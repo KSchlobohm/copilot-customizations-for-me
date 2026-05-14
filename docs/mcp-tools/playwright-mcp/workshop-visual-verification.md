@@ -40,9 +40,8 @@ differences in layout, navigation, and content presentation between the two?
 ## The "Aha" Moment
 
 Notice what just happened:
-1. **No local setup required** — you used a public site with zero configuration
-2. **Copilot saw both viewports** — you didn't have to describe anything manually
-3. **Instant comparison** — checking responsive differences took seconds, not minutes of resizing and note-taking
-4. **Written report** — you got a structured deliverable, not just a visual you have to interpret yourself
+1. **Copilot can see your page** — it's no longer coding blind when it comes to visual outcomes
+2. **It can compare states** — before/after, desktop/mobile, expected/actual — without you describing the differences
+3. **It can gather its own feedback** — when debugging web views, Copilot can now look at the result, identify what's wrong, and iterate — just like you would with DevTools open
 
-Now imagine this on *your* project — screenshot two states, ask Copilot to report the differences, and you have documentation of what changed.
+This is the foundation for all visual debugging workflows. Once Copilot can see what the browser renders, it can reason about CSS, layout, responsiveness, and regressions on its own.
