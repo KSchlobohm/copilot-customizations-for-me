@@ -138,8 +138,6 @@ Example with options:
 }
 ```
 
-> **Note on `--caps vision`**: This enables coordinate-based mouse navigation (pixel positions), not the standard screenshot/accessibility features. You don't need it for typical visual verification workflows — those work out of the box.
-
 ### Notes
 
 - The `npx` command auto-downloads the package on first use — no global install needed
