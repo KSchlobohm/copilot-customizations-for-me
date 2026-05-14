@@ -27,11 +27,15 @@ Without visual verification, Copilot is coding blind for any visually-measurable
 
 ## Prerequisites
 
-- **Node.js** 18+ (for the MCP server)
+- **Node.js**: latest 20.x, 22.x, or 24.x
 - **npm** (comes with Node.js)
-- A Chromium-based browser (Playwright installs its own by default)
+- **Playwright installed with browsers** — see [Install Playwright](install-playwright.md) for the full walkthrough
+
+> ⚠️ Complete the [Playwright installation prerequisite](install-playwright.md) first. The MCP server requires Playwright's browser binaries to be present.
 
 ## Installation & Configuration
+
+The package is [`@playwright/mcp`](https://github.com/microsoft/playwright-mcp) — the official MCP server from the Playwright team at Microsoft.
 
 ### VS Code
 
@@ -42,13 +46,13 @@ Add to your workspace `.vscode/mcp.json`:
   "servers": {
     "playwright": {
       "command": "npx",
-      "args": ["@anthropic-ai/mcp-playwright"]
+      "args": ["@playwright/mcp@latest"]
     }
   }
 }
 ```
 
-Or add to your VS Code User Settings (JSON) under `mcp.servers` for global availability:
+Or add to your VS Code User Settings (JSON) for global availability:
 
 ```json
 {
@@ -56,35 +60,76 @@ Or add to your VS Code User Settings (JSON) under `mcp.servers` for global avail
     "servers": {
       "playwright": {
         "command": "npx",
-        "args": ["@anthropic-ai/mcp-playwright"]
+        "args": ["@playwright/mcp@latest"]
       }
     }
   }
 }
 ```
 
+You can also install via the VS Code CLI:
+
+```bash
+code --add-mcp '{"name":"playwright","command":"npx","args":["@playwright/mcp@latest"]}'
+```
+
 ### Copilot CLI
 
-Add to your global MCP config at `~/.config/github-copilot/mcp.json`:
+Use the interactive command within a Copilot CLI session:
+
+```
+/mcp add
+```
+
+Or create/edit the configuration file at `~/.copilot/mcp-config.json`:
+
+```json
+{
+  "mcpServers": {
+    "playwright": {
+      "type": "local",
+      "command": "npx",
+      "tools": ["*"],
+      "args": ["@playwright/mcp@latest"]
+    }
+  }
+}
+```
+
+For workspace-specific setup, create `.copilot/mcp-config.json` in your project root with the same content.
+
+### Key Configuration Options
+
+The MCP server supports many options via args. Some notable ones:
+
+| Option | Description |
+|--------|-------------|
+| `--browser` | Browser to use: `chrome`, `firefox`, `webkit`, `msedge` |
+| `--headless` | Run headless (default is headed) |
+| `--viewport-size` | Set viewport, e.g., `"1280x720"` |
+| `--device` | Emulate a device, e.g., `"iPhone 15"` |
+| `--caps vision` | Enable vision/screenshot capabilities |
+| `--isolated` | Don't persist browser profile between sessions |
+
+Example with options:
 
 ```json
 {
   "servers": {
     "playwright": {
       "command": "npx",
-      "args": ["@anthropic-ai/mcp-playwright"]
+      "args": ["@playwright/mcp@latest", "--caps", "vision"]
     }
   }
 }
 ```
 
-Or for a workspace-specific setup, create `.copilot/mcp.json` in your project root with the same content.
-
-### Key Configuration Notes
+### Notes
 
 - The `npx` command auto-downloads the package on first use — no global install needed
-- Playwright will download browser binaries on first run (~200MB for Chromium)
-- If behind a corporate proxy, ensure `HTTPS_PROXY` is set before first run
+- Playwright browsers must already be installed (see [prerequisites](install-playwright.md))
+- If behind a corporate proxy, set `HTTPS_PROXY` before first run
+- A persistent browser profile is stored per-workspace; use `--isolated` if you want a clean slate each session
 
 ## Verification
 
@@ -92,13 +137,13 @@ After configuration, verify the setup is working:
 
 ### Step 1: Confirm MCP server starts
 
-In VS Code, open the Output panel and look for the MCP server log. You should see Playwright MCP initialize without errors.
+In VS Code, open the Output panel and select the MCP channel. You should see Playwright MCP initialize without errors.
 
-In Copilot CLI, run a session and ask:
+In Copilot CLI, start a session and ask:
 ```
 What MCP tools do you have available?
 ```
-You should see Playwright-related tools listed (e.g., `browser_navigate`, `browser_screenshot`, `browser_click`).
+You should see Playwright-related tools listed (e.g., `browser_navigate`, `browser_snapshot`, `browser_click`, `browser_screenshot`).
 
 ### Step 2: Test a screenshot
 
@@ -185,9 +230,10 @@ This workflow is impossible without Playwright MCP. With it, CSS and visual work
 | Symptom | Likely cause | Fix |
 |---------|-------------|-----|
 | MCP server won't start | Node.js not in PATH | Ensure `node --version` works in your terminal |
-| "Browser not found" | First-run download didn't complete | Run `npx playwright install chromium` manually |
+| "Browser not found" | Playwright browsers not installed | Run `npx playwright install chromium` (see [prerequisites](install-playwright.md)) |
 | Can't reach localhost | Server not running or wrong port | Verify your dev server is up on the expected port |
 | Screenshots are blank | Page hasn't loaded yet | The MCP tool should wait for load, but check for long-loading SPAs |
+| "Only one instance" error | Another MCP client using same profile | Use `--isolated` flag or point to a different `--user-data-dir` |
 
 ## Next Steps
 
