@@ -17,7 +17,7 @@ Not every tool belongs in every session. I think about MCP tools on a spectrum:
 | Tool | Status | Guide |
 |------|--------|-------|
 | Playwright MCP | ✅ Complete | [Setup & Workshop](mcp-tools/playwright-mcp/README.md) |
-| .NET NuGet MCP Server | 🚧 Coming soon | [Placeholder](mcp-tools/dotnet-nuget-mcp/README.md) |
+| .NET NuGet MCP Server | ✅ Complete | [Setup & Workshop](mcp-tools/dotnet-nuget-mcp/README.md) |
 | Microsoft.GitHubCopilot.Modernization.Mcp | ✅ Complete | [Setup Guide](mcp-tools/modernization-mcp/README.md) |
 
 ## How to Use These Guides
