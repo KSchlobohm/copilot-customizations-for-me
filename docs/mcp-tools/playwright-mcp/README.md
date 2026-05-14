@@ -168,15 +168,6 @@ Navigate to https://playwright.dev and take a screenshot
 
 If you see a screenshot result (or Copilot describes what it sees on the page), the setup is confirmed working.
 
-### Step 3: Test with a local app
-
-If you have a local dev server running (e.g., `localhost:3000`):
-```
-Take a screenshot of http://localhost:3000
-```
-
-This confirms Playwright can reach local services — critical for the development workflow.
-
 ## Workshop: Visual Verification in Action
 
 ### Scenario: Fix a CSS Layout Bug
