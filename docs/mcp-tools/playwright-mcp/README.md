@@ -39,6 +39,9 @@ The package is [`@playwright/mcp`](https://github.com/microsoft/playwright-mcp) 
 
 ### VS Code
 
+<details>
+<summary>VS Code configuration options</summary>
+
 Add to your workspace `.vscode/mcp.json`:
 
 ```json
@@ -73,7 +76,12 @@ You can also install via the VS Code CLI:
 code --add-mcp '{"name":"playwright","command":"npx","args":["@playwright/mcp@latest"]}'
 ```
 
+</details>
+
 ### Copilot CLI
+
+<details>
+<summary>Copilot CLI configuration options</summary>
 
 Use the interactive command within a Copilot CLI session:
 
@@ -97,6 +105,8 @@ Or create/edit the configuration file at `~/.copilot/mcp-config.json`:
 ```
 
 For workspace-specific setup, create `.copilot/mcp-config.json` in your project root with the same content.
+
+</details>
 
 ### Key Configuration Options
 
