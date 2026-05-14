@@ -39,12 +39,14 @@ Download .NET 10 SDK: https://dotnet.microsoft.com/en-us/download/dotnet/10.0
 
 ### The Setup Pattern
 
-Workspace-specific tools need **two config files** — one for Copilot CLI, one for VS Code — because they use different property names:
+If you want a **shared workspace setup**, use two config files — one for Copilot CLI, one for VS Code — because they use different property names:
 
 | File | Used by | Root property |
 |------|---------|---------------|
 | `.mcp.json` (workspace root) | Copilot CLI | `mcpServers` |
 | `.vscode/mcp.json` | VS Code | `servers` |
+
+If you only want this configured for yourself in Copilot CLI, use `/mcp add` or edit `~/.copilot/mcp-config.json` instead.
 
 ### VS Code — `.vscode/mcp.json`
 

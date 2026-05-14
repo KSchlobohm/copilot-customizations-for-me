@@ -91,7 +91,7 @@ Use the interactive command within a Copilot CLI session:
 
 ![Copilot CLI /mcp add interactive setup](playwright-mcp-tool-install.png)
 
-Or create/edit the configuration file at `~/.copilot/mcp-config.json`:
+Or create/edit the personal configuration file at `~/.copilot/mcp-config.json`:
 
 ```json
 {
@@ -106,7 +106,7 @@ Or create/edit the configuration file at `~/.copilot/mcp-config.json`:
 }
 ```
 
-For workspace-specific setup, create `.copilot/mcp-config.json` in your project root with the same content.
+For a shared workspace setup, create `.mcp.json` in your project root with the same content.
 
 </details>
 

@@ -28,12 +28,14 @@ This is a **workspace-specific** tool. You configure it per-project where you're
 
 ## Configuration
 
-Workspace-specific tools need **two config files** — one for Copilot CLI, one for VS Code — because they use different property names:
+If you want a **shared workspace setup**, use two config files — one for Copilot CLI, one for VS Code — because they use different property names:
 
 | File | Used by | Root property |
 |------|---------|---------------|
 | `.mcp.json` (workspace root) | Copilot CLI | `mcpServers` |
 | `.vscode/mcp.json` | VS Code | `servers` |
+
+If you only want this configured for yourself in Copilot CLI, use `/mcp add` or edit `~/.copilot/mcp-config.json` instead.
 
 ### VS Code — `.vscode/mcp.json`
 
@@ -78,7 +80,8 @@ Workspace-specific tools need **two config files** — one for Copilot CLI, one 
 <details>
 <summary>VS Code</summary>
 
-1. Install the [GitHub Copilot modernization](https://marketplace.visualstudio.com/items?itemName=vscjava.migrate-java-to-azure) extension from the VS Code Marketplace
+1. Install the [GitHub Copilot app modernization](https://marketplace.visualstudio.com/items?itemName=vscjava.migrate-java-to-azure) extension from the VS Code Marketplace
+   - The marketplace identifier still says `migrate-java-to-azure`, but the extension also supports .NET modernization workflows
 2. Open a workspace containing your .NET project
 3. Open Copilot Chat and select `modernize-dotnet` from the Agent picker
 4. Prompt: `upgrade my project to .NET 10`
