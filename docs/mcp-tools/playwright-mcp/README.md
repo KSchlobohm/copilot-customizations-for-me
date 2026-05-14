@@ -89,6 +89,8 @@ Use the interactive command within a Copilot CLI session:
 /mcp add
 ```
 
+![Copilot CLI /mcp add interactive setup](playwright-mcp-tool-install.png)
+
 Or create/edit the configuration file at `~/.copilot/mcp-config.json`:
 
 ```json
