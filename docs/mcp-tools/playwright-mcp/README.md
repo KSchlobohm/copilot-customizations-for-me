@@ -163,7 +163,7 @@ You should see Playwright-related tools listed (e.g., `browser_navigate`, `brows
 
 Ask Copilot to take a screenshot of a known URL:
 ```
-Navigate to https://github.com and take a screenshot
+Navigate to https://playwright.dev and take a screenshot
 ```
 
 If you see a screenshot result (or Copilot describes what it sees on the page), the setup is confirmed working.
