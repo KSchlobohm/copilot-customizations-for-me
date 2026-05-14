@@ -1,61 +1,58 @@
 # Workshop: Visual Verification in Action
 
-## Scenario: Fix a CSS Layout Bug
+## Scenario: Inspect and Understand a Page Layout
 
-You have a web page where a centered hero section isn't actually centering on mobile viewports. Let's walk through how Playwright MCP transforms this workflow.
+Let's walk through how Playwright MCP transforms visual workflows — using a public site so there's nothing to set up.
 
 ## Prerequisites for this workshop
-- A running local web app (any framework — React, Next.js, plain HTML, etc.)
 - Playwright MCP configured and verified (see [setup guide](README.md))
-- A CSS layout issue to fix (or introduce one intentionally for learning)
+- That's it — no local app needed
 
 ---
 
-## Step 1: Describe the problem to Copilot
+## Step 1: Capture a baseline screenshot
 
 ```
-The hero section on my homepage should be centered vertically and horizontally,
-but on mobile viewport widths it's shifted to the left. Can you take a screenshot
-of http://localhost:3000 at a 375px viewport width so we can see the issue?
+Navigate to https://playwright.dev and take a screenshot at a 1440px viewport width.
 ```
 
-**Expected outcome:** Copilot uses Playwright to navigate to your app, sets the viewport to 375px wide, and captures a screenshot. You (and Copilot) can now see the misalignment.
+**Expected outcome:** Copilot uses Playwright to navigate to the site and captures a full-width screenshot. You can see the desktop layout of the Playwright docs homepage.
 
-## Step 2: Let Copilot analyze and fix
-
-```
-Based on what you see in that screenshot, can you identify why the hero section
-isn't centered and propose a CSS fix?
-```
-
-**Expected outcome:** Copilot examines the screenshot, cross-references your CSS code, and identifies the issue (e.g., missing `margin: 0 auto`, incorrect flex properties, or a fixed-width element overflowing).
-
-## Step 3: Apply the fix and verify
+## Step 2: Compare a mobile viewport
 
 ```
-Apply that fix and take another screenshot at the same viewport width so we can
-confirm it's resolved.
+Now take a screenshot of the same page at 375px viewport width so we can see
+how the layout responds on mobile.
 ```
 
-**Expected outcome:** Copilot edits the CSS, takes a new screenshot, and you can visually confirm the hero section is now centered.
+**Expected outcome:** Copilot captures a mobile-width screenshot. You can immediately compare how the navigation, hero section, and content reflow for smaller screens.
 
-## Step 4: Check for regressions
+## Step 3: Ask Copilot to analyze what it sees
 
 ```
-Now take a screenshot at 1440px width to make sure the desktop layout still
-looks correct.
+Compare the two screenshots. What layout changes do you notice between the
+desktop and mobile viewports? How is the navigation handled differently?
 ```
 
-**Expected outcome:** Copilot screenshots the desktop viewport, confirming the mobile fix didn't break the desktop layout.
+**Expected outcome:** Copilot describes the responsive design choices — hamburger menu vs full nav, stacked vs side-by-side content, font size changes, etc.
+
+## Step 4: Inspect a specific element
+
+```
+Take a screenshot of https://playwright.dev/docs/intro at 768px width.
+Is the sidebar navigation visible at this breakpoint, or is it collapsed?
+```
+
+**Expected outcome:** Copilot navigates to a docs page at tablet width and reports whether the sidebar is visible or hidden behind a toggle.
 
 ---
 
 ## The "Aha" Moment
 
 Notice what just happened:
-1. **No manual browser switching** — you stayed in your editor/terminal the entire time
-2. **Copilot saw the problem itself** — you didn't have to describe pixel-level details
-3. **Instant feedback loop** — fix → screenshot → confirm, all in one conversation
-4. **Regression check built in** — testing multiple viewports took seconds, not minutes
+1. **No local setup required** — you used a public site with zero configuration
+2. **Copilot saw the page itself** — you didn't have to describe what was on screen
+3. **Instant viewport comparison** — checking responsive behavior took seconds, not minutes of manual resizing
+4. **Natural conversation** — you asked questions about visual layout and got meaningful answers
 
-This workflow is impossible without Playwright MCP. With it, CSS and visual work becomes a collaborative conversation instead of a back-and-forth of "try this, no that's not right, try again."
+Now imagine this workflow on *your* project — fix a CSS bug, verify it visually, check for regressions across viewports, all without leaving your editor or terminal.
