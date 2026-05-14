@@ -38,7 +38,7 @@ MCP tools can be configured differently depending on your client:
 | Client | Config location | Scope |
 |--------|----------------|-------|
 | VS Code | `.vscode/mcp.json` (workspace) or User Settings (global) | Per-workspace or global |
-| Copilot CLI | `~/.config/github-copilot/mcp.json` or workspace `.copilot/mcp.json` | Global or per-workspace |
+| Copilot CLI | `~/.copilot/mcp-config.json` (global) or workspace `.copilot/mcp-config.json` | Global or per-workspace |
 
 This distinction matters because:
 - **VS Code** users might want tools available in the editor's Copilot Chat
