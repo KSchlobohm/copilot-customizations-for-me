@@ -4,24 +4,29 @@
 
 The [.NET Modernization Agent](https://github.com/dotnet/modernize-dotnet) is an AI-powered agent for upgrading and modernizing .NET applications. It can analyze your application, generate an upgrade plan, and apply changes to move to the latest .NET.
 
-## Supported Scenarios
+Supported scenarios:
 
 - Upgrade projects to the latest supported .NET version
 - Migrate from .NET Framework to modern .NET
 
-## Why It's a Workspace-Specific Tool
+## Why I Recommend It
 
-This tool belongs in the **workspace-specific** category — you configure it per-project where you're doing modernization work, not globally. Reasons:
+This is a **workspace-specific** tool. You configure it per-project where you're doing modernization work, not globally.
 
 - It adds MCP tools that are irrelevant during normal development
 - It uses `dnx` (the .NET tool runner) and .NET-specific packages that only make sense in .NET workspaces
 - Different modernization projects may need different companion tools alongside it
 
+## Prerequisites
+
+| Requirement | Details |
+|---|---|
+| **.NET 10 SDK** | Provides the `dnx` command that downloads and runs the MCP server on-demand |
+| **VS Code** or **VS 2022 17.14+** | For IDE integration |
+| **GitHub Copilot** | Must be signed in |
+| **A .NET Framework project** | The tool targets projects that need to be modernized |
+
 ## Configuration
-
-The key difference for workspace-specific MCP tools: you create config files **in the workspace** rather than in your global settings.
-
-### The Setup Pattern
 
 Workspace-specific tools need **two config files** — one for Copilot CLI, one for VS Code — because they use different property names:
 
@@ -30,11 +35,11 @@ Workspace-specific tools need **two config files** — one for Copilot CLI, one 
 | `.mcp.json` (workspace root) | Copilot CLI | `mcpServers` |
 | `.vscode/mcp.json` | VS Code | `servers` |
 
-### Copilot CLI — `.mcp.json` at workspace root
+### VS Code — `.vscode/mcp.json`
 
 ```json
 {
-  "mcpServers": {
+  "servers": {
     "Microsoft.GitHubCopilot.AppModernization.Mcp": {
       "type": "stdio",
       "command": "dnx",
@@ -49,11 +54,11 @@ Workspace-specific tools need **two config files** — one for Copilot CLI, one 
 }
 ```
 
-### VS Code — `.vscode/mcp.json`
+### Copilot CLI — `.mcp.json` at workspace root
 
 ```json
 {
-  "servers": {
+  "mcpServers": {
     "Microsoft.GitHubCopilot.AppModernization.Mcp": {
       "type": "stdio",
       "command": "dnx",
@@ -102,10 +107,47 @@ Workspace-specific tools need **two config files** — one for Copilot CLI, one 
 
 </details>
 
-## Workspace Setup Automation
+## Verification
+
+After configuration, verify the setup is working:
+
+### Step 1: Confirm MCP server starts
+
+In VS Code, open the Output panel and select the MCP channel. You should see the Modernization MCP server initialize without errors.
+
+In Copilot CLI, start a session and ask:
+```
+What MCP tools do you have available?
+```
+You should see modernization-related tools listed.
+
+### Step 2: Test a project assessment
+
+Open a workspace containing a .NET Framework project and ask Copilot:
+```
+Assess my project for modernization to .NET 10
+```
+
+If Copilot invokes the modernization tools and returns an analysis, the setup is confirmed working.
+
+## Workshop
 
 For a full workshop-style setup that configures both MCP servers and downloads companion skills/agents, see the [fx2dotnet workspace setup agent](https://github.com/KSchlobohm/fx2dotnet/blob/kschlobohm/setup-agent/agents/00-agent-workspace-setup.agent.md). It demonstrates:
 
 - Downloading MCP config and producing both CLI and VS Code format files
 - Pulling in companion skills and sub-agents for the modernization workflow
 - Validating the setup before beginning assessment work
+
+## Troubleshooting
+
+| Symptom | Likely cause | Fix |
+|---------|-------------|-----|
+| `dnx: command not found` | .NET 10 SDK not installed | Install from https://dotnet.microsoft.com/en-us/download/dotnet/10.0 and restart terminal |
+| Tools not appearing in Copilot | `mcp.json` in wrong location | Verify the file is at `.vscode/mcp.json` (VS Code) or `.mcp.json` at workspace root (CLI) |
+| Agent not available in Copilot CLI | Plugin not installed | Run `/plugin marketplace add dotnet/modernize-dotnet` then restart CLI |
+
+## Next Steps
+
+Once comfortable with the modernization agent:
+- Explore the [fx2dotnet workspace setup agent](https://github.com/KSchlobohm/fx2dotnet/blob/kschlobohm/setup-agent/agents/00-agent-workspace-setup.agent.md) for automated workspace configuration
+- Combine with the [NuGet MCP Server](../dotnet-nuget-mcp/README.md) to manage package upgrades alongside framework migration
