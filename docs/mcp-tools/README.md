@@ -26,10 +26,12 @@ These are valuable when working in a particular ecosystem. I configure them per-
 
 → [.NET NuGet MCP Server](dotnet-nuget-mcp/README.md) — .NET package management and features
 
+→ [Modernization MCP](modernization-mcp/README.md) — .NET Framework to modern .NET migration
+
 ### Situational tools
 These are powerful but narrow. I enable them only when I'm doing the specific task they support, then disable them to keep sessions focused.
 
-→ [Modernization MCP](modernization-mcp/README.md) — .NET modernization tasks
+*(Future entries will go here)*
 
 ## Configuration: VS Code vs Copilot CLI
 

@@ -31,7 +31,7 @@ Use this repository to collect reusable Copilot customization building blocks, s
 | Skill | `copilot-customization-advisor` | Helps new Copilot users decide whether they need instructions, a prompt file, a skill, an agent, a sub-agent, or a hook | `.github/skills/copilot-customization-advisor/SKILL.md` |
 | Guide | Playwright MCP Setup | Full setup guide + workshop for visual verification with Playwright MCP | `docs/mcp-tools/playwright-mcp/README.md` |
 | Guide | .NET NuGet MCP Server | Workspace-specific MCP for .NET package management (coming soon) | `docs/mcp-tools/dotnet-nuget-mcp/README.md` |
-| Guide | Modernization MCP | Situational MCP for .NET modernization tasks (coming soon) | `docs/mcp-tools/modernization-mcp/README.md` |
+| Guide | Modernization MCP | Workspace-specific MCP for .NET Framework to modern .NET migration | `docs/mcp-tools/modernization-mcp/README.md` |
 
 ## How to Navigate
 
