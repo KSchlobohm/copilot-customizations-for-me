@@ -110,16 +110,18 @@ For workspace-specific setup, create `.copilot/mcp-config.json` in your project 
 
 ### Key Configuration Options
 
-The MCP server supports many options via args. Some notable ones:
+The default no-args configuration is appropriate for most scenarios. The MCP server handles accessibility snapshots and browser interaction without needing extra flags.
+
+Options worth considering for specific workflows:
 
 | Option | Description |
 |--------|-------------|
+| `--headless` | Run headless (default is headed — you'll see the browser window) |
+| `--isolated` | Don't persist browser profile between sessions (clean slate each time) |
+| `--output-dir` | Directory for output files, e.g., `"playwright-output"` |
 | `--browser` | Browser to use: `chrome`, `firefox`, `webkit`, `msedge` |
-| `--headless` | Run headless (default is headed) |
 | `--viewport-size` | Set viewport, e.g., `"1280x720"` |
 | `--device` | Emulate a device, e.g., `"iPhone 15"` |
-| `--caps vision` | Enable vision/screenshot capabilities |
-| `--isolated` | Don't persist browser profile between sessions |
 
 Example with options:
 
@@ -128,11 +130,13 @@ Example with options:
   "servers": {
     "playwright": {
       "command": "npx",
-      "args": ["@playwright/mcp@latest", "--caps", "vision"]
+      "args": ["@playwright/mcp@latest", "--headless", "--isolated", "--output-dir", "playwright-output"]
     }
   }
 }
 ```
+
+> **Note on `--caps vision`**: This enables coordinate-based mouse navigation (pixel positions), not the standard screenshot/accessibility features. You don't need it for typical visual verification workflows — those work out of the box.
 
 ### Notes
 
