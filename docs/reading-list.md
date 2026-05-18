@@ -24,3 +24,14 @@ Recommended reading for moving older systems and workflows forward.
 | [dotnet/modernize-dotnet](https://github.com/dotnet/modernize-dotnet) | GitHub | The official repository for Microsoft's Copilot-driven .NET modernization agent, including installation and setup instructions. | It is the practical starting point if you want to install the agent and understand how to use it on real modernization work. |
 | [twsouthwick/fx2dotnet](https://github.com/twsouthwick/fx2dotnet) | GitHub | A GitHub Copilot agent plugin for migrating .NET Framework applications to modern .NET through ordered phases, with prerequisites and quick start guidance in the README. | It is a useful reference if you want a concrete example of a migration workflow built around small, reviewable, committable changes instead of one large automated conversion. |
 | [GitHub Copilot app modernization](https://marketplace.visualstudio.com/items?itemName=vscjava.migrate-java-to-azure) | VS Code Marketplace | Extension for .NET modernization workflows in VS Code. | Enables running the modernize-dotnet agent directly within your editor for integrated modernization work. |
+
+---
+
+## Sample Applications
+
+Working examples and reference implementations for common modernization patterns.
+
+| Repository | Purpose | Recommended Branch | What to Use It For |
+|---|---|---|---|
+| [KSchlobohm/MvcMovieNet6](https://github.com/KSchlobohm/MvcMovieNet6) | ASP.NET Core MVC sample application | `main` | Basic MVC patterns, Entity Framework Core usage, authentication and authorization in ASP.NET Core |
+| [KSchlobohm/eShopUpgrade](https://github.com/KSchlobohm/eShopUpgrade) | E-commerce platform upgrade from .NET Framework to .NET 6+ | `main` | Real-world modernization example, Azure Key Vault integration, legacy app migration patterns, incremental upgrade strategies |
