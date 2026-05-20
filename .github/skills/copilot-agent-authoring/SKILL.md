@@ -1,6 +1,6 @@
 ---
 name: copilot-agent-authoring
-description: Create and review custom agent files (.agent.md) in .github/agents/. Use this skill when asked to create a new agent, review an existing agent, grade agent quality, or get guidance on agent frontmatter fields. Applies best practices from 2,500+ analyzed repositories.
+description: Create and review custom agent files (.agent.md) in .github/agents/. Use this skill when asked to create a new agent, review an existing agent, grade agent quality, or get guidance on agent frontmatter fields. Applies best practices from large-scale community analysis.
 ---
 
 # Agent Authoring
@@ -18,7 +18,7 @@ Key principles:
 - **Specific beats generic** — "You are a helpful assistant" fails; "You are a .NET testing specialist targeting 80%+ coverage" works
 - **Commands early** — put executable commands (`npm test`, `dotnet build`) near the top
 - **Boundaries are mandatory** — define what the agent must never touch
-- **Six core areas** — commands, testing, project structure, code style, git workflow, boundaries
+- **Cover six core areas** — commands, testing, project structure, code style, git workflow, boundaries
 
 ## Value Gate
 
@@ -68,7 +68,7 @@ All `.agent.md` files begin with YAML frontmatter between `---` fences.
 | `disable-model-invocation` | boolean | `false` | Set `true` to prevent other agents from invoking this one as a sub-agent. |
 | `mcp-servers` | object[] | — | MCP server configurations for GitHub Copilot coding agent. |
 | `handoffs` | object[] | — | Suggested next-step buttons for agent chaining. |
-| `hooks` | object | — | Hook commands scoped to this agent (Preview feature). |
+| `hooks` | object | — | Hook commands scoped to this agent. |
 
 ### Handoffs Schema
 
@@ -103,7 +103,7 @@ handoffs:
 - `description` is the only practically required field (agents without it have no discoverability)
 - `name` should use lowercase letters and hyphens for CLI compatibility
 - `tools` as an empty array `[]` means the agent has NO tool access (read-only conversation)
-- `model` format must match exactly: `"Claude Sonnet 4 (copilot)"`, not just `"claude-sonnet-4"`
+- `model` format must match exactly: `"Model Name (vendor)"` (e.g., `"Claude Sonnet 4 (copilot)"`), not an API model ID
 - `agents` requires the `agent` tool to be in the `tools` list (or tools omitted entirely)
 - Frontmatter must be valid YAML — watch for unquoted strings containing colons
 
