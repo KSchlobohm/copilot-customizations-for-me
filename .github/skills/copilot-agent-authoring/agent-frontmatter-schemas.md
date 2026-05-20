@@ -45,7 +45,7 @@ All `.agent.md` files begin with YAML frontmatter between `---` fences.
 
 | Field | Type | Constraints | Description |
 |-------|------|-------------|-------------|
-| `description` | string | 50–150 chars | Shown as placeholder text in chat. Must clearly state what the agent does. CLI heavily relies on this for inference-based invocation. |
+| `description` | string | **Required**; keep brief (~50–150 chars recommended) | Shown as placeholder text in chat. Must clearly state what the agent does. CLI heavily relies on this for inference-based invocation. |
 
 ### Optional Fields
 
