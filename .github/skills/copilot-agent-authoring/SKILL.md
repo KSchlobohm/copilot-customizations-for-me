@@ -77,7 +77,7 @@ A well-structured agent body follows this pattern:
 - **Show don't tell** — one code example beats three paragraphs of explanation
 - **Three-tier boundaries** — Always/Ask/Never prevents destructive mistakes
 - **Reference existing files** — link to `copilot-instructions.md` or other docs rather than duplicating
-- **Max 30,000 characters** — VS Code limit for agent body
+- **Max 30,000 characters** — platform limit for agent body
 
 ## Reviewing an Agent
 
