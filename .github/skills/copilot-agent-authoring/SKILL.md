@@ -10,6 +10,7 @@ Create, review, and grade custom agent files following established best practice
 ## Reference
 
 Best practices guide: `.github/skills/copilot-agent-authoring/agent-best-practices.md`
+Frontmatter schemas: `.github/skills/copilot-agent-authoring/agent-frontmatter-schemas.md`
 
 > This reference distills guidance from the VS Code docs, GitHub CLI docs, GitHub Blog analysis of 2,500+ repos, and the Copilot Academy developer guide. Read it before creating or reviewing any agent.
 
@@ -39,73 +40,10 @@ If yes, leave it out. Agents should focus on **role-specific, project-specific**
 
 1. Define the agent's purpose: who is it, what does it do, what tools does it need
 2. Create file: `.github/agents/{agent-name}.agent.md`
-3. Write YAML frontmatter (see Frontmatter Reference below)
+3. Write YAML frontmatter (Consult `agent-frontmatter-schemas.md` for VS Code vs. CLI differences and cross-platform rules)
 4. Write body content: identity, workflow, standards, boundaries
 5. Run the review checklist below
 6. Iterate until the agent passes review
-
-## Frontmatter Reference
-
-All `.agent.md` files begin with YAML frontmatter between `---` fences.
-
-### Required Fields
-
-| Field | Type | Constraints | Description |
-|-------|------|-------------|-------------|
-| `description` | string | 50–150 chars recommended | Shown as placeholder text in chat. Must clearly state what the agent does. |
-
-### Optional Fields
-
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `name` | string | filename without `.agent.md` | Display name in the agents dropdown. Use lowercase with hyphens for programmatic use. |
-| `argument-hint` | string | — | Hint text guiding users on what input to provide (e.g., "Describe what you want to test"). |
-| `tools` | string[] | all tools | Restrict available tools. **Omit to allow all.** See tool selection strategy in best practices. |
-| `model` | string \| string[] | user's selected model | AI model override. Use `"Model Name (vendor)"` format. Array = fallback priority list. |
-| `agents` | string[] | — | Sub-agents this agent can invoke. Use `['*']` for all, `[]` for none. |
-| `target` | string | both | `"vscode"` or `"github-copilot"`. Omit for cross-platform availability. |
-| `user-invokable` | boolean | `true` | Set `false` to hide from dropdown (sub-agent only). |
-| `disable-model-invocation` | boolean | `false` | Set `true` to prevent other agents from invoking this one as a sub-agent. |
-| `mcp-servers` | object[] | — | MCP server configurations for GitHub Copilot coding agent. |
-| `handoffs` | object[] | — | Suggested next-step buttons for agent chaining. |
-| `hooks` | object | — | Hook commands scoped to this agent. |
-
-### Handoffs Schema
-
-```yaml
-handoffs:
-  - label: "Button Text"        # Required: display text
-    agent: target-agent          # Required: agent to switch to
-    prompt: "Instructions..."    # Optional: pre-filled prompt
-    send: false                  # Optional: false=user clicks send, true=auto-submit
-    model: "GPT-5.2 (copilot)"  # Optional: model override for this step
-```
-
-### Tools — Common Built-in Names
-
-| Tool | Capability |
-|------|-----------|
-| `search` | Search workspace files by text |
-| `codebase` | Semantic code search |
-| `editFiles` | Create and edit files |
-| `runCommands` | Execute terminal commands |
-| `runTests` | Run test suite |
-| `findTestFiles` | Locate test files |
-| `testFailure` | Get test failure details |
-| `problems` | Get compile/lint errors |
-| `changes` | View git changes |
-| `usages` | Find symbol usages |
-| `fetch` | Fetch web content |
-| `githubRepo` | Search GitHub repos |
-
-### Frontmatter Validation Rules
-
-- `description` is the only practically required field (agents without it have no discoverability)
-- `name` should use lowercase letters and hyphens for CLI compatibility
-- `tools` as an empty array `[]` means the agent has NO tool access (read-only conversation)
-- `model` format must match exactly: `"Model Name (vendor)"` (e.g., `"Claude Sonnet 4 (copilot)"`), not an API model ID
-- `agents` requires the `agent` tool to be in the `tools` list (or tools omitted entirely)
-- Frontmatter must be valid YAML — watch for unquoted strings containing colons
 
 ## Body Structure
 
@@ -213,6 +151,7 @@ After reviewing, assign a letter grade:
 1. {specific strength with evidence}
 2. {specific strength with evidence}
 3. {specific strength with evidence}
+- [ ] Harness compatibility: If `target` is omitted (cross-platform), ensures VS-Code-only fields (`handoffs`, `hooks`, VS Code tool IDs) are NOT present.
 
 ### Improvements Needed
 1. {specific issue} → {concrete fix}
@@ -247,17 +186,5 @@ To review all agents in a repo:
 1. List files in `.github/agents/`
 2. For each `.agent.md` file, read it and run the review checklist
 3. Assign a grade using the rubric
-4. Report findings grouped by agent with the grade report format
-5. Prioritize improvements by impact (F→D agents first, then D→C, etc.)
-
-## Platform Differences
-
-| Feature | VS Code | CLI | GitHub Copilot (Cloud) |
-|---------|---------|-----|----------------------|
-| File location | `.github/agents/` | `.github/agents/` or `~/.copilot/agents/` | `.github/agents/` |
-| Invocation | Agents dropdown / `@mention` | `/agent`, `--agent`, or by inference | Automatic |
-| `target` field | `"vscode"` | Not applicable | `"github-copilot"` |
-| `mcp-servers` | Not used | Not used | Supported |
-| `handoffs` | Supported | Not applicable | Not applicable |
-| `hooks` | Supported (Preview) | Not applicable | Not applicable |
+4. Report findings grouped by agent with the grade report format|
 | Tool names | VS Code tool IDs | CLI tool IDs | GitHub tool IDs |
