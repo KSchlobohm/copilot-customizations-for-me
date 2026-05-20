@@ -128,7 +128,7 @@ After reviewing, assign a letter grade:
 | Grade | Label | Criteria |
 |-------|-------|----------|
 | **A** | Excellent | All checklist items pass. Clear specialist identity, specific commands with flags, concrete code examples, well-defined three-tier boundaries, covers all six core areas. Ready to ship. |
-| **B** | Good | Most items pass. Minor gaps — perhaps missing `argument-hint`, boundaries could be more specific, or one core area is thin. Quick fixes away from A. |
+| **B** | Good | Most items pass. Minor gaps — boundaries could be more specific, missing code examples, or one core area is thin. Quick fixes away from A. |
 | **C** | Adequate | Functional but vague in places. Identity is stated but generic. Commands listed without flags. Boundaries present but not three-tiered. Missing 2–3 core areas. Needs focused revision. |
 | **D** | Below Average | Multiple issues. Vague identity ("you help with code"), no boundaries, no executable commands, or reads like a prompt rather than an agent profile. Substantial rewrite needed. |
 | **F** | Failing | No specialization. "You are a helpful coding assistant" territory. Missing description, no structure, no boundaries, no actionable content. Start over with a clear purpose. |
