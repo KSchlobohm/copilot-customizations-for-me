@@ -24,8 +24,8 @@ Whenever possible, design agents to be cross-platform compatible. If an agent us
 
 ### Cross-Platform Target (Default & Recommended)
 To make an agent work natively in **both** VS Code and Copilot CLI:
-1. Omit the `target` property.
-2. **Omit the `tools` property**. This is critical. Allowing the host to provide the default toolset prevents validation errors where CLI encounters the VS Code `editFiles` tool or vice-versa.
+1. **Omit the `tools` property** or use `tools: ["*"]` — both enable all available tools on any platform.
+2. If restricting tools, use **cross-platform aliases** (`read`, `edit`, `search`, `execute`, `agent`, `web`) instead of platform-specific names like `editFiles` or `runCommands`. Unrecognized tool names are silently ignored, not rejected. *(Source: [GitHub Docs][gh-config] — tool aliases table)*
 3. Omit `handoffs`, `hooks`, and `mcp-servers`.
 
 ### VS Code Target (`target: "vscode"`)
