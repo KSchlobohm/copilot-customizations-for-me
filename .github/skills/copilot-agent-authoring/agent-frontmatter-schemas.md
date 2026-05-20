@@ -8,7 +8,7 @@ This reference details the YAML frontmatter schema for `.agent.md` files, with a
 
 ## Cross-Platform Compatibility
 
-Whenever possible, design agents to be cross-platform compatible. If an agent uses platform-specific features (like VS Code `handoffs`), it MUST explicitly set the `target` field or it will cause parsing errors on other platforms.
+Whenever possible, design agents to be cross-platform compatible. If an agent uses platform-specific features (like VS Code `handoffs` or `hooks`), it SHOULD set the `target` field to signal intent. Unsupported fields are ignored on other platforms (not rejected), but omitting `target` makes it unclear whether the agent was designed for cross-platform use.
 
 | Feature | VS Code | Copilot CLI | GitHub Copilot (Cloud) |
 |---------|---------|-------------|------------------------|
