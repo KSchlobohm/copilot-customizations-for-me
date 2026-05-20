@@ -52,7 +52,7 @@ All `.agent.md` files begin with YAML frontmatter between `---` fences.
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
 | `name` | string | filename | Display name. Use lowercase with hyphens for CLI programmatic compatibility. |
-| `argument-hint` | string | — | Hint text guiding users on what input to provide. |
+| `argument-hint` | string | — | Hint text guiding users on what input to provide. *(VS Code/IDE only; ignored by cloud agent)* |
 | `tools` | string[] | all tools | Restrict available tools. **Omit to allow host defaults (required for cross-platform agents).** |
 | `model` | string \| string[] | user's chosen | AI model override. **Format differs by platform** — see note below. |
 | `agents` | string[] | — | Sub-agents this agent can invoke. Use `['*']` for all, `[]` for none. |
