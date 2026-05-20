@@ -245,7 +245,7 @@ code for untested paths and generate comprehensive unit and integration tests.
 name: planner
 description: "Solution architect generating detailed implementation plans. Researches codebase without making changes."
 tools: ['search', 'codebase', 'fetch', 'usages']
-model: ['Claude Opus 4.5', 'GPT-5.2']
+model: 'gpt-4o'
 handoffs:
   - label: "Start Implementation"
     agent: agent

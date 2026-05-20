@@ -50,7 +50,7 @@ All `.agent.md` files begin with YAML frontmatter between `---` fences.
 | `name` | string | filename | Display name. Use lowercase with hyphens for CLI programmatic compatibility. |
 | `argument-hint` | string | — | Hint text guiding users on what input to provide. |
 | `tools` | string[] | all tools | Restrict available tools. **Omit to allow host defaults (required for cross-platform agents).** |
-| `model` | string \| string[] | user's chosen | AI model override. format: `"Model Name (vendor)"` |
+| `model` | string | user's chosen | AI model override using the exact model ID (e.g., `"gpt-4o"`, `"claude-sonnet-4.5"`). Do not use display names. |
 | `agents` | string[] | — | Sub-agents this agent can invoke. Use `['*']` for all, `[]` for none. |
 | `target` | string | both | `"vscode"` or `"github-copilot"`. Omit to serve all platforms. |
 | `user-invokable` | boolean | `true` | Set `false` to hide from dropdown/invocation (sub-agent only). |
