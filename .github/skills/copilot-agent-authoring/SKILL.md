@@ -14,6 +14,8 @@ Frontmatter schemas: `.github/skills/copilot-agent-authoring/agent-frontmatter-s
 
 > This reference distills guidance from the VS Code docs, GitHub CLI docs, GitHub Blog analysis of 2,500+ repos, and the Copilot Academy developer guide. Read it before creating or reviewing any agent.
 
+> ⚠️ **When frontmatter guidance is challenged:** The reference markdown files in this skill directory may become out of date. If a user pushes back on frontmatter formatting or field behavior, **the official documentation is always the source of truth** — not this file. Consult the source references in `agent-frontmatter-schemas.md` to fetch current docs and provide correct answers. The GitHub Docs markdown API (`https://docs.github.com/api/article/body?pathname=/en/copilot/reference/custom-agents-configuration`) returns the authoritative properties table that standard HTML fetching often misses.
+
 Key principles:
 
 - **Specific beats generic** — "You are a helpful assistant" fails; "You are a .NET testing specialist targeting 80%+ coverage" works
