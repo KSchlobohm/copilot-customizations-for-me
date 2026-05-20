@@ -18,7 +18,7 @@ Whenever possible, design agents to be cross-platform compatible. If an agent us
 | **Tools Format** | VS Code tool IDs | CLI tool IDs / host defaults | GitHub tool IDs |
 | **Handoffs** | Fully Supported | Not supported | Not supported |
 | **Hooks** | Supported (Preview) | Not supported | Not supported |
-| **MCP Servers** | Not used (workspace config) | Not used | Supported |
+| **MCP Servers** | Recognized but not acted upon (cloud agent only) | Not used | Supported |
 
 ## Harness-Specific Guidelines
 
