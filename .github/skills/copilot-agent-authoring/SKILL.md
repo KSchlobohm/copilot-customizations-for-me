@@ -100,6 +100,7 @@ When reviewing an agent, evaluate it against the checklist below. Reference `age
 - [ ] Tool selection matches the agent's role (read-only agents don't get `editFiles`)
 - [ ] Tools are explicitly restricted if the agent shouldn't have full access
 - [ ] If `agents` is specified, the `agent` tool is available
+- [ ] Harness compatibility: Tool names are harness-specific. VS Code uses namespaced IDs (`search/codebase`, `web/fetch`, `read/terminalLastCommand`), CLI/Cloud uses aliases (`execute`, `read`, `search`, `edit`). If `target` is omitted (cross-platform), verify tool names are valid for all intended harnesses. Sources: [GitHub Docs — Tool Aliases](https://docs.github.com/en/copilot/reference/custom-agents-configuration#tool-aliases), [VS Code Docs — Custom Agents](https://code.visualstudio.com/docs/copilot/customization/custom-agents).
 
 #### Instructions Quality
 - [ ] Workflow steps are numbered and unambiguous
@@ -153,7 +154,6 @@ After reviewing, assign a letter grade:
 1. {specific strength with evidence}
 2. {specific strength with evidence}
 3. {specific strength with evidence}
-- [ ] Harness compatibility: If `target` is omitted (cross-platform), ensures VS-Code-only fields (`handoffs`, `hooks`, VS Code tool IDs) are NOT present.
 
 ### Improvements Needed
 1. {specific issue} → {concrete fix}
@@ -188,5 +188,4 @@ To review all agents in a repo:
 1. List files in `.github/agents/`
 2. For each `.agent.md` file, read it and run the review checklist
 3. Assign a grade using the rubric
-4. Report findings grouped by agent with the grade report format|
-| Tool names | VS Code tool IDs | CLI tool IDs | GitHub tool IDs |
+4. Report findings grouped by agent with the grade report format
