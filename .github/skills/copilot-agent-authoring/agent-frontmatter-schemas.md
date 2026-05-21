@@ -93,6 +93,7 @@ handoffs:
 - `runTests`: Run test suite
 - `problems`: Get compile/lint errors
 - `fetch`: Fetch web content
+- `vscode/askQuestions`: Enables the agent to ask clarifying questions using an interactive carousel *(VS Code 1.109+, [release notes](https://code.visualstudio.com/updates/v1_109))*
 
 ## Validation Rules
 - `description` MUST exist for discoverability (especially for CLI inference). *(Source: [GitHub Docs][gh-config] — marked **Required**)*
