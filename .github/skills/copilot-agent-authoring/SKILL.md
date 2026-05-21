@@ -100,6 +100,7 @@ When reviewing an agent, evaluate it against the checklist below. Reference `age
 - [ ] Tool selection matches the agent's role (read-only agents don't get `editFiles`)
 - [ ] Tools are explicitly restricted if the agent shouldn't have full access
 - [ ] If `agents` is specified, the `agent` tool is available
+- [ ] Harness compatibility: If `target` is omitted (cross-platform), ensures harness-specific tool names are NOT used — tool IDs differ across harnesses (e.g., `powershell` in CLI vs `runInTerminal` in VS Code). Refer to `agent-frontmatter-schemas.md` for the canonical mapping.
 
 #### Instructions Quality
 - [ ] Workflow steps are numbered and unambiguous
@@ -153,7 +154,6 @@ After reviewing, assign a letter grade:
 1. {specific strength with evidence}
 2. {specific strength with evidence}
 3. {specific strength with evidence}
-- [ ] Harness compatibility: If `target` is omitted (cross-platform), ensures VS-Code-only fields (`handoffs`, `hooks`, VS Code tool IDs) are NOT present.
 
 ### Improvements Needed
 1. {specific issue} → {concrete fix}
@@ -188,5 +188,4 @@ To review all agents in a repo:
 1. List files in `.github/agents/`
 2. For each `.agent.md` file, read it and run the review checklist
 3. Assign a grade using the rubric
-4. Report findings grouped by agent with the grade report format|
-| Tool names | VS Code tool IDs | CLI tool IDs | GitHub tool IDs |
+4. Report findings grouped by agent with the grade report format
