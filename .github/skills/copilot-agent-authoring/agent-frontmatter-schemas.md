@@ -57,7 +57,7 @@ All `.agent.md` files begin with YAML frontmatter between `---` fences.
 | `model` | string \| string[] | user's chosen | AI model override. **Format differs by platform** — see note below. |
 | `agents` | string[] | — | Sub-agents this agent can invoke. Use `['*']` for all, `[]` for none. |
 | `target` | string | both | `"vscode"` or `"github-copilot"`. Omit to serve all platforms. |
-| `user-invokable` | boolean | `true` | Set `false` to hide from dropdown/invocation (sub-agent only). |
+| `user-invocable` | boolean | `true` | Set `false` to hide from dropdown/invocation (sub-agent only). |
 | `disable-model-invocation` | boolean | `false` | Set `true` to prevent other agents from invoking this one. |
 
 ### Model Field — Platform Differences
