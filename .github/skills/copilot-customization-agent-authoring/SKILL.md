@@ -1,5 +1,5 @@
 ---
-name: copilot-agent-authoring
+name: copilot-customization-agent-authoring
 description: Create and review custom agent files (.agent.md) in .github/agents/. Use this skill when asked to create a new agent, review an existing agent, grade agent quality, or get guidance on agent frontmatter fields. Applies best practices from large-scale community analysis.
 ---
 
@@ -9,8 +9,8 @@ Create, review, and grade custom agent files following established best practice
 
 ## Reference
 
-Best practices guide: `.github/skills/copilot-agent-authoring/agent-best-practices.md`
-Frontmatter schemas: `.github/skills/copilot-agent-authoring/agent-frontmatter-schemas.md`
+Best practices guide: `.github/skills/copilot-customization-agent-authoring/agent-best-practices.md`
+Frontmatter schemas: `.github/skills/copilot-customization-agent-authoring/agent-frontmatter-schemas.md`
 
 > This reference distills guidance from the VS Code docs, GitHub CLI docs, GitHub Blog analysis of 2,500+ repos, and the Copilot Academy developer guide. Read it before creating or reviewing any agent.
 
@@ -90,6 +90,7 @@ When reviewing an agent, evaluate it against the checklist below. Reference `age
 - [ ] `description` is 50–150 characters (concise but informative)
 - [ ] `name` uses lowercase/hyphens (CLI-friendly)
 - [ ] If CLI-targeted: description contains trigger keywords for inference-based invocation
+- [ ] No frontmatter properties are set to their default values (remove redundant defaults for maintainability and cross-platform safety)
 
 #### Identity & Role
 - [ ] Body begins with a clear identity statement (who, what expertise, what task)
@@ -181,6 +182,7 @@ When an agent doesn't meet standards, suggest improvements conversationally:
 - "This agent has all tools enabled but only reads code — restricting to `search`, `codebase`, `usages` would be safer"
 - "No code examples — one snippet showing your preferred test style beats a paragraph explaining it"
 - "Consider adding handoffs if this agent produces output another specialist should act on"
+- "This frontmatter defines `{property}: {value}` which is already the default — remove it to reduce noise, improve maintainability, and avoid conflicts if the platform default changes across harnesses"
 
 ## Reviewing Existing Agents
 

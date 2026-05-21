@@ -135,6 +135,47 @@ Cross-platform tool aliases from [GitHub Docs][gh-config]. All aliases are case 
 - Frontmatter must be valid YAML — wrap strings containing colons in quotes.
 - `tools: ["*"]` is equivalent to omitting `tools` — both enable all available tools. *(Source: [GitHub Docs][gh-config])*
 
+## Removing Redundant Defaults
+
+**If a frontmatter property is set to its default value, remove it.** Explicitly stating defaults adds noise, hurts maintainability, and can cause subtle cross-platform issues when defaults differ between harnesses.
+
+### Properties with Defaults
+
+| Property | Default Value | Remove if set to... |
+|----------|--------------|---------------------|
+| `name` | filename (without `.agent.md`) | the same string as the filename |
+| `tools` | all tools enabled | `["*"]` or listing every available tool |
+| `model` | user's chosen model | not overriding — only include if forcing a specific model |
+| `target` | both (cross-platform) | omit unless intentionally restricting to one platform |
+| `user-invocable` | `true` | `true` (only set when changing to `false`) |
+| `disable-model-invocation` | `false` | `false` (only set when changing to `true`) |
+
+### Why This Matters
+
+1. **Maintainability** — Fewer properties means less to read and maintain. Reviewers immediately see which fields are intentional overrides vs. boilerplate.
+2. **Cross-platform safety** — Defaults may differ between VS Code, CLI, and Cloud. Hardcoding a value that happens to match today's default on one platform can conflict with another platform's behavior or with future changes.
+3. **Signal-to-noise** — When every field is explicit, intentional configuration choices (like restricting tools or forcing a model) get lost in the noise of redundant declarations.
+
+### Examples
+
+❌ **Redundant — remove these:**
+```yaml
+---
+name: my-agent           # file is already named my-agent.agent.md
+tools: ["*"]             # same as omitting tools entirely
+user-invocable: true     # already the default
+disable-model-invocation: false  # already the default
+---
+```
+
+✅ **Clean — only intentional overrides:**
+```yaml
+---
+description: "Security auditor scanning for vulnerabilities and secrets in source code."
+tools: ['skill', 'search', 'codebase', 'usages', 'problems']
+---
+```
+
 ## Source References
 
 | Source | URL | What it covers |
