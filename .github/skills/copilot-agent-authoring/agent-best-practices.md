@@ -40,12 +40,12 @@ Match tool access to the agent's role. This prevents accidental damage and makes
 
 | Agent Archetype | Recommended Tools | Rationale |
 |-----------------|------------------|-----------|
-| **Planner / Read-only** | `search`, `codebase`, `fetch`, `usages` | Prevents accidental code changes |
+| **Planner / Read-only** | `skill`, `search`, `codebase`, `fetch`, `usages` | Prevents accidental code changes |
 | **Implementation** | All tools (omit `tools`) | Needs full editing + running capability |
-| **Testing** | `search`, `codebase`, `editFiles`, `runTests`, `findTestFiles`, `testFailure`, `runCommands`, `problems` | Write tests, run them, diagnose failures |
-| **Code Review** | `search`, `codebase`, `changes`, `problems`, `usages` | Read-only analysis of changes |
-| **Documentation** | `search`, `codebase`, `editFiles`, `fetch`, `runCommands` | Read code, write docs, validate links |
-| **Security Audit** | `search`, `codebase`, `usages`, `problems` | Analyze without modifying |
+| **Testing** | `skill`, `search`, `codebase`, `editFiles`, `runTests`, `findTestFiles`, `testFailure`, `runCommands`, `problems` | Write tests, run them, diagnose failures |
+| **Code Review** | `skill`, `search`, `codebase`, `changes`, `problems`, `usages` | Read-only analysis of changes |
+| **Documentation** | `skill`, `search`, `codebase`, `editFiles`, `fetch`, `runCommands` | Read code, write docs, validate links |
+| **Security Audit** | `skill`, `search`, `codebase`, `usages`, `problems` | Analyze without modifying |
 
 ### When to Omit `tools` Entirely
 
@@ -60,6 +60,8 @@ Restrict tools when the agent:
 - Should never modify code (planners, reviewers, auditors)
 - Operates in a sensitive area (security, production configs)
 - Is part of a handoff chain (each agent owns a specific phase)
+
+> ⚠️ **When restricting tools, always include `skill`** so the agent can still discover and leverage skill files from `.github/skills/`. Without it, the agent loses access to skill-based knowledge and workflows that inform its behavior.
 
 ## Handoffs — Chaining Agents into Workflows
 

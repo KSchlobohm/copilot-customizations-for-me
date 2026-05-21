@@ -99,6 +99,7 @@ When reviewing an agent, evaluate it against the checklist below. Reference `age
 #### Tools & Permissions
 - [ ] Tool selection matches the agent's role (read-only agents don't get `editFiles`)
 - [ ] Tools are explicitly restricted if the agent shouldn't have full access
+- [ ] If tools are explicitly listed, `skill` is included for skill file discovery
 - [ ] If `agents` is specified, the `agent` tool is available
 - [ ] Harness compatibility: Tool names are harness-specific. VS Code uses namespaced IDs (`search/codebase`, `web/fetch`, `read/terminalLastCommand`), CLI/Cloud uses aliases (`execute`, `read`, `search`, `edit`). If `target` is omitted (cross-platform), verify tool names are valid for all intended harnesses. Sources: [GitHub Docs — Tool Aliases](https://docs.github.com/en/copilot/reference/custom-agents-configuration#tool-aliases), [VS Code Docs — Custom Agents](https://code.visualstudio.com/docs/copilot/customization/custom-agents).
 

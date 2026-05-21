@@ -26,7 +26,8 @@ Whenever possible, design agents to be cross-platform compatible. If an agent us
 To make an agent work natively in **both** VS Code and Copilot CLI:
 1. **Omit the `tools` property** or use `tools: ["*"]` — both enable all available tools on any platform.
 2. If restricting tools, use **cross-platform aliases** (`read`, `edit`, `search`, `execute`, `agent`, `web`, `todo`) instead of platform-specific names like `editFiles` or `runCommands`. Unrecognized tool names are silently ignored, not rejected. *(Source: [GitHub Docs][gh-config] — tool aliases table)*
-3. Omit `handoffs`, `hooks`, and `mcp-servers`.
+3. **When explicitly listing tools, strongly include `skill`** so the agent can discover and use skill files (`.github/skills/`). Without it, agents with restricted tool lists lose access to skill-based knowledge and workflows.
+4. Omit `handoffs`, `hooks`, and `mcp-servers`.
 
 ### VS Code Target (`target: "vscode"`)
 - **Tools**: VS Code relies on specific extension tool IDs (e.g., `search`, `codebase`, `editFiles`, `runCommands`). If you define the `tools` array, you MUST use valid VS Code tool names.
@@ -124,11 +125,13 @@ Cross-platform tool aliases from [GitHub Docs][gh-config]. All aliases are case 
 | `agent` | `custom-agent`, `Task` | "Custom agent" tools | Invoke a different custom agent for a sub-task |
 | `web` | `WebSearch`, `WebFetch` | Currently not applicable for cloud agent | Fetch content from URLs and perform web search |
 | `todo` | `TodoWrite` | Currently not applicable for cloud agent | Create and manage structured task lists *(VS Code only)* |
+| **`skill`** | — | Skill discovery | **Strongly recommended when tools are explicit.** Enables discovery of `.github/skills/` files so agents retain access to skill-based knowledge and workflows. |
 
 ## Validation Rules
 - `description` MUST exist for discoverability (especially for CLI inference). *(Source: [GitHub Docs][gh-config] — marked **Required**)*
 - `name` SHOULD use lowercase letters and hyphens for CLI programmatic compatibility. *(Recommendation — not a documented constraint, but the CLI docs suggest it for `--agent` flag usage)*
 - If `target` is omitted (cross-platform), do NOT include `handoffs`, `hooks`, or explicit `tools` arrays with platform-specific names. *(Source: [GitHub Docs][gh-config] — "All unrecognized tool names are ignored"; [VS Code Docs][vscode-agents] — `argument-hint` and `handoffs` "are ignored to ensure compatibility")*
+- If `tools` is explicitly defined, **strongly include `skill`** to ensure the agent can discover skill files. Omitting it cuts off access to `.github/skills/` knowledge.
 - Frontmatter must be valid YAML — wrap strings containing colons in quotes.
 - `tools: ["*"]` is equivalent to omitting `tools` — both enable all available tools. *(Source: [GitHub Docs][gh-config])*
 
