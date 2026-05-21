@@ -13,7 +13,7 @@ Whenever possible, design agents to be cross-platform compatible. If an agent us
 | Feature | VS Code | Copilot CLI | GitHub Copilot (Cloud) |
 |---------|---------|-------------|------------------------|
 | **File location** | `.github/agents/` | `.github/agents/` or `~/.copilot/agents/` | `.github/agents/` |
-| **Invocation** | Agents dropdown / `@mention` | `/agent`, `--agent`, or by inference | Automatic |
+| **Invocation** | Agents dropdown / `@mention` | `/agent`, `--agent`, or by inference | Automatic or manual selection |
 | **Target Field** | `target: "vscode"` | Ignored / Not natively matching target string | `target: "github-copilot"` |
 | **Tools Format** | VS Code tool IDs | CLI tool IDs / host defaults | GitHub tool IDs |
 | **Handoffs** | Fully Supported | Not supported | Not supported |
@@ -25,8 +25,9 @@ Whenever possible, design agents to be cross-platform compatible. If an agent us
 ### Cross-Platform Target (Default & Recommended)
 To make an agent work natively in **both** VS Code and Copilot CLI:
 1. **Omit the `tools` property** or use `tools: ["*"]` — both enable all available tools on any platform.
-2. If restricting tools, use **cross-platform aliases** (`read`, `edit`, `search`, `execute`, `agent`, `web`) instead of platform-specific names like `editFiles` or `runCommands`. Unrecognized tool names are silently ignored, not rejected. *(Source: [GitHub Docs][gh-config] — tool aliases table)*
-3. Omit `handoffs`, `hooks`, and `mcp-servers`.
+2. If restricting tools, use **cross-platform aliases** (`read`, `edit`, `search`, `execute`, `agent`, `web`, `todo`) instead of platform-specific names like `editFiles` or `runCommands`. Unrecognized tool names are silently ignored, not rejected. *(Source: [GitHub Docs][gh-config] — tool aliases table)*
+3. **When explicitly listing tools, strongly include `skill`** so the agent can discover and use skill files (`.github/skills/`). Without it, agents with restricted tool lists lose access to skill-based knowledge and workflows.
+4. Omit `handoffs`, `hooks`, and `mcp-servers`.
 
 ### VS Code Target (`target: "vscode"`)
 - **Tools**: VS Code relies on specific extension tool IDs (e.g., `search`, `codebase`, `editFiles`, `runCommands`). If you define the `tools` array, you MUST use valid VS Code tool names.
@@ -45,12 +46,12 @@ To make an agent work natively in **both** VS Code and Copilot CLI:
 - **Tool Access**: Uses the alias system (`execute`, `read`, `edit`, `search`, `agent`, `web`). Each alias maps to compatible names (e.g., `execute` accepts `shell`, `Bash`, `powershell`). *(Source: [GitHub Docs][gh-config] — tool aliases table)*
 
 ### Copilot CLI Target
-- **Tool Access**: The CLI often relies on inference and system-level execution. Hardcoding VS Code specific tools like `editFiles` will cause the CLI agent to fail or act unpredictably.
+- **Tool Access**: The CLI often relies on inference and system-level execution. Unrecognized tool names (like VS Code-specific `editFiles`) are silently ignored, which may leave the agent without the intended capabilities.
 - **Invocation**: The CLI relies heavily on the `description` field to infer when to automatically trigger the agent if not explicitly invoked via `--agent`.
 
 ## Schema Definition
 
-All `.agent.md` files begin with YAML frontmatter between `---` fences.
+All `.agent.md` files begin with YAML frontmatter between `---` fences. The Markdown body below the frontmatter defines the agent's behavior and can be a maximum of **30,000 characters**.
 
 ### Required Fields
 
@@ -64,12 +65,14 @@ All `.agent.md` files begin with YAML frontmatter between `---` fences.
 |-------|------|---------|-------------|
 | `name` | string | filename | Display name. Use lowercase with hyphens for CLI programmatic compatibility. |
 | `argument-hint` | string | — | Hint text guiding users on what input to provide. *(VS Code/IDE only; ignored by cloud agent)* |
-| `tools` | string[] | all tools | Restrict available tools. **Omit to allow host defaults (required for cross-platform agents).** |
+| `tools` | list of strings, string | all tools | Restrict available tools. Supports both a comma-separated string and YAML string array. Use `tools: []` to disable all tools. **Omit to allow host defaults (required for cross-platform agents).** See [Tool Aliases](#tool-aliases). |
 | `model` | string \| string[] | user's chosen | AI model override. **Format differs by platform** — see note below. |
-| `agents` | string[] | — | Sub-agents this agent can invoke. Use `['*']` for all, `[]` for none. |
+| `agents` | string[] | — | Sub-agents this agent can invoke. Use `['*']` for all, `[]` for none. *(VS Code/IDE; not in GitHub Docs schema)* |
 | `target` | string | both | `"vscode"` or `"github-copilot"`. Omit to serve all platforms. |
-| `user-invocable` | boolean | `true` | Set `false` to hide from dropdown/invocation (sub-agent only). |
-| `disable-model-invocation` | boolean | `false` | Set `true` to prevent other agents from invoking this one. |
+| `user-invocable` | boolean | `true` | Controls whether this agent can be selected by a user. When `false`, the agent can only be accessed programmatically or as a sub-agent. |
+| `disable-model-invocation` | boolean | `false` | **Semantics differ by platform.** Cloud/CLI: disables automatic selection based on task context. VS Code: prevents other agents from invoking this one as a sub-agent. |
+| `mcp-servers` | object | — | Additional MCP servers and tools for the agent. *(Cloud agent only; not used in VS Code/IDE agents)* |
+| `metadata` | object | — | Allows annotation of the agent with name/value pairs. *(Cloud agent only; not used in VS Code/IDE agents)* |
 
 ### Model Field — Platform Differences
 
@@ -82,7 +85,7 @@ The `model` field has conflicting documentation between platforms:
 | **Example** | *(none given)* | `model: ['Claude Opus 4.5', 'GPT-5.2']` or `model: GPT-5.2 (copilot)` |
 | **Source** | [GitHub Docs properties table][gh-config] | [VS Code custom agents docs][vscode-agents] |
 
-> ⚠️ **Recommendation:** For VS Code agents, use display names with vendor qualifier (e.g., `"Claude Sonnet 4 (copilot)"`). Arrays are supported for fallback priority. For cloud agents, the GitHub docs specify only `string` type with no format guidance — test with your target environment. The `handoffs.model` field in VS Code explicitly states: "Use the qualified model name in the format `Model Name (vendor)`."
+> ⚠️ **Recommendation:** For VS Code `handoffs.model`, use qualified names in `"Model Name (vendor)"` format (explicitly required by VS Code docs). For top-level `model`, VS Code examples show both bare names (`'Claude Opus 4.5'`) and arrays for fallback priority. For cloud agents, the GitHub docs specify only `string` type with no format guidance — test with your target environment.
 
 ### VS Code Specific Schemas
 
@@ -93,10 +96,13 @@ handoffs:
     agent: target-agent          # Required: agent to switch to
     prompt: "Instructions..."    # Optional: pre-filled prompt
     send: false                  # Optional: false=user clicks send, true=auto-submit
+    model: "GPT-5.2 (copilot)"  # Optional: model override (use "Model Name (vendor)" format)
 ```
 
+> **Note:** If `agents` is specified in frontmatter, ensure the `agent` tool is also included in the `tools` property.
+
 **Common VS Code Tools**
-*Only use these if `target: "vscode"` is explicitly defined or intended.*
+*Only use these if `target: "vscode"` is explicitly defined or intended. This list may change — see [VS Code agent tools docs](https://code.visualstudio.com/docs/copilot/agents/agent-tools) for the current canonical list.*
 - `search`: Search workspace files by text
 - `codebase`: Semantic code search
 - `editFiles`: Create and edit files
@@ -106,10 +112,26 @@ handoffs:
 - `fetch`: Fetch web content
 - `vscode/askQuestions`: Enables the agent to ask clarifying questions using an interactive carousel *(VS Code 1.109+, [release notes](https://code.visualstudio.com/updates/v1_109))*
 
+### Tool Aliases
+
+Cross-platform tool aliases from [GitHub Docs][gh-config]. All aliases are case insensitive. **Use these for cross-platform agents instead of VS Code-specific tool names.**
+
+| Primary Alias | Compatible Aliases | Cloud Agent Mapping | Purpose |
+|---------------|-------------------|---------------------|---------|
+| `execute` | `shell`, `Bash`, `powershell` | Shell tools: `bash` or `powershell` | Execute a command in the appropriate shell for the OS |
+| `read` | `Read`, `NotebookRead` | `view` | Read file contents |
+| `edit` | `Edit`, `MultiEdit`, `Write`, `NotebookEdit` | Edit tools: e.g. `str_replace`, `str_replace_editor` | Allow LLM to edit files |
+| `search` | `Grep`, `Glob` | `search` | Search for files or text in files |
+| `agent` | `custom-agent`, `Task` | "Custom agent" tools | Invoke a different custom agent for a sub-task |
+| `web` | `WebSearch`, `WebFetch` | Currently not applicable for cloud agent | Fetch content from URLs and perform web search |
+| `todo` | `TodoWrite` | Currently not applicable for cloud agent | Create and manage structured task lists *(VS Code only)* |
+| **`skill`** | — | Skill discovery | **Strongly recommended when tools are explicit.** Enables discovery of `.github/skills/` files so agents retain access to skill-based knowledge and workflows. |
+
 ## Validation Rules
 - `description` MUST exist for discoverability (especially for CLI inference). *(Source: [GitHub Docs][gh-config] — marked **Required**)*
 - `name` SHOULD use lowercase letters and hyphens for CLI programmatic compatibility. *(Recommendation — not a documented constraint, but the CLI docs suggest it for `--agent` flag usage)*
 - If `target` is omitted (cross-platform), do NOT include `handoffs`, `hooks`, or explicit `tools` arrays with platform-specific names. *(Source: [GitHub Docs][gh-config] — "All unrecognized tool names are ignored"; [VS Code Docs][vscode-agents] — `argument-hint` and `handoffs` "are ignored to ensure compatibility")*
+- If `tools` is explicitly defined, **strongly include `skill`** to ensure the agent can discover skill files. Omitting it cuts off access to `.github/skills/` knowledge.
 - Frontmatter must be valid YAML — wrap strings containing colons in quotes.
 - `tools: ["*"]` is equivalent to omitting `tools` — both enable all available tools. *(Source: [GitHub Docs][gh-config])*
 
@@ -120,7 +142,7 @@ handoffs:
 | GitHub Docs — Custom Agents Configuration | [gh-config] | Authoritative properties table, tool aliases, MCP config, processing rules |
 | VS Code Docs — Custom Agents | [vscode-agents] | File structure, all frontmatter fields, handoffs, hooks, examples |
 | GitHub CLI Docs — Create Custom Agents | [cli-agents] | CLI-specific invocation, file locations, trigger words |
-| Copilot Academy — Developer Guide | [dev-guide] | Step-by-step walkthrough, tool selection strategy, anatomy |
+| Copilot Academy — Developer Guide | [dev-guide] | Best practices and walkthrough *(non-authoritative for schema; use for patterns/examples only)* |
 
 [gh-config]: https://docs.github.com/en/copilot/reference/custom-agents-configuration
 [vscode-agents]: https://code.visualstudio.com/docs/copilot/customization/custom-agents#_custom-agent-file-structure

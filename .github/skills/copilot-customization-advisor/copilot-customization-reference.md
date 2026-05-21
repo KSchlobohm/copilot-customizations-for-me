@@ -128,7 +128,7 @@ agents:                       # optional: restrict which sub-agents I can call
 - Full persona with identity, system prompt, tool set, and model preference
 - Invoked by `@mention` in chat
 - Can spawn sub-agents for delegation
-- Can be restricted from user invocation (`user-invokable: false`) to serve only as a sub-agent
+- Can be restricted from user invocation (`user-invocable: false`) to serve only as a sub-agent
 - Body defines behavior, approach, output format, and constraints
 
 ### Good candidates
@@ -150,13 +150,14 @@ agents:                       # optional: restrict which sub-agents I can call
 ### Controlling access
 
 ```yaml
-# Agent can be invoked by user AND by other agents (default)
-user-invokable: true
+# Agent can be selected by user AND auto-invoked by Copilot (default)
+user-invocable: true
 
-# Agent can ONLY be used as a sub-agent
-user-invokable: false
+# Agent cannot be selected by user; only accessible programmatically or as sub-agent
+user-invocable: false
 
-# Agent can ONLY be invoked by user (never as sub-agent)
+# Cloud/CLI: agent must be manually selected; won't be auto-invoked based on context
+# VS Code: prevents other agents from invoking this one as a sub-agent
 disable-model-invocation: true
 ```
 

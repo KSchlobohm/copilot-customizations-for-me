@@ -2,7 +2,7 @@
 
 Deep-dive reference for creating effective custom agents. Read this file when SKILL.md points you here for detailed rationale, patterns, and examples.
 
-> Distilled from: GitHub Blog analysis of 2,500+ repositories, VS Code custom agents documentation, GitHub CLI agent documentation, and the Copilot Academy Custom Agent Developer Guide.
+> Distilled from: GitHub Blog analysis of 2,500+ repositories, VS Code custom agents documentation, and GitHub CLI agent documentation. The Copilot Academy Developer Guide informed best-practice patterns but is non-authoritative for schema definitions.
 
 ## Lessons from 2,500+ Repositories
 
@@ -40,12 +40,12 @@ Match tool access to the agent's role. This prevents accidental damage and makes
 
 | Agent Archetype | Recommended Tools | Rationale |
 |-----------------|------------------|-----------|
-| **Planner / Read-only** | `search`, `codebase`, `fetch`, `usages` | Prevents accidental code changes |
+| **Planner / Read-only** | `skill`, `search`, `codebase`, `fetch`, `usages` | Prevents accidental code changes |
 | **Implementation** | All tools (omit `tools`) | Needs full editing + running capability |
-| **Testing** | `search`, `codebase`, `editFiles`, `runTests`, `findTestFiles`, `testFailure`, `runCommands`, `problems` | Write tests, run them, diagnose failures |
-| **Code Review** | `search`, `codebase`, `changes`, `problems`, `usages` | Read-only analysis of changes |
-| **Documentation** | `search`, `codebase`, `editFiles`, `fetch`, `runCommands` | Read code, write docs, validate links |
-| **Security Audit** | `search`, `codebase`, `usages`, `problems` | Analyze without modifying |
+| **Testing** | `skill`, `search`, `codebase`, `editFiles`, `runTests`, `findTestFiles`, `testFailure`, `runCommands`, `problems` | Write tests, run them, diagnose failures |
+| **Code Review** | `skill`, `search`, `codebase`, `changes`, `problems`, `usages` | Read-only analysis of changes |
+| **Documentation** | `skill`, `search`, `codebase`, `editFiles`, `fetch`, `runCommands` | Read code, write docs, validate links |
+| **Security Audit** | `skill`, `search`, `codebase`, `usages`, `problems` | Analyze without modifying |
 
 ### When to Omit `tools` Entirely
 
@@ -60,6 +60,8 @@ Restrict tools when the agent:
 - Should never modify code (planners, reviewers, auditors)
 - Operates in a sensitive area (security, production configs)
 - Is part of a handoff chain (each agent owns a specific phase)
+
+> ⚠️ **When restricting tools, always include `skill`** so the agent can still discover and leverage skill files from `.github/skills/`. Without it, the agent loses access to skill-based knowledge and workflows that inform its behavior.
 
 ## Handoffs — Chaining Agents into Workflows
 
@@ -118,14 +120,15 @@ agents: ['researcher', 'implementer']
 ### Visibility Controls
 
 ```yaml
-# Sub-agent only (hidden from user dropdown)
-user-invokable: false
+# Not user-selectable; only accessible programmatically or as sub-agent
+user-invocable: false
 
-# User-only (cannot be called as sub-agent)
+# Cloud/CLI: prevents automatic invocation (must be manually selected)
+# VS Code: prevents other agents from invoking this one as sub-agent
 disable-model-invocation: true
 
-# Both (default)
-user-invokable: true
+# User-selectable and auto-invocable (default)
+user-invocable: true
 disable-model-invocation: false
 ```
 
