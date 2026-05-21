@@ -119,13 +119,13 @@ agents: ['researcher', 'implementer']
 
 ```yaml
 # Sub-agent only (hidden from user dropdown)
-user-invokable: false
+user-invocable: false
 
 # User-only (cannot be called as sub-agent)
 disable-model-invocation: true
 
 # Both (default)
-user-invokable: true
+user-invocable: true
 disable-model-invocation: false
 ```
 

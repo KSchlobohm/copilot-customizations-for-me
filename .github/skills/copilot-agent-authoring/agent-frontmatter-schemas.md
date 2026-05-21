@@ -25,7 +25,7 @@ Whenever possible, design agents to be cross-platform compatible. If an agent us
 ### Cross-Platform Target (Default & Recommended)
 To make an agent work natively in **both** VS Code and Copilot CLI:
 1. **Omit the `tools` property** or use `tools: ["*"]` — both enable all available tools on any platform.
-2. If restricting tools, use **cross-platform aliases** (`read`, `edit`, `search`, `execute`, `agent`, `web`) instead of platform-specific names like `editFiles` or `runCommands`. Unrecognized tool names are silently ignored, not rejected. *(Source: [GitHub Docs][gh-config] — tool aliases table)*
+2. If restricting tools, use **cross-platform aliases** (`read`, `edit`, `search`, `execute`, `agent`, `web`, `todo`) instead of platform-specific names like `editFiles` or `runCommands`. Unrecognized tool names are silently ignored, not rejected. *(Source: [GitHub Docs][gh-config] — tool aliases table)*
 3. Omit `handoffs`, `hooks`, and `mcp-servers`.
 
 ### VS Code Target (`target: "vscode"`)
@@ -64,12 +64,13 @@ All `.agent.md` files begin with YAML frontmatter between `---` fences.
 |-------|------|---------|-------------|
 | `name` | string | filename | Display name. Use lowercase with hyphens for CLI programmatic compatibility. |
 | `argument-hint` | string | — | Hint text guiding users on what input to provide. *(VS Code/IDE only; ignored by cloud agent)* |
-| `tools` | string[] | all tools | Restrict available tools. **Omit to allow host defaults (required for cross-platform agents).** |
+| `tools` | list of strings, string | all tools | Restrict available tools. Supports both a comma-separated string and YAML string array. **Omit to allow host defaults (required for cross-platform agents).** See [Tool Aliases](#tool-aliases). |
 | `model` | string \| string[] | user's chosen | AI model override. **Format differs by platform** — see note below. |
 | `agents` | string[] | — | Sub-agents this agent can invoke. Use `['*']` for all, `[]` for none. |
 | `target` | string | both | `"vscode"` or `"github-copilot"`. Omit to serve all platforms. |
-| `user-invocable` | boolean | `true` | Set `false` to hide from dropdown/invocation (sub-agent only). |
-| `disable-model-invocation` | boolean | `false` | Set `true` to prevent other agents from invoking this one. |
+| `user-invocable` | boolean | `true` | Controls whether this agent can be selected by a user. Set `false` so the agent can only be accessed programmatically (sub-agent only). |
+| `disable-model-invocation` | boolean | `false` | Disables Copilot from automatically using this agent based on task context. When `true`, the agent must be manually selected. |
+| `metadata` | object | — | Allows annotation of the agent with name/value pairs. *(Cloud agent only; not used in VS Code/IDE agents)* |
 
 ### Model Field — Platform Differences
 
@@ -105,6 +106,20 @@ handoffs:
 - `problems`: Get compile/lint errors
 - `fetch`: Fetch web content
 - `vscode/askQuestions`: Enables the agent to ask clarifying questions using an interactive carousel *(VS Code 1.109+, [release notes](https://code.visualstudio.com/updates/v1_109))*
+
+### Tool Aliases
+
+Cross-platform tool aliases from [GitHub Docs][gh-config]. All aliases are case insensitive. **Use these for cross-platform agents instead of VS Code-specific tool names.**
+
+| Primary Alias | Compatible Aliases | Cloud Agent Mapping | Purpose |
+|---------------|-------------------|---------------------|---------|
+| `execute` | `shell`, `Bash`, `powershell` | Shell tools: `bash` or `powershell` | Execute a command in the appropriate shell for the OS |
+| `read` | `Read`, `NotebookRead` | `view` | Read file contents |
+| `edit` | `Edit`, `MultiEdit`, `Write`, `NotebookEdit` | Edit tools: e.g. `str_replace`, `str_replace_editor` | Allow LLM to edit files |
+| `search` | `Grep`, `Glob` | `search` | Search for files or text in files |
+| `agent` | `custom-agent`, `Task` | "Custom agent" tools | Invoke a different custom agent for a sub-task |
+| `web` | `WebSearch`, `WebFetch` | Currently not applicable for cloud agent | Fetch content from URLs and perform web search |
+| `todo` | `TodoWrite` | Currently not applicable for cloud agent | Create and manage structured task lists *(VS Code only)* |
 
 ## Validation Rules
 - `description` MUST exist for discoverability (especially for CLI inference). *(Source: [GitHub Docs][gh-config] — marked **Required**)*

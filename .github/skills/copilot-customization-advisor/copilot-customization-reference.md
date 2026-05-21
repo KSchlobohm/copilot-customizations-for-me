@@ -128,7 +128,7 @@ agents:                       # optional: restrict which sub-agents I can call
 - Full persona with identity, system prompt, tool set, and model preference
 - Invoked by `@mention` in chat
 - Can spawn sub-agents for delegation
-- Can be restricted from user invocation (`user-invokable: false`) to serve only as a sub-agent
+- Can be restricted from user invocation (`user-invocable: false`) to serve only as a sub-agent
 - Body defines behavior, approach, output format, and constraints
 
 ### Good candidates
@@ -151,10 +151,10 @@ agents:                       # optional: restrict which sub-agents I can call
 
 ```yaml
 # Agent can be invoked by user AND by other agents (default)
-user-invokable: true
+user-invocable: true
 
 # Agent can ONLY be used as a sub-agent
-user-invokable: false
+user-invocable: false
 
 # Agent can ONLY be invoked by user (never as sub-agent)
 disable-model-invocation: true
