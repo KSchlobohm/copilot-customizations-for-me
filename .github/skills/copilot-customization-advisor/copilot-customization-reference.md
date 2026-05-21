@@ -150,13 +150,13 @@ agents:                       # optional: restrict which sub-agents I can call
 ### Controlling access
 
 ```yaml
-# Agent can be invoked by user AND by other agents (default)
+# Agent can be selected by user AND auto-invoked by Copilot (default)
 user-invocable: true
 
-# Agent can ONLY be used as a sub-agent
+# Agent cannot be selected by user; only accessible programmatically (sub-agent)
 user-invocable: false
 
-# Agent can ONLY be invoked by user (never as sub-agent)
+# Agent must be manually selected; Copilot will not auto-invoke based on context
 disable-model-invocation: true
 ```
 

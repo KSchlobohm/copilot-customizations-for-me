@@ -13,7 +13,7 @@ Whenever possible, design agents to be cross-platform compatible. If an agent us
 | Feature | VS Code | Copilot CLI | GitHub Copilot (Cloud) |
 |---------|---------|-------------|------------------------|
 | **File location** | `.github/agents/` | `.github/agents/` or `~/.copilot/agents/` | `.github/agents/` |
-| **Invocation** | Agents dropdown / `@mention` | `/agent`, `--agent`, or by inference | Automatic |
+| **Invocation** | Agents dropdown / `@mention` | `/agent`, `--agent`, or by inference | Automatic or manual selection |
 | **Target Field** | `target: "vscode"` | Ignored / Not natively matching target string | `target: "github-copilot"` |
 | **Tools Format** | VS Code tool IDs | CLI tool IDs / host defaults | GitHub tool IDs |
 | **Handoffs** | Fully Supported | Not supported | Not supported |
@@ -50,7 +50,7 @@ To make an agent work natively in **both** VS Code and Copilot CLI:
 
 ## Schema Definition
 
-All `.agent.md` files begin with YAML frontmatter between `---` fences.
+All `.agent.md` files begin with YAML frontmatter between `---` fences. The Markdown body below the frontmatter defines the agent's behavior and can be a maximum of **30,000 characters**.
 
 ### Required Fields
 
@@ -64,12 +64,13 @@ All `.agent.md` files begin with YAML frontmatter between `---` fences.
 |-------|------|---------|-------------|
 | `name` | string | filename | Display name. Use lowercase with hyphens for CLI programmatic compatibility. |
 | `argument-hint` | string | — | Hint text guiding users on what input to provide. *(VS Code/IDE only; ignored by cloud agent)* |
-| `tools` | list of strings, string | all tools | Restrict available tools. Supports both a comma-separated string and YAML string array. **Omit to allow host defaults (required for cross-platform agents).** See [Tool Aliases](#tool-aliases). |
+| `tools` | list of strings, string | all tools | Restrict available tools. Supports both a comma-separated string and YAML string array. Use `tools: []` to disable all tools. **Omit to allow host defaults (required for cross-platform agents).** See [Tool Aliases](#tool-aliases). |
 | `model` | string \| string[] | user's chosen | AI model override. **Format differs by platform** — see note below. |
-| `agents` | string[] | — | Sub-agents this agent can invoke. Use `['*']` for all, `[]` for none. |
+| `agents` | string[] | — | Sub-agents this agent can invoke. Use `['*']` for all, `[]` for none. *(VS Code/IDE; not in GitHub Docs schema)* |
 | `target` | string | both | `"vscode"` or `"github-copilot"`. Omit to serve all platforms. |
 | `user-invocable` | boolean | `true` | Controls whether this agent can be selected by a user. Set `false` so the agent can only be accessed programmatically (sub-agent only). |
 | `disable-model-invocation` | boolean | `false` | Disables Copilot from automatically using this agent based on task context. When `true`, the agent must be manually selected. |
+| `mcp-servers` | object | — | Additional MCP servers and tools for the agent. *(Cloud agent only; not used in VS Code/IDE agents)* |
 | `metadata` | object | — | Allows annotation of the agent with name/value pairs. *(Cloud agent only; not used in VS Code/IDE agents)* |
 
 ### Model Field — Platform Differences
@@ -135,7 +136,7 @@ Cross-platform tool aliases from [GitHub Docs][gh-config]. All aliases are case 
 | GitHub Docs — Custom Agents Configuration | [gh-config] | Authoritative properties table, tool aliases, MCP config, processing rules |
 | VS Code Docs — Custom Agents | [vscode-agents] | File structure, all frontmatter fields, handoffs, hooks, examples |
 | GitHub CLI Docs — Create Custom Agents | [cli-agents] | CLI-specific invocation, file locations, trigger words |
-| Copilot Academy — Developer Guide | [dev-guide] | Step-by-step walkthrough, tool selection strategy, anatomy |
+| Copilot Academy — Developer Guide | [dev-guide] | Best practices and walkthrough *(non-authoritative for schema; use for patterns/examples only)* |
 
 [gh-config]: https://docs.github.com/en/copilot/reference/custom-agents-configuration
 [vscode-agents]: https://code.visualstudio.com/docs/copilot/customization/custom-agents#_custom-agent-file-structure

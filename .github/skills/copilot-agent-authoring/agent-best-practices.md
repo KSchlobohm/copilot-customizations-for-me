@@ -2,7 +2,7 @@
 
 Deep-dive reference for creating effective custom agents. Read this file when SKILL.md points you here for detailed rationale, patterns, and examples.
 
-> Distilled from: GitHub Blog analysis of 2,500+ repositories, VS Code custom agents documentation, GitHub CLI agent documentation, and the Copilot Academy Custom Agent Developer Guide.
+> Distilled from: GitHub Blog analysis of 2,500+ repositories, VS Code custom agents documentation, and GitHub CLI agent documentation. The Copilot Academy Developer Guide informed best-practice patterns but is non-authoritative for schema definitions.
 
 ## Lessons from 2,500+ Repositories
 
@@ -118,13 +118,13 @@ agents: ['researcher', 'implementer']
 ### Visibility Controls
 
 ```yaml
-# Sub-agent only (hidden from user dropdown)
+# Sub-agent only (hidden from user selection)
 user-invocable: false
 
-# User-only (cannot be called as sub-agent)
+# Prevent automatic invocation (must be manually selected)
 disable-model-invocation: true
 
-# Both (default)
+# Both user-selectable and auto-invocable (default)
 user-invocable: true
 disable-model-invocation: false
 ```
