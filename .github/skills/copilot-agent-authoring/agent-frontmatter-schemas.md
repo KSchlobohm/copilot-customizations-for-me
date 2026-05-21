@@ -45,7 +45,7 @@ To make an agent work natively in **both** VS Code and Copilot CLI:
 - **Tool Access**: Uses the alias system (`execute`, `read`, `edit`, `search`, `agent`, `web`). Each alias maps to compatible names (e.g., `execute` accepts `shell`, `Bash`, `powershell`). *(Source: [GitHub Docs][gh-config] — tool aliases table)*
 
 ### Copilot CLI Target
-- **Tool Access**: The CLI often relies on inference and system-level execution. Hardcoding VS Code specific tools like `editFiles` will cause the CLI agent to fail or act unpredictably.
+- **Tool Access**: The CLI often relies on inference and system-level execution. Unrecognized tool names (like VS Code-specific `editFiles`) are silently ignored, which may leave the agent without the intended capabilities.
 - **Invocation**: The CLI relies heavily on the `description` field to infer when to automatically trigger the agent if not explicitly invoked via `--agent`.
 
 ## Schema Definition
@@ -68,8 +68,8 @@ All `.agent.md` files begin with YAML frontmatter between `---` fences. The Mark
 | `model` | string \| string[] | user's chosen | AI model override. **Format differs by platform** — see note below. |
 | `agents` | string[] | — | Sub-agents this agent can invoke. Use `['*']` for all, `[]` for none. *(VS Code/IDE; not in GitHub Docs schema)* |
 | `target` | string | both | `"vscode"` or `"github-copilot"`. Omit to serve all platforms. |
-| `user-invocable` | boolean | `true` | Controls whether this agent can be selected by a user. Set `false` so the agent can only be accessed programmatically (sub-agent only). |
-| `disable-model-invocation` | boolean | `false` | Disables Copilot from automatically using this agent based on task context. When `true`, the agent must be manually selected. |
+| `user-invocable` | boolean | `true` | Controls whether this agent can be selected by a user. When `false`, the agent can only be accessed programmatically or as a sub-agent. |
+| `disable-model-invocation` | boolean | `false` | **Semantics differ by platform.** Cloud/CLI: disables automatic selection based on task context. VS Code: prevents other agents from invoking this one as a sub-agent. |
 | `mcp-servers` | object | — | Additional MCP servers and tools for the agent. *(Cloud agent only; not used in VS Code/IDE agents)* |
 | `metadata` | object | — | Allows annotation of the agent with name/value pairs. *(Cloud agent only; not used in VS Code/IDE agents)* |
 
@@ -84,7 +84,7 @@ The `model` field has conflicting documentation between platforms:
 | **Example** | *(none given)* | `model: ['Claude Opus 4.5', 'GPT-5.2']` or `model: GPT-5.2 (copilot)` |
 | **Source** | [GitHub Docs properties table][gh-config] | [VS Code custom agents docs][vscode-agents] |
 
-> ⚠️ **Recommendation:** For VS Code agents, use display names with vendor qualifier (e.g., `"Claude Sonnet 4 (copilot)"`). Arrays are supported for fallback priority. For cloud agents, the GitHub docs specify only `string` type with no format guidance — test with your target environment. The `handoffs.model` field in VS Code explicitly states: "Use the qualified model name in the format `Model Name (vendor)`."
+> ⚠️ **Recommendation:** For VS Code `handoffs.model`, use qualified names in `"Model Name (vendor)"` format (explicitly required by VS Code docs). For top-level `model`, VS Code examples show both bare names (`'Claude Opus 4.5'`) and arrays for fallback priority. For cloud agents, the GitHub docs specify only `string` type with no format guidance — test with your target environment.
 
 ### VS Code Specific Schemas
 
@@ -95,10 +95,13 @@ handoffs:
     agent: target-agent          # Required: agent to switch to
     prompt: "Instructions..."    # Optional: pre-filled prompt
     send: false                  # Optional: false=user clicks send, true=auto-submit
+    model: "GPT-5.2 (copilot)"  # Optional: model override (use "Model Name (vendor)" format)
 ```
 
+> **Note:** If `agents` is specified in frontmatter, ensure the `agent` tool is also included in the `tools` property.
+
 **Common VS Code Tools**
-*Only use these if `target: "vscode"` is explicitly defined or intended.*
+*Only use these if `target: "vscode"` is explicitly defined or intended. This list may change — see [VS Code agent tools docs](https://code.visualstudio.com/docs/copilot/agents/agent-tools) for the current canonical list.*
 - `search`: Search workspace files by text
 - `codebase`: Semantic code search
 - `editFiles`: Create and edit files

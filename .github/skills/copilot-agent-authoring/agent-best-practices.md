@@ -118,13 +118,14 @@ agents: ['researcher', 'implementer']
 ### Visibility Controls
 
 ```yaml
-# Sub-agent only (hidden from user selection)
+# Not user-selectable; only accessible programmatically or as sub-agent
 user-invocable: false
 
-# Prevent automatic invocation (must be manually selected)
+# Cloud/CLI: prevents automatic invocation (must be manually selected)
+# VS Code: prevents other agents from invoking this one as sub-agent
 disable-model-invocation: true
 
-# Both user-selectable and auto-invocable (default)
+# User-selectable and auto-invocable (default)
 user-invocable: true
 disable-model-invocation: false
 ```

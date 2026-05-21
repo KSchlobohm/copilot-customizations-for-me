@@ -153,10 +153,11 @@ agents:                       # optional: restrict which sub-agents I can call
 # Agent can be selected by user AND auto-invoked by Copilot (default)
 user-invocable: true
 
-# Agent cannot be selected by user; only accessible programmatically (sub-agent)
+# Agent cannot be selected by user; only accessible programmatically or as sub-agent
 user-invocable: false
 
-# Agent must be manually selected; Copilot will not auto-invoke based on context
+# Cloud/CLI: agent must be manually selected; won't be auto-invoked based on context
+# VS Code: prevents other agents from invoking this one as a sub-agent
 disable-model-invocation: true
 ```
 
