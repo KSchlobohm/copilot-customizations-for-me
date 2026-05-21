@@ -30,8 +30,19 @@ To make an agent work natively in **both** VS Code and Copilot CLI:
 
 ### VS Code Target (`target: "vscode"`)
 - **Tools**: VS Code relies on specific extension tool IDs (e.g., `search`, `codebase`, `editFiles`, `runCommands`). If you define the `tools` array, you MUST use valid VS Code tool names.
+- **MCP Tools**: You can reference tools from MCP servers and VS Code extensions using namespaced syntax:
+  - `some-mcp-server/*` — enable all tools from a specific MCP server
+  - `some-mcp-server/some-tool` — enable a single tool from a server
+  - `azure.some-extension/some-tool` — reference a tool from a VS Code extension
 - **Handoffs**: You can use the `handoffs` array to chain agents.
 - **Hooks**: You can bind workspace lifecycle events specifically to this agent.
+
+### Cloud Agent Target (`target: "github-copilot"`)
+- **MCP Tools**: Cloud agent supports MCP servers configured in the agent profile or repository settings:
+  - `some-mcp-server/*` — enable all tools from a configured MCP server
+  - `some-mcp-server/some-tool` — enable a specific tool from a server
+  - Out-of-the-box servers: `github/*`, `playwright/*` (see [GitHub Docs][gh-config])
+- **Tool Access**: Uses the alias system (`execute`, `read`, `edit`, `search`, `agent`, `web`). Each alias maps to compatible names (e.g., `execute` accepts `shell`, `Bash`, `powershell`). *(Source: [GitHub Docs][gh-config] — tool aliases table)*
 
 ### Copilot CLI Target
 - **Tool Access**: The CLI often relies on inference and system-level execution. Hardcoding VS Code specific tools like `editFiles` will cause the CLI agent to fail or act unpredictably.
