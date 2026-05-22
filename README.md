@@ -18,7 +18,7 @@ Use this repository to collect reusable Copilot customization building blocks, s
 | Path | Purpose |
 |------|---------|
 | `.github/skills/` | Reusable skills that Copilot can discover when relevant |
-| `.github/skills/copilot-customization-skill-authoring/` | Guidance for creating and reviewing high-quality skills |
+| `.github/skills/copilot-customization-skill-authoring/` | Guidance for creating and reviewing high-quality skills; `sources-of-truth.md` catalogs authoritative sources to cite when recommendations are challenged |
 | `.github/skills/copilot-customization-advisor/` | Guidance for choosing the right customization type for a new idea |
 | `.github/skills/copilot-customization-agent-authoring/` | Guidance for creating, reviewing, and grading custom agent files |
 | `docs/` | Recommended tool setup guides, installation steps, and workshops |
@@ -28,7 +28,7 @@ Use this repository to collect reusable Copilot customization building blocks, s
 
 | Type | Name | Problem it solves | Entry point |
 |------|------|-------------------|-------------|
-| Skill | `copilot-customization-skill-authoring` | Helps create or review skill files that are concise, discoverable, and effective | `.github/skills/copilot-customization-skill-authoring/SKILL.md` |
+| Skill | `copilot-customization-skill-authoring` | Helps create or review skill files that are concise, discoverable, and effective; includes `sources-of-truth.md` for citing authoritative sources when best practices are questioned | `.github/skills/copilot-customization-skill-authoring/SKILL.md` |
 | Skill | `copilot-customization-advisor` | Helps new Copilot users decide whether they need instructions, a prompt file, a skill, an agent, a sub-agent, or a hook | `.github/skills/copilot-customization-advisor/SKILL.md` |
 | Skill | `copilot-customization-agent-authoring` | Helps create, review, and grade custom agent files (.agent.md) using best practices from large-scale community analysis | `.github/skills/copilot-customization-agent-authoring/SKILL.md` |
 | Guide | Playwright MCP Setup | Full setup guide + workshop for visual verification with Playwright MCP | `docs/mcp-tools/playwright-mcp/README.md` |
