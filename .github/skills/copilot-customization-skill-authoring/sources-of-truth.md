@@ -14,7 +14,7 @@ When a user questions a best practice or frontmatter rule:
 **Example:**
 > User: "Why does the description have to be max 1024 characters? That seems arbitrary."
 >
-> Agent: "The 1024-character limit is defined in the Agent Skills specification (agentskills.io/specification). GitHub's Copilot docs don't currently state an explicit limit, so this is a spec-level constraint rather than a hard Copilot requirement. If you prefer to follow only GitHub-documented limits, you could keep descriptions under a practical length for readability without worrying about a strict character count. Which approach works better for your team?"
+> Agent: "The 1024-character limit is defined in the Agent Skills specification (https://agentskills.io/specification). If the GitHub Docs pages for CLI skills (https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-skills) and cloud agent skills (https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/customize-cloud-agent/add-skills) don't mention an explicit description limit, treat this as a spec-level constraint rather than a GitHub-documented Copilot requirement. If you prefer to follow only GitHub-documented limits, you could keep descriptions under a practical length for readability without worrying about a strict character count. Which approach works better for your team?"
 
 **If live web access is unavailable:** Cite the URL and note: *"My knowledge of this may be outdated — verify against the current docs before treating this as authoritative."*
 
