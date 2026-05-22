@@ -11,6 +11,8 @@ Create, review, and improve skill files following established best practices.
 
 Best practices guide: `.github/skills/copilot-customization-skill-authoring/agent-skills-best-practices.md`
 
+Sources of truth (for handling pushback): `.github/skills/copilot-customization-skill-authoring/sources-of-truth.md`
+
 > This is an external reference adapted from Anthropic's Claude skill-authoring docs. It uses Claude-specific terminology but the principles apply to Copilot skills. Where it says "Claude", read "the agent".
 
 Read this file before creating or reviewing any skill. Key principles:
@@ -75,6 +77,17 @@ A good SKILL.md body follows this pattern:
 
 A **When to Use** section is helpful when activation context is nuanced or multi-faceted. If the YAML `description` already has clear trigger terms, this section is redundant — don't repeat yourself.
 
+## When Challenged
+
+If a user questions a best practice recommendation or frontmatter rule:
+
+1. **Explain the rationale** — don't just re-assert the rule.
+2. **Cite the relevant source** from [sources-of-truth.md](sources-of-truth.md) — AI-trained knowledge can go stale, so point to live docs the user can verify themselves.
+3. **Name the tradeoff** — there's usually a valid reason someone might choose differently.
+4. **Ask which direction they prefer** — do not override a stated preference.
+
+> **Note:** Not all constraints come from the same authority. Some are GitHub-documented requirements; others come from the Agent Skills spec or are adopted conventions in this repo. [sources-of-truth.md](sources-of-truth.md) labels each source so you can cite accurately.
+
 ## Reviewing a Skill
 
 When creating or reviewing a skill, evaluate it against the checklist below. Reference `agent-skills-best-practices.md` for detailed rationale.
@@ -105,6 +118,7 @@ When creating or reviewing a skill, evaluate it against the checklist below. Ref
 - [ ] Steps are specific enough to follow without guessing
 - [ ] Error handling and edge cases are addressed
 - [ ] Degrees of freedom are appropriate — prescriptive for fragile/critical steps, flexible where the agent can reasonably decide
+- [ ] When challenged on a rule, agent cites [sources-of-truth.md](sources-of-truth.md) rather than asserting without evidence
 
 ### Review Process
 
