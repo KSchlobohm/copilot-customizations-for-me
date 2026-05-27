@@ -94,6 +94,12 @@ if ($siteScheme -notin @("http", "https")) {
 if ([string]::IsNullOrWhiteSpace($siteHost)) {
     throw "Site host must not be empty."
 }
+if ($siteHost -ne "localhost") {
+    Write-Warning "Site host '$siteHost' is not 'localhost'. IIS Express rejects non-localhost host headers by default unless explicitly configured and run elevated."
+}
+if ($siteScheme -eq "https" -and ($sitePort -lt 44300 -or $sitePort -gt 44399)) {
+    throw "HTTPS port $sitePort is outside the IIS Express SSL-friendly range 44300-44399. Either pick a port in that range or manually register an SSL cert binding (netsh http add sslcert) before launching."
+}
 if ([string]::IsNullOrWhiteSpace($applicationPath)) {
     $applicationPath = "/"
 }
@@ -105,13 +111,14 @@ $siteUrl = "{0}://{1}:{2}{3}" -f $siteScheme, $siteHost, $sitePort, $application
 
 $existing = Get-GeneratedIISExpressProcess
 if ($existing) {
-    Write-Host "Stopping IIS Express for site '$siteName'..."
+    Write-Host "Stopping the IIS Express instance previously launched for site '$siteName' so this run can take over..."
     $existing | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
     Start-Sleep -Seconds 1
+} elseif ($Stop) {
+    Write-Host "No matching IIS Express process found for site '$siteName'."
 }
 
 if ($Stop) {
-    Write-Host "IIS Express stopped."
     return
 }
 
@@ -142,10 +149,19 @@ if (-not $site) {
 }
 
 $site.SetAttribute("name", $siteName)
-$app = $site.SelectSingleNode("application")
-$app.SetAttribute("path", $applicationPath)
-$app.SetAttribute("applicationPool", "Clr4IntegratedAppPool")
-$app.SelectSingleNode("virtualDirectory").SetAttribute("physicalPath", $webProjectPath)
+$rootApp = $site.SelectSingleNode("application")
+$rootApp.SetAttribute("path", "/")
+$rootApp.SetAttribute("applicationPool", "Clr4IntegratedAppPool")
+$rootApp.SelectSingleNode("virtualDirectory").SetAttribute("physicalPath", $webProjectPath)
+
+if ($applicationPath -ne "/") {
+    $subApp = $rootApp.CloneNode($true)
+    $subApp.SetAttribute("path", $applicationPath)
+    $subApp.SetAttribute("applicationPool", "Clr4IntegratedAppPool")
+    $subApp.SelectSingleNode("virtualDirectory").SetAttribute("physicalPath", $webProjectPath)
+    $rootApp.ParentNode.AppendChild($subApp) | Out-Null
+}
+
 $binding = $site.SelectSingleNode("bindings/binding")
 $binding.SetAttribute("protocol", $siteScheme)
 $binding.SetAttribute("bindingInformation", "*:${sitePort}:$siteHost")
@@ -165,7 +181,7 @@ $proc = Start-Process -FilePath $iisExpressExe `
 Write-Host "IIS Express started (PID $($proc.Id)). Waiting for it to listen on port $sitePort..."
 
 $ready = $false
-for ($i = 0; $i -lt 10; $i++) {
+for ($i = 0; $i -lt 40; $i++) {
     Start-Sleep -Milliseconds 500
 
     $proc.Refresh()
