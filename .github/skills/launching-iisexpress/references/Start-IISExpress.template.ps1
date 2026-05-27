@@ -16,6 +16,9 @@ $ErrorActionPreference = 'Stop'
 
 $siteName = "{{SITE_NAME}}"
 $sitePort = {{SITE_PORT}}
+$siteScheme = "{{SITE_SCHEME}}"
+$siteHost = "{{SITE_HOST}}"
+$applicationPath = "{{APPLICATION_PATH}}"
 $webProjectPath = "{{WEB_PROJECT_PATH}}"
 $solutionRoot = "{{SOLUTION_ROOT}}"
 
@@ -85,6 +88,21 @@ function Format-PortListener {
         ForEach-Object { Get-ProcessSummary -ProcessId $_.OwningProcess }) -join [Environment]::NewLine
 }
 
+if ($siteScheme -notin @("http", "https")) {
+    throw "Unsupported IIS Express scheme '$siteScheme'. Expected 'http' or 'https'."
+}
+if ([string]::IsNullOrWhiteSpace($siteHost)) {
+    throw "Site host must not be empty."
+}
+if ([string]::IsNullOrWhiteSpace($applicationPath)) {
+    $applicationPath = "/"
+}
+if (-not $applicationPath.StartsWith("/")) {
+    $applicationPath = "/$applicationPath"
+}
+
+$siteUrl = "{0}://{1}:{2}{3}" -f $siteScheme, $siteHost, $sitePort, $applicationPath
+
 $existing = Get-GeneratedIISExpressProcess
 if ($existing) {
     Write-Host "Stopping IIS Express for site '$siteName'..."
@@ -125,15 +143,18 @@ if (-not $site) {
 
 $site.SetAttribute("name", $siteName)
 $app = $site.SelectSingleNode("application")
+$app.SetAttribute("path", $applicationPath)
 $app.SetAttribute("applicationPool", "Clr4IntegratedAppPool")
 $app.SelectSingleNode("virtualDirectory").SetAttribute("physicalPath", $webProjectPath)
-$site.SelectSingleNode("bindings/binding").SetAttribute("bindingInformation", "*:${sitePort}:localhost")
+$binding = $site.SelectSingleNode("bindings/binding")
+$binding.SetAttribute("protocol", $siteScheme)
+$binding.SetAttribute("bindingInformation", "*:${sitePort}:$siteHost")
 
 $xml.Save($configPath)
 
 Write-Host "Config written to: $configPath"
 Write-Host "Physical path:     $webProjectPath"
-Write-Host "URL:               http://localhost:$sitePort/"
+Write-Host "URL:               $siteUrl"
 Write-Host ""
 Write-Host "Launching IIS Express..."
 
@@ -160,7 +181,7 @@ for ($i = 0; $i -lt 10; $i++) {
 }
 
 if ($ready) {
-    Write-Host "IIS Express is listening on http://localhost:$sitePort/"
+    Write-Host "IIS Express is listening on $siteUrl"
 } else {
     $currentListener = @(Get-PortListener -Port $sitePort)
     if ($currentListener.Count -gt 0) {
@@ -169,8 +190,8 @@ if ($ready) {
     }
 
     if ($proc.HasExited) {
-        throw "IIS Express exited before listening on http://localhost:$sitePort/. Check the IIS Express logs for startup errors."
+        throw "IIS Express exited before listening on $siteUrl. Check the IIS Express logs for startup errors."
     }
 
-    throw "IIS Express did not start listening on http://localhost:$sitePort/ within the expected time."
+    throw "IIS Express did not start listening on $siteUrl within the expected time."
 }
