@@ -28,7 +28,7 @@ Start a .NET Framework ASP.NET web project with IIS Express from the terminal by
    - For `http://localhost:<port>`, scan nearby ports first, then a practical local range such as `5000..65000`.
    - A candidate port is free when `Get-NetTCPConnection -LocalPort <candidate> -State Listen` returns no listeners.
    - Update only the port in `ProjectExtensions > VisualStudio > FlavorProperties > WebProjectProperties > IISUrl`; preserve the scheme, host, path, encoding, BOM, and line endings. Legacy `.csproj` files usually use the MSBuild XML namespace, so namespace-aware XML handling is required if editing structurally.
-5. **Create the script**: Copy `references/Start-IISExpress.template.ps1` to the solution root as `Start-IISExpress.ps1`, then replace these placeholders:
+5. **Create the script**: Copy `.github/skills/launching-iisexpress/references/Start-IISExpress.template.ps1` to the solution root as `Start-IISExpress.ps1`, then replace these placeholders:
 
 | Placeholder | Replace with |
 |---|---|
