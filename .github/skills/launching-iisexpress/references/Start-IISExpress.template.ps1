@@ -24,8 +24,28 @@ $solutionRoot = "{{SOLUTION_ROOT}}"
 
 $configDir = Join-Path $solutionRoot ".vs\config"
 $configPath = Join-Path $configDir "applicationhost.config"
-$iisExpressExe = "C:\Program Files\IIS Express\iisexpress.exe"
-$templatePath = "C:\Program Files\IIS Express\config\templates\PersonalWebServer\applicationhost.config"
+
+function Get-IISExpressInstallRoot {
+    $candidateRoots = @(
+        $(if ($env:ProgramFiles) { Join-Path $env:ProgramFiles "IIS Express" }),
+        $(if ($env:'ProgramFiles(x86)') { Join-Path $env:'ProgramFiles(x86)' "IIS Express" })
+    ) | Where-Object { $_ } | Select-Object -Unique
+
+    foreach ($candidateRoot in $candidateRoots) {
+        $candidateExe = Join-Path $candidateRoot "iisexpress.exe"
+        $candidateTemplate = Join-Path $candidateRoot "config\templates\PersonalWebServer\applicationhost.config"
+
+        if ((Test-Path $candidateExe) -and (Test-Path $candidateTemplate)) {
+            return $candidateRoot
+        }
+    }
+
+    throw "Unable to locate IIS Express. Checked: $($candidateRoots -join ', '). Ensure IIS Express is installed, or update the script to point to the correct install location."
+}
+
+$iisExpressRoot = Get-IISExpressInstallRoot
+$iisExpressExe = Join-Path $iisExpressRoot "iisexpress.exe"
+$templatePath = Join-Path $iisExpressRoot "config\templates\PersonalWebServer\applicationhost.config"
 
 function Test-GeneratedIISExpressCommandLine {
     param(
