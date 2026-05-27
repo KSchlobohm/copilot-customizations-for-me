@@ -104,8 +104,9 @@ function Format-PortListener {
     )
 
     ($Listener |
-        Sort-Object OwningProcess -Unique |
-        ForEach-Object { Get-ProcessSummary -ProcessId $_.OwningProcess }) -join [Environment]::NewLine
+        Select-Object -ExpandProperty OwningProcess |
+        Sort-Object -Unique |
+        ForEach-Object { Get-ProcessSummary -ProcessId $_ }) -join [Environment]::NewLine
 }
 
 if ($siteScheme -notin @("http", "https")) {
