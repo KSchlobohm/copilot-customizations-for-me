@@ -5,10 +5,12 @@ relative to what the skill's body content is actually built to do.
 
 ## Why this exists
 
-The `description` is the *only* signal the agent sees when deciding whether to activate a
-skill. Everything else — the body, the reference files — is invisible until after the
-skill fires. So a skill can be excellent inside and still never run, because its
-description doesn't match the way users phrase the tasks it was built for.
+The skill's `name` and `description` are the only signals the agent sees when deciding
+whether to activate a skill. Everything else (the body, the reference files) is invisible
+until after the skill fires. The `name` is short and constrained, so the `description`
+carries most of the activation-tuning load, and that is where this method focuses. So a
+skill can be excellent inside and still never run, because its `name` and `description`
+don't match the way users phrase the tasks it was built for.
 
 This is **activation mismatch**: the description's implied activation range diverges from
 the content's true purpose.
@@ -56,10 +58,11 @@ hides under-trigger bugs.
 
 ### Step 3 — Blind-judge using the description only
 
-For each scenario, look **only at the `description`** (cover the body) and decide: would
-this description cause the skill to trigger for this request? Answer **trigger / no-trigger**
-and give a one-line reason. Be honest about weak keyword overlap — judge as a cold agent
-that has never seen the body would.
+For each scenario, look **only at the `name` and `description`** (cover the body) and
+decide: would they cause the skill to trigger for this request? Answer
+**trigger / no-trigger** and give a one-line reason. Include the `name`'s trigger terms in
+your judgment, and watch for an overly broad name causing over-trigger. Be honest about
+weak keyword overlap, judging as a cold agent that has never seen the body would.
 
 ### Step 4 — Compare and classify
 
