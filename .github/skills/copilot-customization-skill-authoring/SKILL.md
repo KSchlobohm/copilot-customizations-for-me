@@ -154,11 +154,42 @@ When creating or reviewing a skill, evaluate it against the checklist below. Ref
 After creating or modifying a skill:
 
 1. Read the skill file end-to-end
-2. Run the activation-alignment evaluation (see [activation-alignment-evaluation.md](activation-alignment-evaluation.md)) — derive purpose from the body, probe with related/boundary/unrelated scenarios, and flag any under- or over-trigger
-3. Walk through the review checklist above — flag any unchecked items
-4. For each flag, suggest a specific improvement (not just "fix this")
-5. Apply fixes and re-check until all items pass
-6. If the skill references scripts or tools, verify they exist and work
+2. Run the activation-alignment evaluation (see [activation-alignment-evaluation.md](activation-alignment-evaluation.md)) by deriving the purpose from the body, probing with related, boundary, and unrelated scenarios, and flagging any under-trigger or over-trigger
+3. Walk through the review checklist above (and flag any unchecked items)
+4. Generate the report following the **Skill Review Report Format** below to explicitly document the activation evaluation and checklist results
+5. For each flag or activation mismatch, suggest a specific improvement (not just "fix this")
+6. Apply fixes and re-check until all items pass
+7. If the skill references scripts or tools, verify they exist and work
+
+### Skill Review Report Format
+
+Use this markdown pattern to present the findings of a skill review:
+
+```markdown
+## Skill Review: {skill-name}
+
+{One-line summary status (e.g., Passed, Mismatch, or Blocked by Under-trigger)}
+
+### Activation-Alignment Evaluation
+- **Derived Purpose:** {1-2 sentences of body-derived purpose}
+
+| # | Probe Scenario (User Words) | Expected | Verdict (Description Only) | Diagnosis |
+|---|---|---|---|---|
+| 1 | {Clearly related 1} | Activate | {Trigger / No-trigger} | {Aligned / Under-trigger} |
+| 2 | {Clearly related 2} | Activate | {Trigger / No-trigger} | {Aligned / Under-trigger} |
+| 3 | {Clearly related 3} | Activate | {Trigger / No-trigger} | {Aligned / Under-trigger} |
+| 4 | {Boundary} | Judgment | {Trigger / No-trigger} | {Aligned / Boundary Confirm} |
+| 5 | {Unrelated} | Should NOT | {Trigger / No-trigger} | {Aligned / Over-trigger} |
+
+### Checklist Summary
+- Discovery: {pass/fail count}
+- Content Quality: {pass/fail count}
+- Structure: {pass/fail count}
+- Actionability: {pass/fail count}
+
+### Specific Improvements Needed
+1. {un-checked checklist item or activation mismatch} -> {concrete fix}
+```
 
 ### Nudges
 
@@ -176,4 +207,5 @@ To review all skills in the repo:
 
 1. List directories in `.github/skills/`
 2. For each skill, read `SKILL.md` and run the review checklist
-3. Report findings grouped by skill, with specific improvement suggestions
+3. Execute the activation-alignment evaluation (deriving its body-purpose and testing 5 scenarios)
+4. Report findings grouped by skill, using the **Skill Review Report Format** described above to present the evaluation and checklist status
