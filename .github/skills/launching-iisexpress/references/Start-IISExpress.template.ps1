@@ -28,7 +28,7 @@ $configPath = Join-Path $configDir "applicationhost.config"
 function Get-IISExpressInstallRoot {
     $candidateRoots = @(
         $(if ($env:ProgramFiles) { Join-Path $env:ProgramFiles "IIS Express" }),
-        $(if ($env:'ProgramFiles(x86)') { Join-Path $env:'ProgramFiles(x86)' "IIS Express" })
+        $(if (${env:ProgramFiles(x86)}) { Join-Path ${env:ProgramFiles(x86)} "IIS Express" })
     ) | Where-Object { $_ } | Select-Object -Unique
 
     foreach ($candidateRoot in $candidateRoots) {
