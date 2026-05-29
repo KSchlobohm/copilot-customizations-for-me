@@ -13,6 +13,8 @@ Best practices guide: `.github/skills/copilot-customization-skill-authoring/agen
 
 Sources of truth (for handling pushback): `.github/skills/copilot-customization-skill-authoring/sources-of-truth.md`
 
+Activation-alignment evaluation: `.github/skills/copilot-customization-skill-authoring/activation-alignment-evaluation.md`
+
 > This is an external reference adapted from Anthropic's Claude skill-authoring docs. It uses Claude-specific terminology but the principles apply to Copilot skills. Where it says "Claude", read "the agent".
 
 Read this file before creating or reviewing any skill. Key principles:
@@ -41,8 +43,9 @@ If yes, leave it out. Skills should focus on **project-specific** knowledge — 
 1. Create directory: `.github/skills/{skill-name}/`
 2. Create `SKILL.md` with YAML frontmatter (`name`, `description`)
 3. Add body content: purpose, when to use, steps, examples
-4. Run the review checklist below
-5. Iterate until the skill passes review
+4. Run the activation-alignment evaluation (see below) to confirm the description triggers on the tasks the body handles
+5. Run the review checklist below
+6. Iterate until the skill passes review
 
 ### Frontmatter Rules
 
@@ -77,6 +80,30 @@ A good SKILL.md body follows this pattern:
 
 A **When to Use** section is helpful when activation context is nuanced or multi-faceted. If the YAML `description` already has clear trigger terms, this section is redundant — don't repeat yourself.
 
+## Activation Alignment
+
+The `description` is the only thing the agent sees when deciding whether to trigger a
+skill. A skill can be excellent inside and still never run because its description doesn't
+match how users phrase the tasks it was built for. Always check that the description's
+activation range matches the body's true purpose.
+
+Run this quick evaluation whenever you create or review a skill:
+
+1. **Derive purpose from the body only** — ignore the description. What tasks is the skill
+   actually built to handle?
+2. **Generate 5 probe scenarios** in real users' words: **3 clearly related** (should
+   activate), **1 narrow/boundary** (judgment call), **1 unrelated** (should not activate).
+3. **Blind-judge each scenario using the `description` only** — would it trigger?
+4. **Compare.** A related scenario that wouldn't trigger = **under-trigger** (weak
+   description). The unrelated scenario that would trigger = **over-trigger** (leaky
+   description). Either is an activation mismatch.
+5. **Fix the description and re-run** until related scenarios trigger and the unrelated one
+   doesn't.
+
+This is an activation test, not a capability test — it complements (does not replace) the
+"Build evaluations first" guidance in `agent-skills-best-practices.md`. Full method,
+interpretation table, and a worked example: [activation-alignment-evaluation.md](activation-alignment-evaluation.md).
+
 ## When Challenged
 
 If a user questions a best practice recommendation or frontmatter rule:
@@ -99,6 +126,8 @@ When creating or reviewing a skill, evaluate it against the checklist below. Ref
 - [ ] Description states both what the skill does AND when to use it
 - [ ] Description is written in third person
 - [ ] Name uses lowercase/hyphens, max 64 characters
+- [ ] Activation alignment: description triggers on every content-derived related scenario (no under-trigger)
+- [ ] Activation alignment: description does not trigger on the unrelated scenario (no over-trigger)
 
 #### Content Quality
 - [ ] SKILL.md body is under 500 lines
@@ -125,16 +154,18 @@ When creating or reviewing a skill, evaluate it against the checklist below. Ref
 After creating or modifying a skill:
 
 1. Read the skill file end-to-end
-2. Walk through the review checklist above — flag any unchecked items
-3. For each flag, suggest a specific improvement (not just "fix this")
-4. Apply fixes and re-check until all items pass
-5. If the skill references scripts or tools, verify they exist and work
+2. Run the activation-alignment evaluation (see [activation-alignment-evaluation.md](activation-alignment-evaluation.md)) — derive purpose from the body, probe with related/boundary/unrelated scenarios, and flag any under- or over-trigger
+3. Walk through the review checklist above — flag any unchecked items
+4. For each flag, suggest a specific improvement (not just "fix this")
+5. Apply fixes and re-check until all items pass
+6. If the skill references scripts or tools, verify they exist and work
 
 ### Nudges
 
 When a skill doesn't meet standards, suggest improvements conversationally:
 
 - "The description says 'helps with X' — can we make it more specific about when to activate?"
+- "I tried a few realistic requests for what this skill does, and the description wouldn't trigger on most of them — that's an under-trigger. Can we add the terms users actually say?"
 - "This SKILL.md is getting long — want to move the reference tables into a separate file?"
 - "The steps assume the agent knows about Y — should we add a quick note?"
 - "This name is pretty generic — would `managing-deployments` be clearer than `deploy`?"
