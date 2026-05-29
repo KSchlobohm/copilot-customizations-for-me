@@ -82,10 +82,12 @@ A **When to Use** section is helpful when activation context is nuanced or multi
 
 ## Activation Alignment
 
-The `description` is the only thing the agent sees when deciding whether to trigger a
-skill. A skill can be excellent inside and still never run because its description doesn't
-match how users phrase the tasks it was built for. Always check that the description's
-activation range matches the body's true purpose.
+The skill's `name` and `description` are the only things the agent sees when deciding
+whether to trigger a skill. The `name` is short and constrained, so the `description`
+carries most of the activation-tuning load. A skill can be excellent inside and still never
+run because its `name` and `description` don't match how users phrase the tasks it was
+built for. Always check that their combined activation range matches the body's true
+purpose.
 
 Run this quick evaluation whenever you create or review a skill:
 
@@ -93,7 +95,9 @@ Run this quick evaluation whenever you create or review a skill:
    actually built to handle?
 2. **Generate 5 probe scenarios** in real users' words: **3 clearly related** (should
    activate), **1 narrow/boundary** (judgment call), **1 unrelated** (should not activate).
-3. **Blind-judge each scenario using the `description` only** — would it trigger?
+3. **Blind-judge each scenario using the `name` and `description` only** — would it
+   trigger? Include the name's trigger terms, and watch for an overly broad name causing
+   over-trigger.
 4. **Compare.** A related scenario that wouldn't trigger = **under-trigger** (weak
    description). The unrelated scenario that would trigger = **over-trigger** (leaky
    description). Either is an activation mismatch.
