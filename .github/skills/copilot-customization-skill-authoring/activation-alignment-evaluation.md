@@ -104,9 +104,11 @@ Skill body: creates, reviews, and grades custom agent files (`.agent.md`).
 Three under-triggers → **mismatch**. "author files" is too generic to catch the way users
 ask for agents.
 
-**Fixed description:** `Create and review custom agent files (.agent.md) in .github/agents/.
-Use this skill when asked to create a new agent or sub-agent, review or grade an existing
-agent, or write agent frontmatter.`
+**Fixed description:**
+
+```text
+Create and review custom agent files (.agent.md) in .github/agents/. Use this skill when asked to create a new agent or sub-agent, review or grade an existing agent, or write agent frontmatter.
+```
 
 Re-judging: scenarios 1–3 now trigger on "create … agent / sub-agent", "review … agent",
 "agent frontmatter"; 4 and 5 still don't. ✅ Aligned.
