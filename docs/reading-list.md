@@ -5,12 +5,13 @@ Reference material worth sharing because it is useful, interesting, or both.
  ---
  
  ## AI Usage
- 
+
 Practical reading on using AI in engineering work.
- 
+
 | Title | Source | What it is | Why it matters |
 |---|---|---|---|
 | [AI Made Us Faster. That Was the Problem.](https://www.linkedin.com/pulse/ai-made-us-faster-problem-david-fowler-mgnzc/) | David Fowler | A short piece on how AI increases delivery speed faster than teams can safely review, integrate, and absorb. | It is a useful reminder that faster output only helps when team practices keep quality, review, and decision-making under control. |
+ | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | GitHub (Addy Osmani) | A repository of 23 production-grade engineering skills, steps, verification gates, and workflows for AI coding agents. | Excellent reference examples for designing structured agent instructions, verification gates, and lifecycle commands. |
  
  ---
  
