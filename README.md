@@ -24,6 +24,7 @@ Use this repository to collect reusable Copilot customization building blocks, s
 | `.github/skills/launching-iisexpress/` | Guidance for launching .NET Framework ASP.NET projects with IIS Express |
 | `docs/` | Recommended tool setup guides, installation steps, and workshops |
 | `docs/mcp-tools/` | MCP tool configuration guides with rationale and walkthroughs |
+| `docs/reading-list.md` | Shared reading list of reference material and useful articles |
 
 ## Current Inventory
 
