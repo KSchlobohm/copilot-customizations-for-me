@@ -1,6 +1,6 @@
 # Recommended Copilot Tool Setup
 
-This section documents my recommended tools, installations, and configurations for getting the most out of GitHub Copilot. Each guide captures **what** to install, **how** to configure it, and **why** it matters.
+This section documents my recommended tools, installations, configurations, and selected workflow notes for getting the most out of GitHub Copilot. Most entries capture **what** to install, **how** to configure it, and **why** it matters.
 
 ## Philosophy
 
@@ -14,15 +14,16 @@ Not every tool belongs in every session. I think about MCP tools on a spectrum:
 
 ## Guides
 
-| Tool | Status | Guide |
-|------|--------|-------|
+| Topic | Status | Guide |
+|-------|--------|-------|
+| Copilot CLI Chronicle | ✅ Complete | [Why it matters early](lessons-learned/copilot-cli-chronicle.md) |
 | Playwright MCP | ✅ Complete | [Setup & Workshop](mcp-tools/playwright-mcp/README.md) |
 | .NET NuGet MCP Server | ✅ Complete | [Setup & Workshop](mcp-tools/dotnet-nuget-mcp/README.md) |
 | Microsoft.GitHubCopilot.Modernization.Mcp | ✅ Complete | [Setup Guide](mcp-tools/modernization-mcp/README.md) |
 
 ## How to Use These Guides
 
-Each guide follows a consistent format:
+Most setup guides follow a consistent format:
 
 1. **What & Why** — What the tool does and why I recommend it
 2. **Setup** — Installation and configuration steps (VS Code + Copilot CLI)
