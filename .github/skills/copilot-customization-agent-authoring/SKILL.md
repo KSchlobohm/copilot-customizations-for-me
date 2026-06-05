@@ -65,9 +65,9 @@ A well-structured agent body follows this pattern:
 {How results should be presented to the user.}
 
 ## Boundaries
-- ✅ **Always do:** {mandatory actions}
-- ⚠️ **Ask first:** {actions requiring user approval}
-- 🚫 **Never do:** {hard constraints — things to never touch}
+- **Always do:** {mandatory actions}
+- **Ask first:** {actions requiring user approval}
+- **Never do:** {hard constraints — things to never touch}
 ```
 
 ### Body Writing Tips
