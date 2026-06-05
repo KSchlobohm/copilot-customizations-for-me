@@ -138,9 +138,9 @@ The most effective agents use a three-tier boundary system:
 
 ```markdown
 ## Boundaries
-- ✅ **Always do:** Write to `tests/`, run tests before committing, follow naming conventions
-- ⚠️ **Ask first:** Database schema changes, adding dependencies, modifying CI/CD config
-- 🚫 **Never do:** Commit secrets or API keys, edit `node_modules/`, modify production configs
+- **Always do:** Write to `tests/`, run tests before committing, follow naming conventions
+- **Ask first:** Database schema changes, adding dependencies, modifying CI/CD config
+- **Never do:** Commit secrets or API keys, edit `node_modules/`, modify production configs
 ```
 
 ### Why Three Tiers Work
@@ -202,9 +202,9 @@ and produce clear, concise Markdown documentation for a developer audience.
 - Link to related docs rather than duplicating content
 
 ## Boundaries
-- ✅ **Always:** Write to `docs/`, follow existing doc style, validate with markdownlint
-- ⚠️ **Ask first:** Before deleting or restructuring existing docs
-- 🚫 **Never:** Modify source code in `src/`, edit config files, commit secrets
+- **Always:** Write to `docs/`, follow existing doc style, validate with markdownlint
+- **Ask first:** Before deleting or restructuring existing docs
+- **Never:** Modify source code in `src/`, edit config files, commit secrets
 ```
 
 ### Testing Agent
@@ -236,9 +236,9 @@ code for untested paths and generate comprehensive unit and integration tests.
 - Use test data builders for complex setup
 
 ## Boundaries
-- ✅ **Always:** Write to `tests/`, run tests after writing, follow AAA pattern
-- ⚠️ **Ask first:** Before modifying existing test helpers or fixtures
-- 🚫 **Never:** Modify source code, remove failing tests, skip validation
+- **Always:** Write to `tests/`, run tests after writing, follow AAA pattern
+- **Ask first:** Before modifying existing test helpers or fixtures
+- **Never:** Modify source code, remove failing tests, skip validation
 ```
 
 ### Planner Agent (Read-Only)
@@ -278,9 +278,9 @@ Plans must include:
 - Risks and open questions
 
 ## Boundaries
-- ✅ **Always:** Research thoroughly before planning, cite specific file paths
-- ⚠️ **Ask first:** If requirements are ambiguous or multiple approaches exist
-- 🚫 **Never:** Edit files, run commands that modify state, make assumptions about undocumented behavior
+- **Always:** Research thoroughly before planning, cite specific file paths
+- **Ask first:** If requirements are ambiguous or multiple approaches exist
+- **Never:** Edit files, run commands that modify state, make assumptions about undocumented behavior
 ```
 
 ### Orchestrator Agent (Sub-agents)
@@ -308,9 +308,9 @@ implementation, and testing phases, delegating each to the right specialist.
 6. Review all results and report completion
 
 ## Boundaries
-- ✅ **Always:** Delegate to specialists, review their output, report progress
-- ⚠️ **Ask first:** If the feature scope is unclear or spans multiple services
-- 🚫 **Never:** Implement directly (always delegate), skip the testing phase
+- **Always:** Delegate to specialists, review their output, report progress
+- **Ask first:** If the feature scope is unclear or spans multiple services
+- **Never:** Implement directly (always delegate), skip the testing phase
 ```
 
 ## CLI-Specific Considerations
