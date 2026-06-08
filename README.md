@@ -23,6 +23,7 @@ Use this repository to collect reusable Copilot customization building blocks, s
 | `.github/skills/copilot-customization-agent-authoring/` | Guidance for creating, reviewing, and grading custom agent files |
 | `.github/skills/launching-iisexpress/` | Guidance for launching .NET Framework ASP.NET projects with IIS Express |
 | `docs/` | Recommended tool setup guides, installation steps, and workshops |
+| `docs/lessons-learned/` | Focused notes on practical AI-assisted engineering lessons worth revisiting |
 | `docs/mcp-tools/` | MCP tool configuration guides with rationale and walkthroughs |
 | `docs/reading-list.md` | Shared reading list of reference material and useful articles |
 
@@ -34,6 +35,7 @@ Use this repository to collect reusable Copilot customization building blocks, s
 | Skill | `copilot-customization-advisor` | Helps new Copilot users decide whether they need instructions, a prompt file, a skill, an agent, a sub-agent, or a hook | `.github/skills/copilot-customization-advisor/SKILL.md` |
 | Skill | `copilot-customization-agent-authoring` | Helps create, review, and grade custom agent files (.agent.md) using best practices from large-scale community analysis | `.github/skills/copilot-customization-agent-authoring/SKILL.md` |
 | Skill | `launching-iisexpress` | Helps launch and verify .NET Framework ASP.NET projects locally with IIS Express from the command line | `.github/skills/launching-iisexpress/SKILL.md` |
+| Guide | Copilot CLI Chronicle lesson | Explains why `/chronicle` matters, what architectural idea sits behind it, and when to go deeper | `docs/lessons-learned/copilot-cli-chronicle.md` |
 | Guide | Playwright MCP Setup | Full setup guide + workshop for visual verification with Playwright MCP | `docs/mcp-tools/playwright-mcp/README.md` |
 | Guide | .NET NuGet MCP Server | Workspace-specific MCP for .NET package vulnerability detection and upgrades | `docs/mcp-tools/dotnet-nuget-mcp/README.md` |
 | Guide | Modernization MCP | Workspace-specific MCP for .NET Framework to modern .NET migration | `docs/mcp-tools/modernization-mcp/README.md` |
