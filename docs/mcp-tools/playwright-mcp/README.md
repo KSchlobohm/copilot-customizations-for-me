@@ -1,5 +1,7 @@
 # Playwright MCP
 
+> **Positioning note:** Playwright now has two official agent-facing paths. This guide covers the **MCP server** (`@playwright/mcp`) when you want browser tools exposed directly inside VS Code or Copilot CLI, especially for visual verification. If you want the newer, simpler **terminal-first** path for agentic Playwright usage, start with the [Playwright CLI skills docs](https://playwright.dev/agent-cli/skills) and the [`playwright-cli` skill](https://github.com/microsoft/playwright-cli/blob/main/skills/playwright-cli/SKILL.md).
+
 ## What Is It?
 
 Playwright MCP gives Copilot the ability to control a browser — navigating pages, clicking elements, filling forms, and taking screenshots. It bridges the gap between "code that runs" and "outcomes you can see."
