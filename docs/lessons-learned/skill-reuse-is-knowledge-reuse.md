@@ -4,9 +4,6 @@ When teams talk about skills and evals, it is easy to hear process for process's
 
 The more useful framing is knowledge distribution. In this context, a skill is a reusable instruction artifact: a packaged block of guidance that a coding agent can draw on when it encounters a relevant task. The broader Agent Skills model is described at [agentskills.io](https://agentskills.io). An eval is a structured check on whether that skill activates in the right situations and improves the outcome when it does.
 
-> [!IMPORTANT]
-> The more useful framing is not **process standardization**. It is **knowledge distribution**.
-
 ## The useful distinction
 
 Skills can serve two very different purposes:
@@ -41,11 +38,11 @@ That is the leverage point.
 
 That shift - from personal shortcut to shared knowledge artifact - is what makes evals worth the effort.
 
-When a skill is meant to distribute important knowledge across many tasks or teams, you need confidence that it activates when it should, stays quiet when it should not, and improves outcomes rather than adding noise.
+When a skill is meant to distribute important knowledge across many tasks or teams, you need confidence that it activates when it should, stays quiet when it should not, and improves outcomes rather than adding noise. For example, if you package internal migration guidance as a shared skill, it should appear when the agent is working on the relevant legacy code, stay out of unrelated tasks, and improve the migration advice when it does appear.
 
 Evals are not inherently valuable. They become valuable when the skill is intended to scale.
 
-If a skill is meant to help many engineers, improve task success across teams, or raise consistency around important patterns, then it is worth measuring and refining. In that case, you can evaluate things like:
+If a skill is meant to help many engineers, improve task success across teams, or raise consistency around important patterns, then it is worth measuring and refining. In practice, the question is simple: does the skill show up when needed, stay quiet when irrelevant, and help more than it hurts? In that case, you can evaluate things like:
 
 - correct activation rate - how often the skill is used when it should be
 - incorrect activation rate - how often the skill is pulled in when it should not be
@@ -62,11 +59,9 @@ Use this distinction:
 
 That decision rule is much clearer than arguing about evals in the abstract.
 
-## The tension worth keeping
+## Guardrail
 
-Even with that framing, there is still a limit worth keeping in view.
-
-I am still not convinced by the idea of a universal "golden skill set" that makes every developer dramatically better.
+Shared skills create leverage, but they do not replace individual workflow design or judgment.
 
 Skills are components, not complete solutions.
 
