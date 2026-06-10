@@ -11,7 +11,10 @@ Practical reading on using AI in engineering work.
 | Title | Source | What it is | Why it matters |
 |---|---|---|---|
 | [AI Made Us Faster. That Was the Problem.](https://www.linkedin.com/pulse/ai-made-us-faster-problem-david-fowler-mgnzc/) | David Fowler | A short piece on how AI increases delivery speed faster than teams can safely review, integrate, and absorb. | It is a useful reminder that faster output only helps when team practices keep quality, review, and decision-making under control. |
- | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | GitHub (Addy Osmani) | A repository of 23 production-grade engineering skills, steps, verification gates, and workflows for AI coding agents. | Excellent reference examples for designing structured agent instructions, verification gates, and lifecycle commands. |
+ | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | GitHub (Addy Osmani) | A repository of 23 production-grade engineering skills, steps, verification gates, and workflows for AI coding agents. | Reusable engineering workflows you can borrow directly for planning, building, testing, review, and shipping. |
+ | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills) | GitHub (Anthropic) | A valuable public skill collection spanning document work, web testing, API usage, MCP building, and skill creation patterns. | Useful both as reusable examples and as a reference for how sophisticated, task-specific skills can be designed. |
+ | [dotnet/skills](https://github.com/dotnet/skills) | GitHub (.NET) | The .NET team's curated marketplace of agent plugins, skills, and custom agents for coding workflows across .NET, ASP.NET Core, AI, testing, NuGet, and upgrades. | .NET-focused examples of how skills and plugins are organized around real product, framework, and workflow needs. |
+ | [microsoft/playwright-cli skill](https://github.com/microsoft/playwright-cli/blob/main/skills/playwright-cli/SKILL.md) | GitHub (Microsoft Playwright) | The official Playwright CLI skill for browser automation, page interaction, Playwright tests, tracing, storage state, and related workflows. | A simpler, terminal-first reference for agentic Playwright work when you want the official skill rather than an MCP-specific setup. |
  
  ---
  
