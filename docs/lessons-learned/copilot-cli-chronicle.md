@@ -73,8 +73,3 @@ It becomes more valuable as your usage becomes more systematic: more sessions, m
 - [Using GitHub Copilot CLI session data](https://docs.github.com/en/copilot/how-tos/copilot-cli/use-copilot-cli/chronicle)
 - [Gain insights across your agent sessions with /chronicle](https://github.blog/changelog/2026-06-02-gain-insights-across-your-agent-sessions-with-chronicle/)
 
-## Why this is worth keeping in this repo
-
-This is the kind of lesson that helps people decide whether to go deeper.
-
-Not everyone needs to read the full docs immediately. But many people should know that `/chronicle` exists, what problem it solves, and why it becomes more important as AI-assisted engineering work matures.
