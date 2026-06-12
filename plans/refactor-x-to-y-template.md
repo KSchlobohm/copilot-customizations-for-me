@@ -15,12 +15,9 @@ Approach: Frontmatter-Driven YAML Config (recommended unanimously by Claude, GPT
 - [x] **Add a YAML frontmatter block** at the top of the file with fields:
   - `source_technology` (replaces `Technology X` / `Local File Logging`)
   - `target_technology` (replaces `Technology Y` / `OpenTelemetry`)
-  - `knowledge_base` (replaces `KnowledgeBase Y` / `open_telemetry_on_azure_knowledge_base`)
-  - `ecosystem.runtime` (e.g. `dotnet`, `node`, `java`)
-  - `ecosystem.project_extension` (e.g. `.csproj`)
-  - `ecosystem.package_tool_install` / `package_tool_uninstall`
-  - `ecosystem.build_command` / `test_command`
-  - `deployment.provider` (e.g. `Azure`)
+  - Final implementation intentionally stops there: the earlier idea to add `knowledge_base`, `ecosystem.*`, and `deployment.*` fields was not carried forward.
+  - Rationale: those extra fields created avoidable friction by forcing callers to encode tool/runtime details that the model can usually infer from the repository and natural-language instructions.
+  - The template now relies on the simplified frontmatter plus generic body guidance instead of a larger schema.
 
 - [x] **Normalize placeholder syntax throughout the body**
   - Current state mixes `[Technology X]`, `(Technology X)`, and bare `Technology X`
@@ -28,18 +25,15 @@ Approach: Frontmatter-Driven YAML Config (recommended unanimously by Claude, GPT
 
 - [x] **Replace .NET-specific prose with generic equivalents**
   - `.NET App Migration Prompt Template` → `Technology Migration Prompt Template`
-  - `.NET or .NET Framework` → `[ecosystem.runtime]`
-  - `.csproj` → `[project_extension]`
-  - `net10.0` → removed (moved to frontmatter config)
+  - Ecosystem-specific examples were rewritten into generic guidance in the body rather than being moved into new frontmatter keys
+  - Tooling, runtime, and test/build details are intentionally described in natural language so the caller does not need to predeclare them in YAML
 
-- [x] **Replace hardcoded tool names with frontmatter references**
-  - `nuget_packages_install_latest` → `[package_tool_install]`
-  - `nuget_packages_uninstall` → `[package_tool_uninstall]`
-  - `dotnet_dependency_management_knowledge_base` → `[package_tool_kb]`
-  - `dotnet test ... --framework net10.0` → `[test_command]`
+- [x] **Remove hardcoded ecosystem/tool assumptions**
+  - Removed hardcoded NuGet/.NET-specific tool references instead of replacing them with new frontmatter fields
+  - Replaced those specifics with generic instructions to detect the project's package manager, build system, and test runner from the repository
 
-- [x] **Replace Azure hardcoding in the Deployment section**
-  - `deploy the project to Azure` → `deploy the project to [deployment.provider]`
+- [x] **Remove Azure-specific deployment assumptions**
+  - Deployment guidance now stays out of scope rather than introducing a `deployment.provider` field
 
 - [x] **Create the generic template file** at `prompts/migration-prompt-template.md`
 - [x] **Update `README.md` inventory** to add the template as a discoverable artifact
