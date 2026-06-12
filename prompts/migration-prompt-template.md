@@ -138,7 +138,7 @@ Evaluate the consistency between the original codebase and the migrated codebase
 ## Build Verification
 
 After all steps, you are REQUIRED to:
-- Add newly created components to the workspace build system if applicable
+- Ensure any new source files added during migration are included in the existing build configuration
 - Build the project using the build system detected in the codebase
 - Report success/failure
 - Fix any build errors and re-verify
