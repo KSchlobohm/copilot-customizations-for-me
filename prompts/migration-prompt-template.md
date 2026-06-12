@@ -1,16 +1,9 @@
 ---
 name: "Technology Migration Prompt Template"
-description: "A generic, reusable prompt template for migrating a codebase from a source technology to a target technology. Fill in the config block before use."
+description: "A generic, reusable prompt template for migrating a codebase from a source technology to a target technology. Fill in source_technology and target_technology before use."
 config:
-  source_technology: "Technology X"         # The old dependency/library/framework to be removed
-  target_technology: "Technology Y"         # The new dependency/library/framework to be introduced
-  ecosystem:
-    project_extension: ".ext"               # Project file extension (e.g. .csproj, pom.xml, package.json)
-    package_tool_install: "install-cmd"     # Command or tool to install packages (e.g. nuget_packages_install_latest, npm install, pip install)
-    package_tool_uninstall: "uninstall-cmd" # Command or tool to uninstall packages
-    package_tool_kb: "pkg-kb-tool"          # Fallback knowledge tool for dependency guidance (if available)
-    build_command: "build-cmd"              # Command to build/verify the project (e.g. dotnet build, mvn package, npm run build)
-    test_command: "test-cmd"                # Command to run tests (e.g. dotnet test, mvn test, pytest)
+  source_technology: "Technology X"    # The old dependency/library/framework to be removed
+  target_technology: "Technology Y"    # The new dependency/library/framework to be introduced
 ---
 
 # Technology Migration Prompt Template: [source_technology] to [target_technology]
@@ -60,7 +53,7 @@ Before writing any code, research [target_technology] thoroughly. Do not assume 
    - Identify all files that need to be modified.
    - Identify all dependencies that need to be updated.
    - Identify all configuration files that need to be updated.
-   - Identify all project files (`*[project_extension]`) that need to be updated.
+   - Identify all project files that need to be updated.
 
 ### Create Migration Temporary Files
 
@@ -98,10 +91,10 @@ Execute the migration tasks as follows:
 4. Minimize code changes:
     - Update only what's necessary for the migration.
     - Avoid unrelated code enhancements.
-5. Add new package references to projects
-   - Use `[package_tool_install]` to install packages.
-   - Use `[package_tool_uninstall]` to uninstall packages.
-   - If the operation fails, use `[package_tool_kb]` tool for guidance, or fall back to researching the official documentation for [target_technology].
+5. Add and remove package references as needed
+   - Use the package manager appropriate for this project's ecosystem to install and uninstall packages.
+   - If the package manager is unclear, examine the existing project files and dependency manifests to determine the correct tool.
+   - If an operation fails, research the official documentation for [target_technology] to resolve it.
 6. **Task Tracking and Progress Updates**
    - Output each task as a Markdown-formatted checklist in `progress.md`.
      - Each task should begin with `- [ ]` (a dash, a space, an open square bracket, a space, and a closing square bracket), followed by the task description.
@@ -156,7 +149,7 @@ Evaluate the consistency between the original codebase and the migrated codebase
 
 After all steps, you are REQUIRED to:
 - Add newly created components to the workspace build system if applicable
-- Run `[build_command]`
+- Build the project using the build system detected in the codebase
 - Report success/failure
 - Fix any build errors and re-verify
 - **CRITICAL** Report the final build status via tool `report_build_verification_summary`
@@ -169,10 +162,7 @@ If the project contains unit tests, run a specific subset of unit tests and repo
 - Only focus on mocked unit tests that do not require external dependencies. Ignore failed ones if the error message indicates a lack of external dependencies.
 - Only run a subset of tests that are related to the modified code, do not run all the tests in the project.
 
-**IMPORTANT**: When the `run_tests` tool is available in your toolset, you MUST use it instead of running `[test_command]` via terminal commands. The `run_tests` tool provides better integration with the IDE and more detailed test results. Only fall back to terminal commands if `run_tests` is not available.
+**IMPORTANT**: When the `run_tests` tool is available in your toolset, you MUST use it instead of running tests via terminal commands. The `run_tests` tool provides better integration with the IDE and more detailed test results. Only fall back to terminal commands if `run_tests` is not available.
 
-Example command to run tests (fallback when run_tests tool is not available):
-```
-[test_command]
-```
+Run a focused subset of tests related to the modified code using the test runner appropriate for this project's ecosystem.
 
