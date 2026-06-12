@@ -4,52 +4,49 @@ description: "A generic, reusable prompt template for migrating a codebase from 
 config:
   source_technology: "Technology X"         # The old dependency/library/framework to be removed
   target_technology: "Technology Y"         # The new dependency/library/framework to be introduced
-  knowledge_base: "KnowledgeBase Y"         # The Copilot custom tool / knowledge base for the target
   ecosystem:
-    runtime: "dotnet"                       # E.g. dotnet, node, java, python
-    project_extension: ".csproj"            # Project file extension
-    package_tool_install: "nuget_packages_install_latest"
-    package_tool_uninstall: "nuget_packages_uninstall"
-    package_tool_kb: "dotnet_dependency_management_knowledge_base"
-    build_command: "dotnet build"
-    test_command: "dotnet test"
-  deployment:
-    provider: "Azure"                       # Target cloud / hosting platform
-    plan_tool: "appmod-get-plan"
+    project_extension: ".ext"               # Project file extension (e.g. .csproj, pom.xml, package.json)
+    package_tool_install: "install-cmd"     # Command or tool to install packages (e.g. nuget_packages_install_latest, npm install, pip install)
+    package_tool_uninstall: "uninstall-cmd" # Command or tool to uninstall packages
+    package_tool_kb: "pkg-kb-tool"          # Fallback knowledge tool for dependency guidance (if available)
+    build_command: "build-cmd"              # Command to build/verify the project (e.g. dotnet build, mvn package, npm run build)
+    test_command: "test-cmd"                # Command to run tests (e.g. dotnet test, mvn test, pytest)
 ---
 
 # Technology Migration Prompt Template: [source_technology] to [target_technology]
 
 ## Migration Request
 
-Migrate this codebase from [source_technology] to [target_technology], focusing **exclusively** on code-level changes required for successful compilation.
+Migrate this codebase from [source_technology] to [target_technology], focusing **exclusively** on code-level changes required for a successful build.
 
 **Autonomous Execution Mode**: This migration MUST be executed autonomously without pausing for user confirmation at any step. Once you begin, continue until all tasks are complete or an unrecoverable error occurs.
 
-## Tools Usage
+## Research Guidance
 
-You **MUST** use the tools from [knowledge_base] for detailed SDK specs and [target_technology] samples.
-- Serve as a knowledge base for you when you make a plan.
-- Serve as a knowledge base for you whenever you make code changes.
-- Refer to the code samples for better code quality and keep the same code styles.
+Before writing any code, research [target_technology] thoroughly. Do not assume knowledge of its API, configuration, or best practices.
+
+- Search the web, official documentation, and community resources for [target_technology] migration guides, SDK references, and code samples.
+- If [target_technology] is not well-known or its details cannot be sourced from the existing codebase, treat external research as a required first step.
+- Prefer official documentation and widely-adopted community samples when making implementation decisions.
+- Save key dependency versions and configuration patterns discovered during research to `plan.md` for reference throughout the migration.
 
 ## Scope
 
-* DO - Collect the framework/runtime used and keep the original project framework
+* DO - Collect the runtime/framework used and keep the original project framework
 * DO - Modify code to replace [source_technology] dependencies with [target_technology] equivalents
-* DO - Update configuration files as necessary for compilation
+* DO - Update configuration files as necessary for a successful build
 * DO - Update dependency management as needed
 * DO - Update function references to use the newly generated functions.
 * DO NOT - Add new business logic, features, or functionality beyond what exists in the original codebase
 * DO NOT - Enhance or improve existing business logic during migration
-* DO NOT - Perform testing beyond compilation verification
+* DO NOT - Perform testing beyond build verification
 * DO NOT - Consider deployment
 
 ## Success Criteria
 
 1. All [source_technology] dependencies and imports are replaced.
-2. All old [source_technology] code files and project configurations are cleaned from the solution.
-3. Codebase compiles successfully with [target_technology].
+2. All old [source_technology] code files and project configurations are cleaned from the workspace.
+3. Codebase builds successfully with [target_technology].
 4. All migration tasks are tracked and marked as completed.
 5. All uncommitted changes are committed if a version control system is detected.
 
@@ -57,8 +54,8 @@ You **MUST** use the tools from [knowledge_base] for detailed SDK specs and [tar
 
 ### Analyze and Identify Migration Tasks
 
-1. First, read the knowledge base from [knowledge_base] for more [target_technology] details.
-   - Collect required package dependencies from the knowledge base and save the dependency versions to the migration plan
+1. First, research [target_technology] using external documentation and community resources (see Research Guidance above).
+   - Collect required package dependencies and save dependency versions to the migration plan.
 2. Analyze the codebase to identify all [source_technology] usages as well as those places using the old [source_technology] API.
    - Identify all files that need to be modified.
    - Identify all dependencies that need to be updated.
@@ -88,24 +85,23 @@ Execute the migration tasks as follows:
 4. Continue until all tasks are complete.
 5. Run **Completeness Validation**, if there are any issues found, append any new tasks to `progress.md` and continue to execute the new tasks.
 6. Run **Consistency Validation**, if there are any issues found, append any new tasks to `progress.md` and continue to execute the new tasks.
-7. Make sure the build passes for the entire project after all steps; keep fixing until the project compiles successfully. **CRITICAL** Report the final build status via tool `report_build_verification_summary`.
+7. Make sure the build passes for the entire project after all steps; keep fixing until the project builds successfully. **CRITICAL** Report the final build status via tool `report_build_verification_summary`.
 8. Stick to the `plan.md` and `progress.md` files, finish all the tasks and do not deviate from the plan unless absolutely necessary.
 9. Before finishing, review the `progress.md` file to ensure all tasks are completed.
 
 ## Important Guideline (put this notice into the progress.md file)
 
 1. When you use the terminal command tool, never input a long command with multiple lines; always use a single-line command. (This is a bug in VS Copilot)
-   - **CRITICAL**: When editing XML-based project files (`[project_extension]`, `.config`, `.props`, `.targets`, etc.) via terminal commands, you MUST use literal XML characters (`<`, `>`, `&`) — NEVER use their escaped Unicode equivalents (`\u003C`, `\u003E`, `\u0026`). Writing escaped Unicode into XML files corrupts the file format. In PowerShell, use single-quoted strings to keep XML markup literal.
    - **CRITICAL**: Prefer tools related to editing files to make changes and do not use terminal commands to create, write, modify, or append to files.
 2. When performing semantic or intent-based searches, DO NOT search content from `.appmod/` folder.
-3. Never create a new project in the solution, always use the existing project to add new files or update the existing files.
+3. Never create a new component in the workspace build system; always use the existing project structure to add new files or update existing files.
 4. Minimize code changes:
     - Update only what's necessary for the migration.
     - Avoid unrelated code enhancements.
 5. Add new package references to projects
    - Use `[package_tool_install]` to install packages.
    - Use `[package_tool_uninstall]` to uninstall packages.
-   - If the operation fails, use `[package_tool_kb]` tool for guidance.
+   - If the operation fails, use `[package_tool_kb]` tool for guidance, or fall back to researching the official documentation for [target_technology].
 6. **Task Tracking and Progress Updates**
    - Output each task as a Markdown-formatted checklist in `progress.md`.
      - Each task should begin with `- [ ]` (a dash, a space, an open square bracket, a space, and a closing square bracket), followed by the task description.
@@ -130,7 +126,7 @@ Execute the migration tasks as follows:
 
 ## Completeness Validation
 
-Evaluate the completeness of the migration by identifying any remaining references to the old technology that should have been updated according to the knowledge base requirements.
+Evaluate the completeness of the migration by identifying any remaining references to the old technology that should have been updated.
 
 - Commit all the changes if there are any uncommitted changes.
 - Call tool `migration_completeness` to get the guide for the validation and perform the scan and check on the entire codebase.
@@ -159,11 +155,10 @@ Evaluate the consistency between the original codebase and the migrated codebase
 ## Build Verification
 
 After all steps, you are REQUIRED to:
-- Add newly created projects to the solution if applicable
-- Make sure all the projects are reloaded before triggering the build process
+- Add newly created components to the workspace build system if applicable
 - Run `[build_command]`
 - Report success/failure
-- Fix any compilation errors and re-verify
+- Fix any build errors and re-verify
 - **CRITICAL** Report the final build status via tool `report_build_verification_summary`
 
 ## Unit Test Verification (if applicable)
@@ -181,6 +176,3 @@ Example command to run tests (fallback when run_tests tool is not available):
 [test_command]
 ```
 
-## Deployment
-
-Ask the user whether they want to deploy the project to [deployment.provider] for testing. If they confirm, call the `[plan_tool]` tool to create a deployment plan, then execute the plan to test-deploy the app to [deployment.provider].
