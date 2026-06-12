@@ -41,7 +41,7 @@ Use this repository to collect reusable Copilot customization building blocks, s
 | Guide | Playwright MCP Setup | Full setup guide + workshop for visual verification with Playwright MCP | `docs/mcp-tools/playwright-mcp/README.md` |
 | Guide | .NET NuGet MCP Server | Workspace-specific MCP for .NET package vulnerability detection and upgrades | `docs/mcp-tools/dotnet-nuget-mcp/README.md` |
 | Guide | Modernization MCP | Workspace-specific MCP for .NET Framework to modern .NET migration | `docs/mcp-tools/modernization-mcp/README.md` |
-| Prompt | `migration-prompt-template` | Generic, configurable prompt template for migrating a codebase from any source technology to a target technology — fill in the YAML frontmatter and apply | `prompts/migration-prompt-template.md` |
+| Prompt | `migration-prompt-template` | Generic, configurable prompt template for migrating a codebase from any source technology to a target technology - fill in the YAML frontmatter and replace or interpolate the bracketed placeholders before use | `prompts/migration-prompt-template.md` |
 
 ## How to Navigate
 

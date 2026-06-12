@@ -1,12 +1,14 @@
 ---
 name: "Technology Migration Prompt Template"
-description: "A generic, reusable prompt template for migrating a codebase from a source technology to a target technology. Fill in source_technology and target_technology before use."
+description: "A generic, reusable prompt template for migrating a codebase from a source technology to a target technology. Fill in the YAML values and replace each bracketed placeholder before use."
 config:
   source_technology: "Technology X"    # The old dependency/library/framework to be removed
   target_technology: "Technology Y"    # The new dependency/library/framework to be introduced
 ---
 
 # Technology Migration Prompt Template: [source_technology] to [target_technology]
+
+> Before using this template, either replace every bracketed placeholder in the body with your actual technologies or run it through a prompt system that interpolates the frontmatter values. Editing the YAML alone does not update the body text by itself.
 
 ## Migration Request
 
@@ -165,4 +167,3 @@ If the project contains unit tests, run a specific subset of unit tests and repo
 **IMPORTANT**: When the `run_tests` tool is available in your toolset, you MUST use it instead of running tests via terminal commands. The `run_tests` tool provides better integration with the IDE and more detailed test results. Only fall back to terminal commands if `run_tests` is not available.
 
 Run a focused subset of tests related to the modified code using the test runner appropriate for this project's ecosystem.
-
