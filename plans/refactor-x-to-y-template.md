@@ -41,9 +41,7 @@ Approach: Frontmatter-Driven YAML Config (recommended unanimously by Claude, GPT
 - [x] **Replace Azure hardcoding in the Deployment section**
   - `deploy the project to Azure` → `deploy the project to [deployment.provider]`
 
-- [x] **Rename the file** from `x-to-y-migration-prompt-template.md`
-  to `migration-prompt-template.md`
-
+- [x] **Create the generic template file** at `prompts/migration-prompt-template.md`
 - [x] **Update `README.md` inventory** to add the template as a discoverable artifact
   - Added `prompts/` row to Repository Map
   - Added Prompt entry to Current Inventory table
