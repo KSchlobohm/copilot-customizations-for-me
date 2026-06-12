@@ -79,7 +79,7 @@ Execute the migration tasks as follows:
 
 ## Important Guideline
 
-1. When you use the terminal command tool, never input a long command with multiple lines; always use a single-line command. (This is a bug in VS Copilot)
+1. When you use the terminal command tool, never input a long command with multiple lines; always use a single-line command.
    - **CRITICAL**: Prefer tools related to editing files to make changes and do not use terminal commands to create, write, modify, or append to files.
 2. Never create a new component in the workspace build system; always use the existing project structure to add new files or update existing files.
 4. Minimize code changes:
