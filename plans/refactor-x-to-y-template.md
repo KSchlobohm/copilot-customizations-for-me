@@ -1,6 +1,6 @@
-# Tasks: Refactor x-to-y-migration-prompt-template.md to Generic Template
+# Tasks: Refactor migration-prompt-template.md to Generic Template
 
-Goal: make `prompts/x-to-y-migration-prompt-template.md` reusable for any technology migration,
+Goal: make `prompts/migration-prompt-template.md` reusable for any technology migration,
 not just the current .NET Local File Logging → OpenTelemetry on Azure example.
 Approach: Frontmatter-Driven YAML Config (recommended unanimously by Claude, GPT-5.4, Gemini 3.1 Pro).
 
