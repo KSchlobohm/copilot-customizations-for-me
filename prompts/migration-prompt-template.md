@@ -23,7 +23,7 @@ Before writing any code, research [target_technology] thoroughly. Do not assume 
 - Search the web, official documentation, and community resources for [target_technology] migration guides, SDK references, and code samples.
 - If [target_technology] is not well-known or its details cannot be sourced from the existing codebase, treat external research as a required first step.
 - Prefer official documentation and widely-adopted community samples when making implementation decisions.
-- Save key dependency versions and configuration patterns discovered during research to `plan.md` for reference throughout the migration.
+- Save key dependency versions and configuration patterns discovered during research to `.appmod/.migration/plan.md` for reference throughout the migration.
 
 ## Scope
 
@@ -68,21 +68,21 @@ If any of these files already exist, delete them first before creating new ones.
 
 NOTE: **DO NOT** add files under `.appmod/` to the project files; they are temporary files for migration purposes only.
 
-**CRITICAL**: Once `plan.md` and `progress.md` files are created, you MUST immediately proceed to execute the migration. Do NOT ask the user for confirmation, review, or approval. Do NOT pause or wait for user input. Continue directly to the "Execute Migration and Track Progress" section without interruption.
+**CRITICAL**: Once `.appmod/.migration/plan.md` and `.appmod/.migration/progress.md` are created, you MUST immediately proceed to execute the migration. Do NOT ask the user for confirmation, review, or approval. Do NOT pause or wait for user input. Continue directly to the "Execute Migration and Track Progress" section without interruption.
 
 ### Execute Migration and Track Progress
 
 Execute the migration tasks as follows:
 
 1. Refer to section `Important Guideline` about how to track the status.
-2. Execute migration tasks in the order they are listed in `progress.md`.
+2. Execute migration tasks in the order they are listed in `.appmod/.migration/progress.md`.
 3. You DO NOT need to pause for confirmation between tasks.
 4. Continue until all tasks are complete.
-5. Run **Completeness Validation**, if there are any issues found, append any new tasks to `progress.md` and continue to execute the new tasks.
-6. Run **Consistency Validation**, if there are any issues found, append any new tasks to `progress.md` and continue to execute the new tasks.
+5. Run **Completeness Validation**, if there are any issues found, append any new tasks to `.appmod/.migration/progress.md` and continue to execute the new tasks.
+6. Run **Consistency Validation**, if there are any issues found, append any new tasks to `.appmod/.migration/progress.md` and continue to execute the new tasks.
 7. Make sure the build passes for the entire project after all steps; keep fixing until the project builds successfully. **CRITICAL** Report the final build status via tool `report_build_verification_summary`.
-8. Stick to the `plan.md` and `progress.md` files, finish all the tasks and do not deviate from the plan unless absolutely necessary.
-9. Before finishing, review the `progress.md` file to ensure all tasks are completed.
+8. Stick to the `.appmod/.migration/plan.md` and `.appmod/.migration/progress.md` files, finish all the tasks and do not deviate from the plan unless absolutely necessary.
+9. Before finishing, review the `.appmod/.migration/progress.md` file to ensure all tasks are completed.
 
 ## Important Guideline (put this notice into the progress.md file)
 
