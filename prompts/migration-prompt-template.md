@@ -1,26 +1,42 @@
-Analyze the usage of Local File Logging in this project, and locate it being Technology X. Technology Y being OpenTelemetry and KnowledgeBase Y being open_telemetry_on_azure_knowledge_base, generate a plan prompt:
-- Make sure you analyze the codebase to adjust the template where appropriate.
-- Create a `plan.md` and a `progress.md` in folder `.appmod/.migration/` accordingly and create a `.gitignore` in folder `.appmod`. Immediately proceed with migration execution without waiting for user confirmation. And here comes the Migration prompt template:
+---
+name: "Technology Migration Prompt Template"
+description: "A generic, reusable prompt template for migrating a codebase from a source technology to a target technology. Fill in the config block before use."
+config:
+  source_technology: "Technology X"         # The old dependency/library/framework to be removed
+  target_technology: "Technology Y"         # The new dependency/library/framework to be introduced
+  knowledge_base: "KnowledgeBase Y"         # The Copilot custom tool / knowledge base for the target
+  ecosystem:
+    runtime: "dotnet"                       # E.g. dotnet, node, java, python
+    project_extension: ".csproj"            # Project file extension
+    package_tool_install: "nuget_packages_install_latest"
+    package_tool_uninstall: "nuget_packages_uninstall"
+    package_tool_kb: "dotnet_dependency_management_knowledge_base"
+    build_command: "dotnet build"
+    test_command: "dotnet test"
+  deployment:
+    provider: "Azure"                       # Target cloud / hosting platform
+    plan_tool: "appmod-get-plan"
+---
 
-# .NET App Migration Prompt Template: [Technology X] to [Technology Y]
+# Technology Migration Prompt Template: [source_technology] to [target_technology]
 
 ## Migration Request
 
-Migrate this codebase from (Technology X) to (Technology Y), focusing **exclusively** on code-level changes required for successful compilation.
+Migrate this codebase from [source_technology] to [target_technology], focusing **exclusively** on code-level changes required for successful compilation.
 
 **Autonomous Execution Mode**: This migration MUST be executed autonomously without pausing for user confirmation at any step. Once you begin, continue until all tasks are complete or an unrecoverable error occurs.
 
 ## Tools Usage
 
-You **MUST** use the tools from (KnowledgeBase Y) for detailed SDK specs and (Technology Y) samples.
+You **MUST** use the tools from [knowledge_base] for detailed SDK specs and [target_technology] samples.
 - Serve as a knowledge base for you when you make a plan.
 - Serve as a knowledge base for you whenever you make code changes.
 - Refer to the code samples for better code quality and keep the same code styles.
 
 ## Scope
 
-* DO - Collect the framework used (.NET or .NET Framework) and keep the original project framework
-* DO - Modify code to replace [Technology X] dependencies with [Technology Y] equivalents
+* DO - Collect the framework/runtime used and keep the original project framework
+* DO - Modify code to replace [source_technology] dependencies with [target_technology] equivalents
 * DO - Update configuration files as necessary for compilation
 * DO - Update dependency management as needed
 * DO - Update function references to use the newly generated functions.
@@ -31,9 +47,9 @@ You **MUST** use the tools from (KnowledgeBase Y) for detailed SDK specs and (Te
 
 ## Success Criteria
 
-1. All [Technology X] dependencies and imports are replaced.
-2. All old (Technology X) code files and project configurations are cleaned from the solution.
-3. Codebase compiles successfully with [Technology Y].
+1. All [source_technology] dependencies and imports are replaced.
+2. All old [source_technology] code files and project configurations are cleaned from the solution.
+3. Codebase compiles successfully with [target_technology].
 4. All migration tasks are tracked and marked as completed.
 5. All uncommitted changes are committed if a version control system is detected.
 
@@ -41,13 +57,13 @@ You **MUST** use the tools from (KnowledgeBase Y) for detailed SDK specs and (Te
 
 ### Analyze and Identify Migration Tasks
 
-1. First, read the .NET-related knowledge base from (KnowledgeBase Y) for more (Technology Y) details.
+1. First, read the knowledge base from [knowledge_base] for more [target_technology] details.
    - Collect required package dependencies from the knowledge base and save the dependency versions to the migration plan
-2. Analyze the codebase to identify all [Technology X] usages as well as those places using the old (Technology X) API.
+2. Analyze the codebase to identify all [source_technology] usages as well as those places using the old [source_technology] API.
    - Identify all files that need to be modified.
    - Identify all dependencies that need to be updated.
    - Identify all configuration files that need to be updated.
-   - Identify all project files that need to be updated.
+   - Identify all project files (`*[project_extension]`) that need to be updated.
 
 ### Create Migration Temporary Files
 
@@ -58,7 +74,7 @@ Create the following files under the project directory:
 
 If any of these files already exist, delete them first before creating new ones.
 
-NOTE: **DO NOT** add files under `.appmod/` to the .csproj project files; they are temporary files for migration purposes only.
+NOTE: **DO NOT** add files under `.appmod/` to the project files; they are temporary files for migration purposes only.
 
 **CRITICAL**: Once `plan.md` and `progress.md` files are created, you MUST immediately proceed to execute the migration. Do NOT ask the user for confirmation, review, or approval. Do NOT pause or wait for user input. Continue directly to the "Execute Migration and Track Progress" section without interruption.
 
@@ -79,7 +95,7 @@ Execute the migration tasks as follows:
 ## Important Guideline (put this notice into the progress.md file)
 
 1. When you use the terminal command tool, never input a long command with multiple lines; always use a single-line command. (This is a bug in VS Copilot)
-   - **CRITICAL**: When editing XML-based project files (`.csproj`, `.config`, `.props`, `.targets`, etc.) via terminal commands, you MUST use literal XML characters (`<`, `>`, `&`) — NEVER use their escaped Unicode equivalents (`\u003C`, `\u003E`, `\u0026`). Writing escaped Unicode into XML files corrupts the file format. In PowerShell, use single-quoted strings to keep XML markup literal.
+   - **CRITICAL**: When editing XML-based project files (`[project_extension]`, `.config`, `.props`, `.targets`, etc.) via terminal commands, you MUST use literal XML characters (`<`, `>`, `&`) — NEVER use their escaped Unicode equivalents (`\u003C`, `\u003E`, `\u0026`). Writing escaped Unicode into XML files corrupts the file format. In PowerShell, use single-quoted strings to keep XML markup literal.
    - **CRITICAL**: Prefer tools related to editing files to make changes and do not use terminal commands to create, write, modify, or append to files.
 2. When performing semantic or intent-based searches, DO NOT search content from `.appmod/` folder.
 3. Never create a new project in the solution, always use the existing project to add new files or update the existing files.
@@ -87,9 +103,9 @@ Execute the migration tasks as follows:
     - Update only what's necessary for the migration.
     - Avoid unrelated code enhancements.
 5. Add new package references to projects
-   - Use `nuget_packages_install_latest` or `nuget_packages_install` to install packages.
-   - Use `nuget_packages_uninstall` tool to uninstall nuget packages.
-   - If the operation fails, use `dotnet_dependency_management_knowledge_base` tool for guidance.
+   - Use `[package_tool_install]` to install packages.
+   - Use `[package_tool_uninstall]` to uninstall packages.
+   - If the operation fails, use `[package_tool_kb]` tool for guidance.
 6. **Task Tracking and Progress Updates**
    - Output each task as a Markdown-formatted checklist in `progress.md`.
      - Each task should begin with `- [ ]` (a dash, a space, an open square bracket, a space, and a closing square bracket), followed by the task description.
@@ -145,7 +161,7 @@ Evaluate the consistency between the original codebase and the migrated codebase
 After all steps, you are REQUIRED to:
 - Add newly created projects to the solution if applicable
 - Make sure all the projects are reloaded before triggering the build process
-- Run the appropriate build command for project type
+- Run `[build_command]`
 - Report success/failure
 - Fix any compilation errors and re-verify
 - **CRITICAL** Report the final build status via tool `report_build_verification_summary`
@@ -158,13 +174,13 @@ If the project contains unit tests, run a specific subset of unit tests and repo
 - Only focus on mocked unit tests that do not require external dependencies. Ignore failed ones if the error message indicates a lack of external dependencies.
 - Only run a subset of tests that are related to the modified code, do not run all the tests in the project.
 
-**IMPORTANT**: When the `run_tests` tool is available in your toolset, you MUST use it instead of running `dotnet test` via terminal commands. The `run_tests` tool provides better integration with the IDE and more detailed test results. Only fall back to terminal commands if `run_tests` is not available.
+**IMPORTANT**: When the `run_tests` tool is available in your toolset, you MUST use it instead of running `[test_command]` via terminal commands. The `run_tests` tool provides better integration with the IDE and more detailed test results. Only fall back to terminal commands if `run_tests` is not available.
 
 Example command to run tests (fallback when run_tests tool is not available):
-```powershell
-dotnet test Tests/UnitTests/UnitTests.csproj --filter "FullyQualifiedName~UnitTests.UtilitiesTests" --framework net10.0
+```
+[test_command]
 ```
 
 ## Deployment
 
-Ask the user whether they want to deploy the project to Azure for testing. If they confirm, call the `appmod-get-plan` tool to create a deployment plan, then execute the plan to test-deploy the app to Azure.
+Ask the user whether they want to deploy the project to [deployment.provider] for testing. If they confirm, call the `[plan_tool]` tool to create a deployment plan, then execute the plan to test-deploy the app to [deployment.provider].
