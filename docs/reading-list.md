@@ -19,7 +19,19 @@ Practical reading on using AI in engineering work.
  | [microsoft/vscode-team-kit](https://github.com/microsoft/vscode-team-kit) | GitHub (Microsoft) | A collection of VS Code extensions and plugins including Model Council, Review Areas, and other tools designed to accelerate AI-assisted workflows. | Provides ready-to-use plugins that enhance team collaboration and AI workflow efficiency within VS Code. |
  
  ---
- 
+
+ ## Local / Edge AI
+
+ Running powerful models on consumer hardware without cloud dependencies.
+
+ | Title | Source | What it is | Why it matters |
+ |---|---|---|---|
+ | [Rapid-MLX](https://github.com/raullenchai/Rapid-MLX) | GitHub (raullenchai) | A framework for running Apple Silicon-optimized AI models using MLX. Designed for speed and ease of use on Mac hardware. | Worth exploring if you are running local models on an M-series Mac and want the fastest available inference path. |
+ | [LocalScore](https://github.com/cjpais/LocalScore) | GitHub (Mozilla Builders) | Open-source CLI and public database that measures LLM performance on your specific machine — prompt processing speed, generation speed, and time-to-first-token. | Useful for answering "can my hardware actually run this model well?" before committing to a local setup. |
+ | [Depth-Anything-V2](https://huggingface.co/spaces/depth-anything/Depth-Anything-V2) | Hugging Face Spaces | A live demo of a state-of-the-art monocular depth estimation model. Given a single RGB photo, it produces a full depth map. | Demonstrates impressive zero-shot generalization across real-world images; relevant for 3D reconstruction, AR/VR, robotics, and scene understanding. |
+
+ ---
+
  ## Modernization
  
 Recommended reading for moving older systems and workflows forward.
