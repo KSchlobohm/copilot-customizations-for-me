@@ -83,7 +83,9 @@ function Test-IISExpressHttpReady {
         [Parameter(Mandatory = $true)]
         [string]$Url,
         [Parameter(Mandatory = $true)]
-        [string]$Scheme
+        [string]$Scheme,
+        [Parameter(Mandatory = $true)]
+        [int]$TimeoutSeconds
     )
 
     $curl = Get-Command curl.exe -ErrorAction SilentlyContinue
@@ -92,7 +94,7 @@ function Test-IISExpressHttpReady {
             "--silent",
             "--show-error",
             "--output", "NUL",
-            "--max-time", "2",
+            "--max-time", "$TimeoutSeconds",
             "--write-out", "%{http_code}"
         )
         if ($Scheme -eq "https") {
@@ -108,15 +110,43 @@ function Test-IISExpressHttpReady {
         return $false
     }
 
+    $invokeWebRequestParams = @{
+        Uri = $Url
+        Method = "GET"
+        TimeoutSec = $TimeoutSeconds
+        ErrorAction = "Stop"
+    }
+
+    if ($PSVersionTable.PSVersion.Major -lt 6) {
+        $invokeWebRequestParams["UseBasicParsing"] = $true
+    }
+
+    $restoreCertValidationCallback = $false
+    $originalCertValidationCallback = $null
+    if ($Scheme -eq "https") {
+        if ($PSVersionTable.PSVersion.Major -ge 6) {
+            $invokeWebRequestParams["SkipCertificateCheck"] = $true
+        } else {
+            $originalCertValidationCallback = [System.Net.ServicePointManager]::ServerCertificateValidationCallback
+            [System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }
+            $restoreCertValidationCallback = $true
+        }
+    }
+
     try {
-        Invoke-WebRequest -Uri $Url -Method GET -UseBasicParsing -TimeoutSec 2 | Out-Null
+        Invoke-WebRequest @invokeWebRequestParams | Out-Null
         return $true
-    } catch [System.Net.WebException] {
-        if ($_.Exception.Response -and $_.Exception.Response.StatusCode) {
+    } catch {
+        $response = $_.Exception.Response
+        if ($response -and $response.StatusCode) {
             return $true
         }
 
         return $false
+    } finally {
+        if ($restoreCertValidationCallback) {
+            [System.Net.ServicePointManager]::ServerCertificateValidationCallback = $originalCertValidationCallback
+        }
     }
 }
 
@@ -244,15 +274,19 @@ $proc = Start-Process -FilePath $iisExpressExe `
 Write-Host "IIS Express started (PID $($proc.Id)). Waiting for an HTTP response from $siteUrl..."
 
 $ready = $false
-for ($i = 0; $i -lt 40; $i++) {
-    Start-Sleep -Milliseconds 500
+$readinessTimeoutSeconds = 60
+$readinessPollIntervalMilliseconds = 500
+$readinessProbeTimeoutSeconds = 1
+$readinessDeadline = (Get-Date).AddSeconds($readinessTimeoutSeconds)
+while ((Get-Date) -lt $readinessDeadline) {
+    Start-Sleep -Milliseconds $readinessPollIntervalMilliseconds
 
     $proc.Refresh()
     if ($proc.HasExited) {
         break
     }
 
-    if (Test-IISExpressHttpReady -Url $siteUrl -Scheme $siteScheme) {
+    if (Test-IISExpressHttpReady -Url $siteUrl -Scheme $siteScheme -TimeoutSeconds $readinessProbeTimeoutSeconds) {
         $ready = $true
         break
     }
@@ -268,8 +302,8 @@ if ($ready) {
     $currentListener = @(Get-PortListener -Port $sitePort)
     if ($currentListener.Count -gt 0) {
         $details = Format-PortListener -Listener $currentListener
-        throw "IIS Express did not return an HTTP response from $siteUrl within the expected time. Current listener details:$([Environment]::NewLine)$details"
+        throw "IIS Express did not return an HTTP response from $siteUrl within $readinessTimeoutSeconds seconds. Current listener details:$([Environment]::NewLine)$details"
     }
 
-    throw "IIS Express did not return an HTTP response from $siteUrl within the expected time."
+    throw "IIS Express did not return an HTTP response from $siteUrl within $readinessTimeoutSeconds seconds."
 }

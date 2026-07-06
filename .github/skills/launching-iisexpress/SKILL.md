@@ -76,6 +76,8 @@ For HTTPS localhost URLs, certificate trust warnings can be expected on some mac
 - Re-running `Start-IISExpress.ps1` automatically stops the IIS Express instance previously launched for the same generated config/site, so the new run can take over. It does not affect IIS Express processes from other sites or solutions.
 - Stop only the IIS Express process launched for the generated config/site. Do not kill all `iisexpress.exe` processes by name.
 - IIS Express HTTP listeners can appear as `OwningProcess = 4` (`System`) because of HTTP.SYS. Do not use `Get-NetTCPConnection` ownership (`OwningProcess == iisexpress PID`) as a readiness check; use an HTTP-level probe to confirm startup.
+- The template probes readiness for up to 60 seconds to accommodate slow startup work (for example, database seeding) and still fail within a bounded time.
+- For HTTPS readiness probing, the template handles local development certificate trust differences across Windows PowerShell and PowerShell 7 so startup does not false-fail when the app is up.
 - Visual Studio can regenerate `.vs/config/applicationhost.config`; keep `.csproj` `IISUrl` aligned so future generated configs use the approved port.
 - If multiple web projects exist, scope edits and process checks to the single target project/site.
 - IIS Express rejects non-`localhost` host headers by default unless run elevated and explicitly configured; keep `IISUrl` host as `localhost` unless the user has set up otherwise.
