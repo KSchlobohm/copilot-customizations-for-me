@@ -78,6 +78,48 @@ function Get-PortListener {
     }
 }
 
+function Test-IISExpressHttpReady {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Url,
+        [Parameter(Mandatory = $true)]
+        [string]$Scheme
+    )
+
+    $curl = Get-Command curl.exe -ErrorAction SilentlyContinue
+    if ($curl) {
+        $arguments = @(
+            "--silent",
+            "--show-error",
+            "--output", "NUL",
+            "--max-time", "2",
+            "--write-out", "%{http_code}"
+        )
+        if ($Scheme -eq "https") {
+            $arguments += "--insecure"
+        }
+        $arguments += $Url
+
+        $statusCode = & $curl.Source @arguments 2>$null
+        if ($LASTEXITCODE -eq 0 -and $statusCode -match "^\d{3}$") {
+            return $true
+        }
+
+        return $false
+    }
+
+    try {
+        Invoke-WebRequest -Uri $Url -Method GET -UseBasicParsing -TimeoutSec 2 | Out-Null
+        return $true
+    } catch [System.Net.WebException] {
+        if ($_.Exception.Response -and $_.Exception.Response.StatusCode) {
+            return $true
+        }
+
+        return $false
+    }
+}
+
 function Get-ProcessSummary {
     param(
         [Parameter(Mandatory = $true)]
@@ -199,7 +241,7 @@ $proc = Start-Process -FilePath $iisExpressExe `
     -ArgumentList "/config:`"$configPath`" /site:`"$siteName`"" `
     -PassThru
 
-Write-Host "IIS Express started (PID $($proc.Id)). Waiting for it to listen on port $sitePort..."
+Write-Host "IIS Express started (PID $($proc.Id)). Waiting for an HTTP response from $siteUrl..."
 
 $ready = $false
 for ($i = 0; $i -lt 40; $i++) {
@@ -210,25 +252,24 @@ for ($i = 0; $i -lt 40; $i++) {
         break
     }
 
-    $listener = @(Get-PortListener -Port $sitePort | Where-Object { $_.OwningProcess -eq $proc.Id })
-    if ($listener.Count -gt 0) {
+    if (Test-IISExpressHttpReady -Url $siteUrl -Scheme $siteScheme) {
         $ready = $true
         break
     }
 }
 
 if ($ready) {
-    Write-Host "IIS Express is listening on $siteUrl"
+    Write-Host "IIS Express is responding at $siteUrl"
 } else {
+    if ($proc.HasExited) {
+        throw "IIS Express exited before responding at $siteUrl. Check the IIS Express logs for startup errors."
+    }
+
     $currentListener = @(Get-PortListener -Port $sitePort)
     if ($currentListener.Count -gt 0) {
         $details = Format-PortListener -Listener $currentListener
-        throw "IIS Express did not own port $sitePort after launch. Current listener details:$([Environment]::NewLine)$details"
+        throw "IIS Express did not return an HTTP response from $siteUrl within the expected time. Current listener details:$([Environment]::NewLine)$details"
     }
 
-    if ($proc.HasExited) {
-        throw "IIS Express exited before listening on $siteUrl. Check the IIS Express logs for startup errors."
-    }
-
-    throw "IIS Express did not start listening on $siteUrl within the expected time."
+    throw "IIS Express did not return an HTTP response from $siteUrl within the expected time."
 }
