@@ -7,6 +7,8 @@
     the same generated config and site name.
 .PARAMETER Stop
     Stops the IIS Express process for this generated config and site, then exits.
+.NOTES
+    Skill version: 1.0.0 (see .github/skills/launching-iisexpress/SKILL.md)
 #>
 param(
     [switch]$Stop
