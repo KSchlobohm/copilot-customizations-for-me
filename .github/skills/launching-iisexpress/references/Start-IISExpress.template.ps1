@@ -8,7 +8,7 @@
 .PARAMETER Stop
     Stops the IIS Express process for this generated config and site, then exits.
 .NOTES
-    Skill version: 1.0.0 (see .github/skills/launching-iisexpress/SKILL.md)
+    Skill version: 1.1.0 (see .github/skills/launching-iisexpress/SKILL.md)
 #>
 param(
     [switch]$Stop
@@ -26,6 +26,7 @@ $solutionRoot = "{{SOLUTION_ROOT}}"
 
 $configDir = Join-Path $solutionRoot ".vs\config"
 $configPath = Join-Path $configDir "applicationhost.config"
+$blankRootPath = Join-Path $configDir "empty-root"
 
 function Get-IISExpressInstallRoot {
     $candidateRoots = @(
@@ -237,6 +238,17 @@ Write-Host "Preparing applicationhost.config..."
 New-Item -ItemType Directory -Path $configDir -Force | Out-Null
 Copy-Item $templatePath $configPath -Force
 
+# When the app is hosted at a non-root virtual path, the site root ("/") must
+# resolve to a separate, blank physical folder rather than the real app
+# folder. If both "/" and the virtual path point at the same folder, IIS
+# Express loads that folder's Web.config for two different configuration
+# scopes and fails to start with HTTP 500.19.
+$isNonRootApp = $applicationPath -ne "/"
+if ($isNonRootApp) {
+    New-Item -ItemType Directory -Path $blankRootPath -Force | Out-Null
+}
+$rootPhysicalPath = if ($isNonRootApp) { $blankRootPath } else { $webProjectPath }
+
 $xml = [xml](Get-Content $configPath -Raw)
 $site = $xml.SelectSingleNode("//site[@name='WebSite1']")
 if (-not $site) {
@@ -247,9 +259,9 @@ $site.SetAttribute("name", $siteName)
 $rootApp = $site.SelectSingleNode("application")
 $rootApp.SetAttribute("path", "/")
 $rootApp.SetAttribute("applicationPool", "Clr4IntegratedAppPool")
-$rootApp.SelectSingleNode("virtualDirectory").SetAttribute("physicalPath", $webProjectPath)
+$rootApp.SelectSingleNode("virtualDirectory").SetAttribute("physicalPath", $rootPhysicalPath)
 
-if ($applicationPath -ne "/") {
+if ($isNonRootApp) {
     $subApp = $rootApp.CloneNode($true)
     $subApp.SetAttribute("path", $applicationPath)
     $subApp.SetAttribute("applicationPool", "Clr4IntegratedAppPool")
@@ -264,7 +276,12 @@ $binding.SetAttribute("bindingInformation", "*:${sitePort}:$siteHost")
 $xml.Save($configPath)
 
 Write-Host "Config written to: $configPath"
-Write-Host "Physical path:     $webProjectPath"
+if ($isNonRootApp) {
+    Write-Host "Root path ('/'):   $rootPhysicalPath (blank)"
+    Write-Host "App path:          $applicationPath -> $webProjectPath"
+} else {
+    Write-Host "Physical path:     $webProjectPath"
+}
 Write-Host "URL:               $siteUrl"
 Write-Host ""
 Write-Host "Launching IIS Express..."

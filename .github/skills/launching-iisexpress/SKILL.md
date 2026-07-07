@@ -1,6 +1,6 @@
 ---
 name: launching-iisexpress
-version: 1.0.0
+version: 1.1.0
 description: Launches .NET Framework ASP.NET projects with IIS Express from the command line, mirroring Visual Studio local debugging. Use when the user needs to start, run, debug, test, or verify a .NET Framework ASP.NET MVC, Web API, or Web Forms app locally, especially during migration. Do not use for ASP.NET Core or modern .NET apps; use dotnet run instead.
 ---
 
@@ -83,7 +83,17 @@ For HTTPS localhost URLs, certificate trust warnings can be expected on some mac
 - If multiple web projects exist, scope edits and process checks to the single target project/site.
 - IIS Express rejects non-`localhost` host headers by default unless run elevated and explicitly configured; keep `IISUrl` host as `localhost` unless the user has set up otherwise.
 - For HTTPS, the template enforces ports in the IIS Express SSL-friendly `44300-44399` range. Other HTTPS ports require a manual `netsh http add sslcert` binding and will be rejected at launch.
-- When `IISUrl` includes a virtual path (for example `http://localhost:6001/MyApp`), the template keeps the root `/` application and adds a second application at the virtual path so requests to `/` and `/MyApp` both work.
+- When `IISUrl` includes a virtual path (for example `http://localhost:6001/MyApp`), the template adds a second application at the virtual path pointing at the real project folder, and maps the root `/` application to a separate, blank folder (`.vs/config/empty-root`) so both applications can coexist without a physical-path collision.
+
+## Troubleshooting: HTTP 500.19 on non-root virtual paths
+
+**Symptom:** IIS Express fails to start (or a request fails) with HTTP 500.19 immediately after launch, even though the app code itself is fine, and only reproduces when `IISUrl` includes a virtual path segment (for example `/MyApp`).
+
+**Root cause:** the site root (`/`) and the non-root virtual path both resolved to the same physical folder. IIS Express then loads that folder's `Web.config` for two different configuration scopes (`/` and `/MyApp`), which collide and produce a 500.19 configuration error.
+
+**Detection:** inspect the generated `.vs/config/applicationhost.config` for the site and confirm the `application path="/"` and `application path="<virtual path>"` elements point at **different** `physicalPath` values. If they match, that's the bug.
+
+**Remediation:** regenerate `Start-IISExpress.ps1` from the current template in this skill (`references/Start-IISExpress.template.ps1`, version 1.1.0+). The template now always points the root application at a blank, empty folder and only maps the virtual path to the real project folder. Do not hand-edit an existing generated config to "fix" this in place — regenerate from the template so the fix persists across future regenerations.
 
 ## Versioning
 
