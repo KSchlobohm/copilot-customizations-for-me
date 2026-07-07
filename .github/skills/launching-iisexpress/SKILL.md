@@ -1,5 +1,6 @@
 ---
 name: launching-iisexpress
+version: 1.0.0
 description: Launches .NET Framework ASP.NET projects with IIS Express from the command line, mirroring Visual Studio local debugging. Use when the user needs to start, run, debug, test, or verify a .NET Framework ASP.NET MVC, Web API, or Web Forms app locally, especially during migration. Do not use for ASP.NET Core or modern .NET apps; use dotnet run instead.
 ---
 
@@ -83,3 +84,11 @@ For HTTPS localhost URLs, certificate trust warnings can be expected on some mac
 - IIS Express rejects non-`localhost` host headers by default unless run elevated and explicitly configured; keep `IISUrl` host as `localhost` unless the user has set up otherwise.
 - For HTTPS, the template enforces ports in the IIS Express SSL-friendly `44300-44399` range. Other HTTPS ports require a manual `netsh http add sslcert` binding and will be rejected at launch.
 - When `IISUrl` includes a virtual path (for example `http://localhost:6001/MyApp`), the template keeps the root `/` application and adds a second application at the virtual path so requests to `/` and `/MyApp` both work.
+
+## Versioning
+
+This skill (`SKILL.md` + `references/Start-IISExpress.template.ps1`) is the canonical upstream copy. Other locations that keep their own copy of this skill should treat this repository as the source of truth and sync from it rather than diverging independently.
+
+- The `version` field in the frontmatter follows semantic versioning and must be bumped whenever the skill's workflow or template behavior changes.
+- Before copying this skill elsewhere, compare the `version` field against the destination copy to detect drift.
+- When porting a fix here, bump the version and summarize the change in the pull request description.
