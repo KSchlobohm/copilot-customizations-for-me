@@ -22,6 +22,7 @@ Use this repository to collect reusable Copilot customization building blocks, s
 | `.github/skills/copilot-customization-advisor/` | Guidance for choosing the right customization type for a new idea |
 | `.github/skills/copilot-customization-agent-authoring/` | Guidance for creating, reviewing, and grading custom agent files |
 | `.github/skills/launching-iisexpress/` | Guidance for launching .NET Framework ASP.NET projects with IIS Express |
+| `.github/skills/managing-summary-canvas/` | A reusable side-panel canvas skill for tracking and resuming engineering work across sessions |
 | `docs/` | Recommended tool setup guides, installation steps, and workshops |
 | `docs/lessons-learned/` | Focused notes on practical AI-assisted engineering lessons worth revisiting |
 | `docs/mcp-tools/` | MCP tool configuration guides with rationale and walkthroughs |
@@ -36,6 +37,7 @@ Use this repository to collect reusable Copilot customization building blocks, s
 | Skill | `copilot-customization-advisor` | Helps new Copilot users decide whether they need instructions, a prompt file, a skill, an agent, a sub-agent, or a hook | `.github/skills/copilot-customization-advisor/SKILL.md` |
 | Skill | `copilot-customization-agent-authoring` | Helps create, review, and grade custom agent files (.agent.md) using best practices from large-scale community analysis | `.github/skills/copilot-customization-agent-authoring/SKILL.md` |
 | Skill | `launching-iisexpress` | Helps launch and verify .NET Framework ASP.NET projects locally with IIS Express from the command line | `.github/skills/launching-iisexpress/SKILL.md` |
+| Skill | `managing-summary-canvas` | Opens, refreshes, and reads a reusable side-panel summary canvas (linked issue header, pinned action items, collapsed build notes, learnings, reviewer verdict matrix) for tracking and resuming work across sessions | `.github/skills/managing-summary-canvas/SKILL.md` |
 | Guide | Copilot CLI Chronicle lesson | Explains why `/chronicle` matters, what architectural idea sits behind it, and when to go deeper | `docs/lessons-learned/copilot-cli-chronicle.md` |
 | Guide | Skill reuse vs knowledge reuse lesson | Explains when skills are personal accelerators vs shared knowledge artifacts, and when evals are worth the investment | `docs/lessons-learned/skill-reuse-is-knowledge-reuse.md` |
 | Guide | Playwright MCP Setup | Full setup guide + workshop for visual verification with Playwright MCP | `docs/mcp-tools/playwright-mcp/README.md` |
