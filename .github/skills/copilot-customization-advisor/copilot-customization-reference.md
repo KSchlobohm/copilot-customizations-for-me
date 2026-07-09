@@ -10,10 +10,13 @@ Detailed anatomy and examples for each customization type. Read this file when t
 |--------|------|-------|
 | Repo-wide | `.github/copilot-instructions.md` | Every chat request |
 | Path-specific | `.github/instructions/*.instructions.md` | Files matching `applyTo` glob |
-| User-scoped (CLI) | `~/.copilot/instructions/*.instructions.md` | All repos for current user |
+| Local user-scoped (CLI, always-on) | `~/.copilot/copilot-instructions.md` | All repos for current user |
+| User path-specific (CLI) | `<dir-from-COPILOT_CUSTOM_INSTRUCTIONS_DIRS>/.github/instructions/*.instructions.md` | Files matching `applyTo` glob across configured local dirs |
 | Cross-agent | `AGENTS.md` or `CLAUDE.md` at repo root | Detected by VS Code, Claude Code |
 
 > Windows user-scope root example: `C:\Users\<username>\.copilot` (or `%USERPROFILE%\.copilot`; generic form: `~/.copilot`).
+>
+> Local always-on and path-specific instructions are complementary; both can apply to the same request.
 
 ### Path-specific frontmatter
 

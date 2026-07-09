@@ -11,7 +11,7 @@ Recommend the right customization type for a user's intent by applying the decis
 
 Walk through these questions in order. Stop at the first "yes."
 
-1. **Is this a rule that should ALWAYS apply?** -> Instructions (`.github/copilot-instructions.md`, `.github/instructions/*.instructions.md`, or user-scoped `~/.copilot/instructions/*.instructions.md`)
+1. **Is this a rule that should ALWAYS apply?** -> Instructions (`.github/copilot-instructions.md`, `.github/instructions/*.instructions.md`, local user-scope `~/.copilot/copilot-instructions.md`, or user path-specific instruction dirs via `COPILOT_CUSTOM_INSTRUCTIONS_DIRS`)
 2. **Is this a repeatable recipe the user will invoke by name?** -> Prompt file (`.prompt.md`)
 3. **Is this a capability that any agent should be able to use?** -> Skill (`SKILL.md`)
 4. **Does it need its own identity, persona, or tool set?** -> Agent (`.agent.md`)
@@ -71,5 +71,6 @@ For user-scoped customizations, use the Copilot home directory:
 
 - Windows example: `C:\Users\<username>\.copilot` (or `%USERPROFILE%\.copilot`)
 - Generic home form: `~/.copilot`
-- User instructions: `~/.copilot/instructions/*.instructions.md`
+- Local always-on instructions: `~/.copilot/copilot-instructions.md`
+- User path-specific instructions: for each directory listed in `COPILOT_CUSTOM_INSTRUCTIONS_DIRS`, place files at `<that-dir>/.github/instructions/*.instructions.md`
 - User skills: `~/.copilot/skills/{skill-name}/SKILL.md`
