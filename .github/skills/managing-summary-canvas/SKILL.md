@@ -185,29 +185,40 @@ recompose of every section.
 2. Get the canvas's current full Markdown via `invoke_canvas_action({ instanceId, actionName: "get_state" })`
    — don't guess or reconstruct it from conversation memory, which may be
    stale or gone after context compaction/a new session.
-3. Decide where the new item goes in the `## Action Items` list. This is a
-   deliberately lightweight substitute for a real dependency graph — no
-   "depends on" tracking, no separate data structure, just a placement
-   judgment made fresh each time a task is added:
-   - **Default: append it as the last item** in the list.
-   - **Before finalizing that default, check the existing *open*
-     (unchecked) items only** (skip anything already checked off — it's
-     done, it can't be blocked): does the new task read as something that
-     has to happen *before* one of them can reasonably be started (e.g. it
-     produces something that item needs, or is an obvious precondition)?
-     Judge this from the plain meaning of the task text — don't build or
-     persist any dependency structure to justify it.
-   - **If yes**, insert the new item immediately *above* the earliest open
-     item it blocks, instead of at the end, so that item isn't silently
-     stuck behind something added later.
-   - **If it's genuinely unclear** whether the new task blocks (or is
-     blocked by) an existing open item — not just "could go earlier or
-     later with no consequence," but actually ambiguous whether skipping
-     it would leave an open item unstartable — ask the user where to place
-     it (e.g. "before item N" vs. "at the end") rather than guessing.
-   - The goal this preserves: the **topmost open item should always be
-     something the user can actually start right now**. Never let adding a
-     task silently leave an earlier open item blocked by it.
+3. Decide where the new item goes in the `## Action Items` list. The open
+   (unchecked) items are maintained as a **working-order sequence**: the
+   user should be able to execute them top-to-bottom without ever being
+   blocked by something that appears later. There is no separate dependency
+   graph — placement is a plain-meaning judgment made fresh on each insert,
+   treating the existing open-item order as correct.
+
+   **How to reason about placement (insertion-sort):**
+   Read all currently open (unchecked) items as an ordered execution
+   sequence. For the new task, ask two questions:
+   - **What does it depend on?** Which existing open items must finish
+     before this new task can start? It must go *after* all of those.
+   - **What depends on it?** Which existing open items can't start until
+     this new task is done? It must go *before* all of those.
+
+   The correct insertion point is the position that satisfies both
+   constraints — after everything it depends on, and before everything
+   that depends on it. Concretely:
+   - If the new task is a **prerequisite for all/most existing items**
+     (nothing it depends on is in the list yet), insert it at or near the
+     **top** of the open items.
+   - If the new task **depends on all/most existing items** (a post-step,
+     like a final review or a step that consumes earlier output), insert
+     it at or near the **bottom** of the open items.
+   - If it depends on some items and blocks others, insert it in the
+     **middle** — after the last item it depends on, before the first
+     item that depends on it.
+   - If placement is **genuinely ambiguous** (not just "could go here or
+     there with no consequence," but unclear whether the topmost item
+     stays actionable), ask the user rather than guessing.
+
+   **The invariant:** after insertion, the topmost open item must still be
+   something the user can start right now, and no open item should be
+   silently stuck behind a prerequisite that appears later in the list.
 4. Insert as `- [ ] <description>` at the position decided above. Leave
    every other section, and the relative order of every other Action Item,
    untouched.
@@ -217,21 +228,34 @@ recompose of every section.
    Learned, Reviewer Matrix) when doing this — only the Action Items list
    changes, and only by adding the one new line.
 
-Example: "add a task for getting the groceries" against a canvas whose
-Action Items list currently ends with
-`- [ ] Review this canvas render (header link, action items placement, reviewer matrix)`
-should append `- [ ] Getting the groceries` as a new line directly after it,
-then push the whole updated document via `update_markdown`.
+Example (top insertion — prerequisite for everything): the open items are
+`- [ ] Draft the detailed technical paper`, then
+`- [ ] Distill the 1-page summary from the paper`. The user says "add a
+task to define the audience and tone guidelines." That determines *how*
+to write the paper, so it must happen first — insert at the top:
+`- [ ] Define audience and tone guidelines`,
+`- [ ] Draft the detailed technical paper`,
+`- [ ] Distill the 1-page summary from the paper`.
 
-Example (blocking case): the Action Items list currently reads
-`- [ ] Write the deployment doc` then `- [ ] Deploy to production`, and the
-user says "add a task to get sign-off from the security team first". This
-new task is a plain-meaning prerequisite for "Deploy to production" (you
-can't deploy before sign-off), so it's inserted *above* that item rather
-than appended to the end:
-`- [ ] Write the deployment doc`, `- [ ] Get sign-off from the security team`,
-`- [ ] Deploy to production`. "Write the deployment doc" is untouched and
-stays the topmost, still-startable item.
+Example (bottom insertion — depends on earlier work): same list, the user
+says "add a task to replace placeholder citations with verified links."
+Replacing citations requires the paper to exist first — insert at the
+bottom:
+`- [ ] Define audience and tone guidelines`,
+`- [ ] Draft the detailed technical paper`,
+`- [ ] Distill the 1-page summary from the paper`,
+`- [ ] Replace placeholder citations with verified links`.
+
+Example (middle insertion): the open items are
+`- [ ] Write the deployment doc`,
+`- [ ] Deploy to production`,
+`- [ ] Send the launch announcement`. The user says "add a task to get
+security sign-off." Sign-off depends on having the doc, but must happen
+before deploying — insert between those two:
+`- [ ] Write the deployment doc`,
+`- [ ] Get security sign-off`,
+`- [ ] Deploy to production`,
+`- [ ] Send the launch announcement`.
 
 ## Reading the canvas
 
@@ -257,4 +281,27 @@ what you last remember sending it.
    `- [x]` in place (don't reorder or touch other sections), then call
    `update_markdown` with the full amended document, same as "Adding a
    single task" above.
+
+## Reordering the task list on demand
+
+Trigger: the user explicitly asks to reorder, re-sort, re-prioritize, or
+reorganize the Action Items list (e.g. "reorder the tasks", "re-sort the
+action items", "fix the task order"). This is **not** done automatically —
+only on explicit request.
+
+1. Get the canvas's current full Markdown via `get_state`.
+2. Extract all open (unchecked) items from the `## Action Items` section.
+   Leave checked-off (done) items untouched — they're already in the
+   Completed group and their order doesn't matter for execution.
+3. Re-sort the open items into working order: top-to-bottom execution
+   sequence where each item can be started once the items above it are
+   done. Use the same plain-meaning reasoning as the insertion-sort rule
+   in "Adding a single task" — no dependency graph, just read the task
+   descriptions and determine a logical execution order.
+4. If the correct order of two or more items is genuinely ambiguous, ask
+   the user rather than guessing.
+5. Rewrite the `## Action Items` section with the re-sorted open items
+   (followed by the done items, which the renderer already groups
+   separately). Leave every other section untouched.
+6. Push the full amended document via `update_markdown`.
 
