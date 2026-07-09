@@ -32,6 +32,10 @@ const PAGE_CSS = `
   th { background: var(--border-color-default, #f6f8fa); }
   ul.task-list { list-style: none; padding-left: 0.25em; }
   ul.task-list li { margin: 0.25em 0; }
+  ol.task-list { padding-left: 1.5em; }
+  ol.task-list li { margin: 0.25em 0; }
+  .task-list-section-label { margin: 0.75em 0 0.25em; font-size: var(--text-body-small, 12px); font-weight: var(--font-weight-semibold, 600);
+    color: var(--text-color-muted, #59636e); text-transform: uppercase; letter-spacing: 0.03em; }
   hr { border: none; border-top: 1px solid var(--border-color-default, #d0d7de); margin: 1.5em 0; }
   details { border: 1px solid var(--border-color-default, #d0d7de); border-radius: 6px; padding: 0.5em 0.75em; margin: 0.75em 0; }
   summary { cursor: pointer; font-weight: var(--font-weight-semibold, 600); }

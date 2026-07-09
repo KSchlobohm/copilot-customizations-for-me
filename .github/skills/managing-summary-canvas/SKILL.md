@@ -118,7 +118,11 @@ Rules:
   sentence of context. Always first.
 - **Action Items** — pinned directly below the header. Real, actionable
   items only. This is also where reviewer feedback lives (see below) —
-  don't duplicate it in the matrix.
+  don't duplicate it in the matrix. The canvas automatically renders open
+  items first, then a "Completed" divider, then checked-off items — so
+  when checking an item off in the source Markdown, just flip its
+  `- [ ]`/`- [x]` marker in place; don't manually reorder the list, the
+  canvas regroups it for display.
 - **What Was Built** — collapsed via `<details>`/`<summary>`, capped at 3-5
   bullets. The PR diff already has full detail; don't duplicate it here.
 - **Reviewer Matrix** — placed directly after "What Was Built" and above

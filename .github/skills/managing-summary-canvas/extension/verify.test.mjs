@@ -119,3 +119,57 @@ test("numbered-checkbox lists render as an <ol> with working checkboxes, not a p
     assert.match(html, /<input type="checkbox" disabled \/> foo/);
     assert.match(html, /<input type="checkbox" disabled checked \/> bar/);
 });
+
+// Feature: Action Items are visually regrouped so open items are separated
+// from completed ones, instead of being interleaved in raw document order.
+test("Action Items with a mix of open and done items are split into a todo group, then a Completed divider, then the done group", () => {
+    const mixed = `## Action Items
+- [x] first done
+- [ ] first open
+- [x] second done
+- [ ] second open`;
+    const html = renderMarkdown(mixed);
+    const dividerIdx = html.indexOf('class="task-list-section-label"');
+    const firstOpenIdx = html.indexOf("first open");
+    const secondOpenIdx = html.indexOf("second open");
+    const firstDoneIdx = html.indexOf("first done");
+    const secondDoneIdx = html.indexOf("second done");
+
+    assert.ok(dividerIdx >= 0, "expected a Completed divider when both open and done items are present");
+    // Both open items precede the divider, preserving their relative order.
+    assert.ok(firstOpenIdx < dividerIdx && secondOpenIdx < dividerIdx);
+    assert.ok(firstOpenIdx < secondOpenIdx);
+    // Both done items come after the divider, preserving their relative order.
+    assert.ok(firstDoneIdx > dividerIdx && secondDoneIdx > dividerIdx);
+    assert.ok(firstDoneIdx < secondDoneIdx);
+});
+
+test("Action Items with only open (or only done) items render without a Completed divider", () => {
+    const allOpen = `## Action Items
+- [ ] a
+- [ ] b`;
+    const allDone = `## Action Items
+- [x] a
+- [x] b`;
+    assert.doesNotMatch(renderMarkdown(allOpen), /task-list-section-label/);
+    assert.doesNotMatch(renderMarkdown(allDone), /task-list-section-label/);
+});
+
+test("grouping is scoped to the Action Items section — a task list elsewhere in the document is unaffected", () => {
+    const doc = `## Action Items
+- [x] done here
+- [ ] open here
+
+## Some Other Section
+- [x] done elsewhere
+- [ ] open elsewhere`;
+    const html = renderMarkdown(doc);
+    // The Action Items section still gets a divider (mixed state)...
+    const actionItemsSection = html.slice(0, html.indexOf("Some Other Section"));
+    assert.match(actionItemsSection, /task-list-section-label/);
+    // ...but the raw order is preserved for the unrelated section (no
+    // regrouping applied outside "## Action Items").
+    const otherSection = html.slice(html.indexOf("Some Other Section"));
+    assert.doesNotMatch(otherSection, /task-list-section-label/);
+    assert.ok(otherSection.indexOf("done elsewhere") < otherSection.indexOf("open elsewhere"));
+});

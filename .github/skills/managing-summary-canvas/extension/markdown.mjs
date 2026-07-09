@@ -135,12 +135,54 @@ export function renderMarkdown(markdown) {
     let i = 0;
     let listStack = null; // { type: 'ul'|'ol' }
     let inBlockquote = false;
+    // Whether we're currently inside the "## Action Items" section — task
+    // list items there are buffered (not emitted immediately) so they can
+    // be regrouped into an open/"Completed" split on section close, rather
+    // than rendered inline in raw document order.
+    let inActionItems = false;
+    let actionItemsBuffer = null; // { type: 'ul-task'|'ol-task', items: [{ checked, html }] }
+
+    // Emits the buffered Action Items as two groups — open items first,
+    // then a "Completed" divider and the checked-off ones — so completed
+    // work doesn't visually clutter what's still outstanding. If a section
+    // is all-open or all-done, no divider is shown (nothing to separate).
+    // The source Markdown order within each group is preserved; only the
+    // open/done split is applied, so authors can keep checking items off
+    // in place without needing to manually reorder the list.
+    function flushActionItems() {
+        if (!actionItemsBuffer) return;
+        const { type, items } = actionItemsBuffer;
+        actionItemsBuffer = null;
+        if (items.length === 0) return;
+        const tag = type === "ol-task" ? "ol" : "ul";
+        function renderGroup(group) {
+            html.push(`<${tag} class="task-list">`);
+            for (const item of group) {
+                html.push(
+                    `<li class="task-list-item"><input type="checkbox" disabled${
+                        item.checked ? " checked" : ""
+                    } /> ${item.html}</li>`
+                );
+            }
+            html.push(`</${tag}>`);
+        }
+        const todo = items.filter((item) => !item.checked);
+        const done = items.filter((item) => item.checked);
+        if (todo.length && done.length) {
+            renderGroup(todo);
+            html.push('<div class="task-list-section-label">Completed</div>');
+            renderGroup(done);
+        } else {
+            renderGroup(items);
+        }
+    }
 
     function closeList() {
         if (listStack) {
             html.push(listStack.type === "ol" || listStack.type === "ol-task" ? "</ol>" : "</ul>");
             listStack = null;
         }
+        flushActionItems();
     }
     function closeBlockquote() {
         if (inBlockquote) {
@@ -214,6 +256,7 @@ export function renderMarkdown(markdown) {
             closeList();
             closeBlockquote();
             const level = headingMatch[1].length;
+            inActionItems = /^action items$/i.test(headingMatch[2].trim());
             html.push(`<h${level}>${renderInline(headingMatch[2].trim())}</h${level}>`);
             i++;
             continue;
@@ -257,21 +300,33 @@ export function renderMarkdown(markdown) {
         // (1. [ ] / 1) [x]) — the ordinal marker is only used to decide
         // whether to render an <ol> vs <ul> wrapper; the checkbox itself
         // still fully determines the item's checked state either way.
+        // Inside the "## Action Items" section specifically, items are
+        // buffered instead of emitted immediately so flushActionItems() can
+        // regroup them (open items, then a "Completed" divider) once the
+        // section ends.
         const taskMatch = line.match(/^\s*(?:[-*]|(\d+)[.)])\s+\[( |x|X)\]\s+(.*)$/);
         if (taskMatch) {
             const isOrdered = taskMatch[1] !== undefined;
-            const listType = isOrdered ? "ol-task" : "ul-task";
-            if (!listStack || listStack.type !== listType) {
+            const checked = taskMatch[2].toLowerCase() === "x";
+            const itemHtml = renderInline(taskMatch[3]);
+            const type = isOrdered ? "ol-task" : "ul-task";
+
+            if (inActionItems) {
+                if (!actionItemsBuffer || actionItemsBuffer.type !== type) {
+                    closeList(); // flushes any prior buffer/list before starting a new one
+                    actionItemsBuffer = { type, items: [] };
+                }
+                actionItemsBuffer.items.push({ checked, html: itemHtml });
+                i++;
+                continue;
+            }
+
+            if (!listStack || listStack.type !== type) {
                 closeList();
                 html.push(isOrdered ? '<ol class="task-list">' : '<ul class="task-list">');
-                listStack = { type: listType };
+                listStack = { type };
             }
-            const checked = taskMatch[2].toLowerCase() === "x";
-            html.push(
-                `<li class="task-list-item"><input type="checkbox" disabled${checked ? " checked" : ""} /> ${renderInline(
-                    taskMatch[3]
-                )}</li>`
-            );
+            html.push(`<li class="task-list-item"><input type="checkbox" disabled${checked ? " checked" : ""} /> ${itemHtml}</li>`);
             i++;
             continue;
         }
