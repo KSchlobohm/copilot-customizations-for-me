@@ -48,6 +48,14 @@ test("instanceId -> documentId mapping survives independently of any in-memory i
     assert.equal(doc.markdown, "## Action Items\n- [ ] a");
 });
 
+test("deleteInstanceMapping removes the mapping so loadInstanceMapping returns null afterward", async () => {
+    await saveInstanceMapping("panel-to-delete", "doc-1");
+    assert.equal(await loadInstanceMapping("panel-to-delete"), "doc-1");
+    const { deleteInstanceMapping } = await import("./store.mjs");
+    await deleteInstanceMapping("panel-to-delete");
+    assert.equal(await loadInstanceMapping("panel-to-delete"), null);
+});
+
 test.after(async () => {
     await rm(tmpHome, { recursive: true, force: true });
 });

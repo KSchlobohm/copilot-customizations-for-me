@@ -6,7 +6,7 @@
 // the same content. Storage lives under the user-scope extension's own
 // artifacts directory (not the repo, not module memory).
 
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile, unlink } from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
 
@@ -50,6 +50,14 @@ export async function saveDocument(documentId, data) {
 export async function saveInstanceMapping(instanceId, documentId) {
     await mkdir(path.dirname(instancePath(instanceId)), { recursive: true });
     await writeFile(instancePath(instanceId), JSON.stringify({ documentId }, null, 2), "utf8");
+}
+
+export async function deleteInstanceMapping(instanceId) {
+    try {
+        await unlink(instancePath(instanceId));
+    } catch {
+        // already gone or never existed
+    }
 }
 
 export async function loadInstanceMapping(instanceId) {

@@ -10,7 +10,7 @@
 import { createServer } from "node:http";
 import { joinSession, createCanvas, CanvasError } from "@github/copilot-sdk/extension";
 import { renderPage, renderContent } from "./render.mjs";
-import { loadDocument, saveDocument, loadInstanceMapping, saveInstanceMapping } from "./store.mjs";
+import { loadDocument, saveDocument, loadInstanceMapping, saveInstanceMapping, deleteInstanceMapping } from "./store.mjs";
 import { summarizeActionItems } from "./tasks.mjs";
 
 // instanceId -> { server, url, documentId, clients: Set<ServerResponse> }
@@ -219,6 +219,11 @@ await joinSession({
                 };
             },
             onClose: async (ctx) => {
+                // Always clean up the durable mapping, even when the
+                // in-memory entry is gone (e.g. after extensions_reload
+                // wiped the instances Map). deleteInstanceMapping is
+                // safe to call when the file doesn't exist.
+                await deleteInstanceMapping(ctx.instanceId);
                 const entry = instances.get(ctx.instanceId);
                 if (entry) {
                     instances.delete(ctx.instanceId);
