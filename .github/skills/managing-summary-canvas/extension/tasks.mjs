@@ -15,7 +15,10 @@ export function parseActionItems(markdown) {
         }
         if (!inSection) continue;
 
-        const task = line.match(/^\s*[-*]\s+\[( |x|X)\]\s+(.*)$/);
+        // Accepts dash/asterisk bullets as well as ordered-list markers
+        // (`1.`/`1)`) before the checkbox, so numbered checklists are parsed
+        // the same as dash-bulleted ones (Bug 1).
+        const task = line.match(/^\s*(?:[-*]|\d+[.)])\s+\[( |x|X)\]\s+(.*)$/);
         if (task) {
             items.push({ text: task[2].trim(), done: task[1].toLowerCase() === "x" });
         }

@@ -88,3 +88,34 @@ test("summarizeActionItems agrees with the checkbox states in the rendered docum
     assert.equal(summary.done, 1);
     assert.equal(summary.remaining, 2);
 });
+
+// Bug 1 regression: numbered-checkbox lists (`1. [ ] foo`) must be parsed
+// and rendered the same as dash-bulleted ones.
+test("numbered-checkbox action items are parsed and counted correctly", () => {
+    const numbered = `## Action Items
+1. [ ] foo
+2. [x] bar
+3. [ ] baz`;
+    const summary = summarizeActionItems(numbered);
+    assert.equal(summary.total, 3);
+    assert.equal(summary.done, 1);
+    assert.equal(summary.remaining, 2);
+    assert.deepEqual(
+        summary.items.map((i) => [i.text, i.done]),
+        [
+            ["foo", false],
+            ["bar", true],
+            ["baz", false],
+        ]
+    );
+});
+
+test("numbered-checkbox lists render as an <ol> with working checkboxes, not a plain ordered list", () => {
+    const numbered = `## Action Items
+1. [ ] foo
+2. [x] bar`;
+    const html = renderMarkdown(numbered);
+    assert.match(html, /<ol class="task-list">/);
+    assert.match(html, /<input type="checkbox" disabled \/> foo/);
+    assert.match(html, /<input type="checkbox" disabled checked \/> bar/);
+});

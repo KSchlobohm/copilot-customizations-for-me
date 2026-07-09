@@ -138,7 +138,7 @@ export function renderMarkdown(markdown) {
 
     function closeList() {
         if (listStack) {
-            html.push(listStack.type === "ol" ? "</ol>" : "</ul>");
+            html.push(listStack.type === "ol" || listStack.type === "ol-task" ? "</ol>" : "</ul>");
             listStack = null;
         }
     }
@@ -253,18 +253,23 @@ export function renderMarkdown(markdown) {
             continue;
         }
 
-        // GFM task list item: - [ ] / - [x]
-        const taskMatch = line.match(/^\s*[-*]\s+\[( |x|X)\]\s+(.*)$/);
+        // GFM task list item: - [ ] / - [x], or a numbered checklist item
+        // (1. [ ] / 1) [x]) — the ordinal marker is only used to decide
+        // whether to render an <ol> vs <ul> wrapper; the checkbox itself
+        // still fully determines the item's checked state either way.
+        const taskMatch = line.match(/^\s*(?:[-*]|(\d+)[.)])\s+\[( |x|X)\]\s+(.*)$/);
         if (taskMatch) {
-            if (!listStack || listStack.type !== "ul") {
+            const isOrdered = taskMatch[1] !== undefined;
+            const listType = isOrdered ? "ol-task" : "ul-task";
+            if (!listStack || listStack.type !== listType) {
                 closeList();
-                html.push('<ul class="task-list">');
-                listStack = { type: "ul" };
+                html.push(isOrdered ? '<ol class="task-list">' : '<ul class="task-list">');
+                listStack = { type: listType };
             }
-            const checked = taskMatch[1].toLowerCase() === "x";
+            const checked = taskMatch[2].toLowerCase() === "x";
             html.push(
                 `<li class="task-list-item"><input type="checkbox" disabled${checked ? " checked" : ""} /> ${renderInline(
-                    taskMatch[2]
+                    taskMatch[3]
                 )}</li>`
             );
             i++;
