@@ -10,7 +10,10 @@ Detailed anatomy and examples for each customization type. Read this file when t
 |--------|------|-------|
 | Repo-wide | `.github/copilot-instructions.md` | Every chat request |
 | Path-specific | `.github/instructions/*.instructions.md` | Files matching `applyTo` glob |
+| User-scoped (CLI) | `~/.copilot/instructions/*.instructions.md` | All repos for current user |
 | Cross-agent | `AGENTS.md` or `CLAUDE.md` at repo root | Detected by VS Code, Claude Code |
+
+> Windows user-scope root example: `C:\Users\<username>\.copilot` (or `%USERPROFILE%\.copilot`; generic form: `~/.copilot`).
 
 ### Path-specific frontmatter
 
@@ -67,6 +70,15 @@ tools:
 
 ```
 .github/skills/{skill-name}/
+├── SKILL.md          <- required entry point
+├── supporting-file   <- optional reference files
+└── templates/        <- optional templates
+```
+
+User-scoped CLI skills live under:
+
+```
+~/.copilot/skills/{skill-name}/
 ├── SKILL.md          <- required entry point
 ├── supporting-file   <- optional reference files
 └── templates/        <- optional templates
