@@ -1,6 +1,6 @@
 // Small, dependency-free Markdown -> HTML renderer.
 //
-// This is a pragmatic GFM subset, not a full CommonMark implementation:
+// This is a pragmatic GitHub Flavored Markdown (GFM) subset, not a full CommonMark implementation:
 // headings, bold/italic, inline code, fenced code blocks, unordered/ordered
 // lists (incl. GFM task list checkboxes), pipe tables, links, images,
 // blockquotes, horizontal rules, paragraphs, and a sanitized <details>/
@@ -296,7 +296,7 @@ export function renderMarkdown(markdown) {
             continue;
         }
 
-        // GFM task list item: - [ ] / - [x], or a numbered checklist item
+        // GitHub Flavored Markdown (GFM) task list item: - [ ] / - [x], or a numbered checklist item
         // (1. [ ] / 1) [x]) — the ordinal marker is only used to decide
         // whether to render an <ol> vs <ul> wrapper; the checkbox itself
         // still fully determines the item's checked state either way.
