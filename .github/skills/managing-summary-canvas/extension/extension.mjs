@@ -10,7 +10,7 @@
 import { createServer } from "node:http";
 import { joinSession, createCanvas, CanvasError } from "@github/copilot-sdk/extension";
 import { renderPage, renderContent } from "./render.mjs";
-import { loadDocument, saveDocument } from "./store.mjs";
+import { loadDocument, saveDocument, loadInstanceMapping, saveInstanceMapping, deleteInstanceMapping } from "./store.mjs";
 import { summarizeActionItems } from "./tasks.mjs";
 
 // instanceId -> { server, url, documentId, clients: Set<ServerResponse> }
@@ -71,6 +71,22 @@ async function startServer(instanceId) {
     return { server, url: `http://127.0.0.1:${port}/` };
 }
 
+// Resolves an instanceId to a usable entry for get_state/update_markdown,
+// even if the in-memory `instances` map was wiped by a full extension
+// process restart (`extensions_reload`). Falls back to the durable
+// instanceId -> documentId index (Bug 2): document content itself was
+// always persisted, only the live registration was memory-only. The
+// reconstructed entry has no live HTTP server/clients — that only comes
+// back once the host re-calls `open()` — but that's not needed to read or
+// write the document.
+async function resolveEntry(instanceId) {
+    const live = instances.get(instanceId);
+    if (live) return live;
+    const documentId = await loadInstanceMapping(instanceId);
+    if (!documentId) return null;
+    return { documentId, clients: new Set(), version: 0, lastHtml: undefined, server: null, url: null };
+}
+
 function broadcast(documentId, html) {
     for (const entry of instances.values()) {
         if (entry.documentId !== documentId) continue;
@@ -120,13 +136,23 @@ await joinSession({
                         },
                     },
                     handler: async (ctx) => {
-                        const entry = instances.get(ctx.instanceId);
+                        const entry = await resolveEntry(ctx.instanceId);
                         if (!entry) {
                             throw new CanvasError("instance_not_found", `No open canvas instance '${ctx.instanceId}'.`);
                         }
                         const prior = await loadDocument(entry.documentId);
                         const title = ctx.input.title ?? prior?.title ?? "Conversation summary";
                         await saveDocument(entry.documentId, { title, markdown: ctx.input.markdown });
+                        // Read back the just-written document before reporting success
+                        // (Bug 4): `get_state` and this handler must never disagree
+                        // about what was actually persisted.
+                        const verify = await loadDocument(entry.documentId);
+                        if (!verify || verify.markdown !== ctx.input.markdown || verify.title !== title) {
+                            throw new CanvasError(
+                                "write_not_confirmed",
+                                `Wrote document '${entry.documentId}' but the read-back did not match; the write may not have persisted.`
+                            );
+                        }
                         broadcast(entry.documentId, renderContent(ctx.input.markdown));
                         return { ok: true, documentId: entry.documentId };
                     },
@@ -136,7 +162,7 @@ await joinSession({
                     description:
                         "Read back the current Markdown content of an already-open canvas instance, plus a parsed summary of its Action Items (total/done/remaining, and each item's text and checked state). Use this to answer questions like 'how many tasks are left?' or to compose an update without having to recall the full document from conversation history.",
                     handler: async (ctx) => {
-                        const entry = instances.get(ctx.instanceId);
+                        const entry = await resolveEntry(ctx.instanceId);
                         if (!entry) {
                             throw new CanvasError("instance_not_found", `No open canvas instance '${ctx.instanceId}'.`);
                         }
@@ -165,6 +191,11 @@ await joinSession({
                 } else {
                     entry.documentId = documentId;
                 }
+                // Persist the instanceId -> documentId link (Bug 2) so a
+                // later extensions_reload can still resolve get_state/
+                // update_markdown for this instanceId via resolveEntry(),
+                // without needing the host to call open() again first.
+                await saveInstanceMapping(ctx.instanceId, documentId);
 
                 const existing = await loadDocument(documentId);
                 // First open (or explicit content passed) wins; otherwise
@@ -188,6 +219,11 @@ await joinSession({
                 };
             },
             onClose: async (ctx) => {
+                // Always clean up the durable mapping, even when the
+                // in-memory entry is gone (e.g. after extensions_reload
+                // wiped the instances Map). deleteInstanceMapping is
+                // safe to call when the file doesn't exist.
+                await deleteInstanceMapping(ctx.instanceId);
                 const entry = instances.get(ctx.instanceId);
                 if (entry) {
                     instances.delete(ctx.instanceId);
