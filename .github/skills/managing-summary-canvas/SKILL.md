@@ -185,18 +185,53 @@ recompose of every section.
 2. Get the canvas's current full Markdown via `invoke_canvas_action({ instanceId, actionName: "get_state" })`
    — don't guess or reconstruct it from conversation memory, which may be
    stale or gone after context compaction/a new session.
-3. Append one new unchecked item to the end of the `## Action Items` list:
-   `- [ ] <description>`. Leave every other section untouched.
-4. Call `invoke_canvas_action({ instanceId: "<that instance>", actionName: "update_markdown", input: { markdown: "<full markdown with the new item appended>" } })`.
-5. Do not reset checked items, reorder existing items, or touch other
-   sections (What Was Built, What We Learned, Reviewer Matrix) when doing
-   this — only the Action Items list changes.
+3. Decide where the new item goes in the `## Action Items` list. This is a
+   deliberately lightweight substitute for a real dependency graph — no
+   "depends on" tracking, no separate data structure, just a placement
+   judgment made fresh each time a task is added:
+   - **Default: append it as the last item** in the list.
+   - **Before finalizing that default, check the existing *open*
+     (unchecked) items only** (skip anything already checked off — it's
+     done, it can't be blocked): does the new task read as something that
+     has to happen *before* one of them can reasonably be started (e.g. it
+     produces something that item needs, or is an obvious precondition)?
+     Judge this from the plain meaning of the task text — don't build or
+     persist any dependency structure to justify it.
+   - **If yes**, insert the new item immediately *above* the earliest open
+     item it blocks, instead of at the end, so that item isn't silently
+     stuck behind something added later.
+   - **If it's genuinely unclear** whether the new task blocks (or is
+     blocked by) an existing open item — not just "could go earlier or
+     later with no consequence," but actually ambiguous whether skipping
+     it would leave an open item unstartable — ask the user where to place
+     it (e.g. "before item N" vs. "at the end") rather than guessing.
+   - The goal this preserves: the **topmost open item should always be
+     something the user can actually start right now**. Never let adding a
+     task silently leave an earlier open item blocked by it.
+4. Insert as `- [ ] <description>` at the position decided above. Leave
+   every other section, and the relative order of every other Action Item,
+   untouched.
+5. Call `invoke_canvas_action({ instanceId: "<that instance>", actionName: "update_markdown", input: { markdown: "<full markdown with the new item inserted>" } })`.
+6. Do not reset checked items, reorder existing items beyond the single
+   insertion above, or touch other sections (What Was Built, What We
+   Learned, Reviewer Matrix) when doing this — only the Action Items list
+   changes, and only by adding the one new line.
 
 Example: "add a task for getting the groceries" against a canvas whose
 Action Items list currently ends with
 `- [ ] Review this canvas render (header link, action items placement, reviewer matrix)`
 should append `- [ ] Getting the groceries` as a new line directly after it,
 then push the whole updated document via `update_markdown`.
+
+Example (blocking case): the Action Items list currently reads
+`- [ ] Write the deployment doc` then `- [ ] Deploy to production`, and the
+user says "add a task to get sign-off from the security team first". This
+new task is a plain-meaning prerequisite for "Deploy to production" (you
+can't deploy before sign-off), so it's inserted *above* that item rather
+than appended to the end:
+`- [ ] Write the deployment doc`, `- [ ] Get sign-off from the security team`,
+`- [ ] Deploy to production`. "Write the deployment doc" is untouched and
+stays the topmost, still-startable item.
 
 ## Reading the canvas
 
