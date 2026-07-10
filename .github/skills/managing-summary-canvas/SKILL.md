@@ -66,6 +66,7 @@ verify" leaves a reproducible, committed artifact instead of relying on
 one-off interactive testing:
 - the header renders as a working link containing the issue number
 - Action Items appears directly below the header
+- Action Items render with visible "To Do" and "Completed" group labels
 - "What Was Built" collapses via `<details>`/`<summary>`
 - the Reviewer Matrix renders as a table (including a pending row) above
   "What We Learned"
@@ -118,11 +119,12 @@ Rules:
   sentence of context. Always first.
 - **Action Items** — pinned directly below the header. Real, actionable
   items only. This is also where reviewer feedback lives (see below) —
-  don't duplicate it in the matrix. The canvas automatically renders open
-  items first, then a "Completed" divider, then checked-off items — so
-  when checking an item off in the source Markdown, just flip its
-  `- [ ]`/`- [x]` marker in place; don't manually reorder the list, the
-  canvas regroups it for display.
+  don't duplicate it in the matrix. Keep one flat checklist in the source
+  Markdown without hand-written subgroup headings. The canvas automatically
+  renders unchecked items under a visible **To Do** label and checked items
+  under a visible **Completed** label. When checking an item off, just flip
+  its `- [ ]`/`- [x]` marker in place; don't manually regroup the source
+  list.
 - **What Was Built** — collapsed via `<details>`/`<summary>`, capped at 3-5
   bullets. The PR diff already has full detail; don't duplicate it here.
 - **Reviewer Matrix** — placed directly after "What Was Built" and above
@@ -304,4 +306,3 @@ only on explicit request.
    (followed by the done items, which the renderer already groups
    separately). Leave every other section untouched.
 6. Push the full amended document via `update_markdown`.
-

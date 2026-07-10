@@ -122,37 +122,43 @@ test("numbered-checkbox lists render as an <ol> with working checkboxes, not a p
 
 // Feature: Action Items are visually regrouped so open items are separated
 // from completed ones, instead of being interleaved in raw document order.
-test("Action Items with a mix of open and done items are split into a todo group, then a Completed divider, then the done group", () => {
+test("Action Items with a mix of open and done items render labeled To Do and Completed groups", () => {
     const mixed = `## Action Items
 - [x] first done
 - [ ] first open
 - [x] second done
 - [ ] second open`;
     const html = renderMarkdown(mixed);
-    const dividerIdx = html.indexOf('class="task-list-section-label"');
+    const todoLabelIdx = html.indexOf(">To Do</div>");
+    const completedLabelIdx = html.indexOf(">Completed</div>");
     const firstOpenIdx = html.indexOf("first open");
     const secondOpenIdx = html.indexOf("second open");
     const firstDoneIdx = html.indexOf("first done");
     const secondDoneIdx = html.indexOf("second done");
 
-    assert.ok(dividerIdx >= 0, "expected a Completed divider when both open and done items are present");
-    // Both open items precede the divider, preserving their relative order.
-    assert.ok(firstOpenIdx < dividerIdx && secondOpenIdx < dividerIdx);
+    assert.ok(todoLabelIdx >= 0, "expected a To Do group label");
+    assert.ok(completedLabelIdx >= 0, "expected a Completed group label");
+    // Both open items follow To Do and precede Completed, preserving their relative order.
+    assert.ok(firstOpenIdx > todoLabelIdx && secondOpenIdx < completedLabelIdx);
     assert.ok(firstOpenIdx < secondOpenIdx);
-    // Both done items come after the divider, preserving their relative order.
-    assert.ok(firstDoneIdx > dividerIdx && secondDoneIdx > dividerIdx);
+    // Both done items come after Completed, preserving their relative order.
+    assert.ok(firstDoneIdx > completedLabelIdx && secondDoneIdx > completedLabelIdx);
     assert.ok(firstDoneIdx < secondDoneIdx);
 });
 
-test("Action Items with only open (or only done) items render without a Completed divider", () => {
+test("Action Items with only one state still render the corresponding group label", () => {
     const allOpen = `## Action Items
 - [ ] a
 - [ ] b`;
     const allDone = `## Action Items
 - [x] a
 - [x] b`;
-    assert.doesNotMatch(renderMarkdown(allOpen), /task-list-section-label/);
-    assert.doesNotMatch(renderMarkdown(allDone), /task-list-section-label/);
+    const openHtml = renderMarkdown(allOpen);
+    const doneHtml = renderMarkdown(allDone);
+    assert.match(openHtml, />To Do<\/div>/);
+    assert.doesNotMatch(openHtml, />Completed<\/div>/);
+    assert.match(doneHtml, />Completed<\/div>/);
+    assert.doesNotMatch(doneHtml, />To Do<\/div>/);
 });
 
 test("grouping is scoped to the Action Items section — a task list elsewhere in the document is unaffected", () => {
