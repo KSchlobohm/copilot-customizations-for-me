@@ -142,10 +142,9 @@ export function renderMarkdown(markdown) {
     let inActionItems = false;
     let actionItemsBuffer = null; // { type: 'ul-task'|'ol-task', items: [{ checked, html }] }
 
-    // Emits the buffered Action Items as two groups — open items first,
-    // then a "Completed" divider and the checked-off ones — so completed
-    // work doesn't visually clutter what's still outstanding. If a section
-    // is all-open or all-done, no divider is shown (nothing to separate).
+    // Emits the buffered Action Items as visibly labeled groups — open items
+    // under "To Do", then checked-off items under "Completed" — so the two
+    // states remain distinguishable even when only one group is present.
     // The source Markdown order within each group is preserved; only the
     // open/done split is applied, so authors can keep checking items off
     // in place without needing to manually reorder the list.
@@ -168,12 +167,13 @@ export function renderMarkdown(markdown) {
         }
         const todo = items.filter((item) => !item.checked);
         const done = items.filter((item) => item.checked);
-        if (todo.length && done.length) {
+        if (todo.length) {
+            html.push('<div class="task-list-section-label">To Do</div>');
             renderGroup(todo);
+        }
+        if (done.length) {
             html.push('<div class="task-list-section-label">Completed</div>');
             renderGroup(done);
-        } else {
-            renderGroup(items);
         }
     }
 
