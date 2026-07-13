@@ -121,7 +121,6 @@ type not explicitly listed, use the default pair.
 | Claude Opus 4.8 (reasoning: high) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
 | GPT-5.6 (reasoning: high) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
 | Gemini 3.5 Flash (reasoning: high) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
-| (Model family unknown) (Version unknown) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
 
 ## What We Learned
 <insights / gotchas discovered during the work that aren't in the PR>
@@ -173,12 +172,16 @@ Rules:
 
   Any actual finding, concern, or comment a reviewer raises — whether it's
   still open or was fixed — goes into **Action Items** instead, as its own
-  line attributed to that reviewer by name, e.g.:
-  `- [x] (Claude Opus 4.8 (reasoning: high)) Fixed a URL-scheme allow-list bypass via a
+  line attributed with the shortest unambiguous reviewer shorthand, e.g.:
+  `- [x] (Opus) Fixed a URL-scheme allow-list bypass via a
   leading C0 control character before \`javascript:\` — sanitized and
   regression-tested.`
-  `- [ ] (GPT-5.6 (reasoning: high)) Missing \`name\` param in the \`install_extension\`
+  `- [ ] (GPT-5.6) Missing \`name\` param in the \`install_extension\`
   example would install under the wrong folder.`
+  Prefer familiar labels such as `Opus`, `Gemini`, or `GPT-5.6`; the matrix
+  is the source of truth for full family, version, and reasoning metadata.
+  If two matrix rows would share a shorthand, add only enough detail to make
+  the Action Item attribution unambiguous.
   Check the box once the concern is resolved and verified, same as any
   other action item; leave it unchecked while still outstanding. This way
   the matrix always answers "is it green" at a glance, and Action Items
@@ -197,6 +200,8 @@ Rules:
     dropping it: `<family> (Version unknown) (reasoning: high)`,
     `(Model family unknown) <version> (reasoning: high)`, or
     `(Model family unknown) (Version unknown)`.
+    Add an unknown-metadata row only for an actual reviewer whose metadata is
+    unavailable; do not include a placeholder reviewer in a new matrix.
   - Preserve the reported reasoning-depth value exactly; do not infer,
     translate, or normalize it. Append the reasoning suffix only when
     reasoning depth is a property supported by that model. For a

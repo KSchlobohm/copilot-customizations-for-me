@@ -52,6 +52,7 @@ const WRITING_SAMPLE_MARKDOWN = SAMPLE_MARKDOWN
     .replace("| Reviewer | Safe to Merge | Closes Scope |", "| Reviewer | Evidence & Consistency | Readability & Tone |");
 
 const SKILL_MARKDOWN = await readFile(new URL("../SKILL.md", import.meta.url), "utf8");
+const SKILL_SCAFFOLD = SKILL_MARKDOWN.match(/```markdown\r?\n([\s\S]*?)\r?\n```/)?.[1] ?? "";
 
 function reviewerHeaders(markdown) {
     const html = renderMarkdown(markdown);
@@ -128,6 +129,18 @@ test("skill guidance defaults reasoning-capable reviewers to high", () => {
         SKILL_MARKDOWN,
         /When selecting reviewers, use `high` for every reasoning-capable model/
     );
+});
+
+test("skill guidance uses short unambiguous reviewer labels in Action Items", () => {
+    assert.match(SKILL_MARKDOWN, /shortest unambiguous reviewer shorthand/);
+    assert.match(SKILL_MARKDOWN, /`- \[x\] \(Opus\)/);
+    assert.match(SKILL_MARKDOWN, /`- \[ \] \(GPT-5\.6\)/);
+    assert.match(SKILL_MARKDOWN, /matrix\s+is the source of truth for full family, version, and reasoning metadata/);
+});
+
+test("skill scaffold does not seed a phantom unknown reviewer", () => {
+    assert.doesNotMatch(SKILL_SCAFFOLD, /\(Model family unknown\)/);
+    assert.match(SKILL_MARKDOWN, /Add an unknown-metadata row only for an actual reviewer/);
 });
 
 test("summarizeActionItems agrees with the checkbox states in the rendered document", () => {
