@@ -119,7 +119,7 @@ type not explicitly listed, use the default pair.
 | Reviewer | Safe to Merge | Closes Scope |
 |---|---|---|
 | Claude Opus 4.8 (reasoning: high) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
-| GPT-5.5 (reasoning: xhigh) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
+| GPT-5.6 (reasoning: high) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
 | Gemini 3.5 Flash (reasoning: minimal) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
 | (Model family unknown) (Version unknown) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
 
@@ -177,7 +177,7 @@ Rules:
   `- [x] (Claude Opus 4.8 (reasoning: high)) Fixed a URL-scheme allow-list bypass via a
   leading C0 control character before \`javascript:\` — sanitized and
   regression-tested.`
-  `- [ ] (GPT-5.5 (reasoning: xhigh)) Missing \`name\` param in the \`install_extension\`
+  `- [ ] (GPT-5.6 (reasoning: high)) Missing \`name\` param in the \`install_extension\`
   example would install under the wrong folder.`
   Check the box once the concern is resolved and verified, same as any
   other action item; leave it unchecked while still outstanding. This way
@@ -188,7 +188,7 @@ Rules:
   - Use the full available family + version followed by the exact reasoning
     depth as `<family> <version> (reasoning: <depth>)` when metadata is known
     (for example `Claude Opus 4.8 (reasoning: high)`,
-    `GPT-5.6 (reasoning: xhigh)`, or
+    `GPT-5.6 (reasoning: high)`, or
     `Gemini 3.5 Flash (reasoning: minimal)`).
   - If any part is missing, represent it explicitly in the label rather than
     dropping it: `<family> (Version unknown) (reasoning: high)`,
