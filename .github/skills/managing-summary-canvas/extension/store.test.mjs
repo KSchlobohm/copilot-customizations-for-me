@@ -22,11 +22,37 @@ process.env.COPILOT_HOME = tmpHome;
 
 const { loadDocument, saveDocument, loadInstanceMapping, saveInstanceMapping } = await import("./store.mjs");
 
+const CODE_MATRIX = `## Reviewer Matrix
+
+| Reviewer | Safe to Merge | Closes Scope |
+|---|---|---|
+| GPT-5.x | ⏳ Not yet reviewed | ⏳ Not yet reviewed |`;
+
+const WRITING_MATRIX = `## Reviewer Matrix
+
+| Reviewer | Evidence & Consistency | Readability & Tone |
+|---|---|---|
+| GPT-5.x | ⏳ Not yet reviewed | ⏳ Not yet reviewed |`;
+
 test("saveDocument then loadDocument round-trips the exact content written (Bug 4 precondition)", async () => {
-    await saveDocument("doc-1", { title: "Doc One", markdown: "## Action Items\n- [ ] a" });
+    const markdown = `## Action Items\n- [ ] a\n\n${CODE_MATRIX}`;
+    await saveDocument("doc-1", { title: "Doc One", markdown });
     const doc = await loadDocument("doc-1");
     assert.equal(doc.title, "Doc One");
-    assert.equal(doc.markdown, "## Action Items\n- [ ] a");
+    assert.equal(doc.markdown, markdown);
+    assert.match(doc.markdown, /\| Reviewer \| Safe to Merge \| Closes Scope \|/);
+});
+
+test("writing reviewer headers survive durable reload and a full-document update", async () => {
+    const initial = `## Action Items\n- [ ] Draft article\n\n${WRITING_MATRIX}`;
+    await saveDocument("writing-doc", { title: "Writing", markdown: initial });
+    assert.equal((await loadDocument("writing-doc")).markdown, initial);
+
+    const updated = `## Action Items\n- [x] Draft article\n- [ ] Copy edit\n\n${WRITING_MATRIX}`;
+    await saveDocument("writing-doc", { title: "Writing", markdown: updated });
+    const reloaded = await loadDocument("writing-doc");
+    assert.equal(reloaded.markdown, updated);
+    assert.match(reloaded.markdown, /\| Reviewer \| Evidence & Consistency \| Readability & Tone \|/);
 });
 
 test("loadDocument returns null for a documentId that was never saved", async () => {
@@ -45,7 +71,7 @@ test("instanceId -> documentId mapping survives independently of any in-memory i
     const documentId = await loadInstanceMapping("panel-abc");
     assert.equal(documentId, "doc-1");
     const doc = await loadDocument(documentId);
-    assert.equal(doc.markdown, "## Action Items\n- [ ] a");
+    assert.match(doc.markdown, /\| Reviewer \| Safe to Merge \| Closes Scope \|/);
 });
 
 test("deleteInstanceMapping removes the mapping so loadInstanceMapping returns null afterward", async () => {
