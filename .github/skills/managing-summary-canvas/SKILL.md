@@ -109,7 +109,7 @@ omit the reviewer matrix.
 | Claude Opus 4.8 (reasoning: high) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
 | GPT-5.5 (reasoning: xhigh) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
 | Gemini 3.5 Flash (reasoning: minimal) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
-| (Model family unknown) (Version unknown) (reasoning: unknown) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
+| (Model family unknown) (Version unknown) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
 
 ## What We Learned
 <insights / gotchas discovered during the work that aren't in the PR>
@@ -169,10 +169,14 @@ Rules:
   - If any part is missing, represent it explicitly in the label rather than
     dropping it: `<family> (Version unknown) (reasoning: high)`,
     `(Model family unknown) <version> (reasoning: high)`, or
-    `(Model family unknown) (Version unknown) (reasoning: unknown)`.
+    `(Model family unknown) (Version unknown)`.
   - Preserve the reported reasoning-depth value exactly; do not infer,
-    translate, or normalize it. Use `(reasoning: unknown)` when the metadata
-    is unavailable.
+    translate, or normalize it. Append the reasoning suffix only when
+    reasoning depth is a property supported by that model. For a
+    reasoning-capable model, use `(reasoning: unknown)` when its selected
+    depth is unavailable. For a model that does not expose reasoning depth,
+    or when reasoning capability itself is unavailable, omit the suffix
+    entirely (for example `Claude Haiku 4.5`).
   - Never collapse or normalize distinct versions or reasoning depths into
     one row (`GPT-5.x`, `Gemini`, `Claude Opus`, etc.). `GPT-5.6
     (reasoning: high)` and `GPT-5.6 (reasoning: xhigh)` remain separate

@@ -38,8 +38,9 @@ Build a canvas + skill for tracking and resuming work across sessions.
 | Claude Opus 4.8 (reasoning: high) | ✅ Pass | ✅ Pass |
 | GPT-5.6 (reasoning: high) | ✅ Pass | ✅ Pass |
 | GPT-5.6 (reasoning: xhigh) | ⚠️ Pass with concerns | ✅ Pass |
+| Claude Haiku 4.5 | ✅ Pass | ✅ Pass |
 | Gemini 3.5 Flash (reasoning: minimal) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
-| (Model family unknown) (Version unknown) (reasoning: unknown) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
+| (Model family unknown) (Version unknown) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
 
 ## What We Learned
 Markdown link/image syntax and raw-HTML passthrough are both real XSS surfaces
@@ -83,8 +84,11 @@ test("Reviewer Matrix renders as a table with per-reviewer verdicts, including a
     assert.match(html, /Claude Opus 4\.8 \(reasoning: high\)/);
     assert.match(html, /GPT-5\.6 \(reasoning: high\)/);
     assert.match(html, /GPT-5\.6 \(reasoning: xhigh\)/);
+    assert.match(html, /Claude Haiku 4\.5/);
+    assert.doesNotMatch(html, /Claude Haiku 4\.5 \(reasoning:/);
     assert.match(html, /Gemini 3\.5 Flash \(reasoning: minimal\)/);
-    assert.match(html, /\(Model family unknown\) \(Version unknown\) \(reasoning: unknown\)/);
+    assert.match(html, /\(Model family unknown\) \(Version unknown\)/);
+    assert.doesNotMatch(html, /\(Model family unknown\) \(Version unknown\) \(reasoning:/);
     assert.match(html, /Pass with concerns/);
     assert.match(html, /Not yet reviewed/);
 });

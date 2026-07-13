@@ -35,7 +35,8 @@ test("reviewer identity labels (including distinct reasoning depths and unknown 
 |---|---|---|
 | GPT-5.6 (reasoning: high) | ✅ Pass | ✅ Pass |
 | GPT-5.6 (reasoning: xhigh) | ⚠️ Pass with concerns | ✅ Pass |
-| (Model family unknown) (Version unknown) (reasoning: unknown) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |`;
+| Claude Haiku 4.5 | ✅ Pass | ✅ Pass |
+| (Model family unknown) (Version unknown) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |`;
     await saveDocument("doc-reviewers", { title: "Matrix", markdown });
     const doc = await loadDocument("doc-reviewers");
     assert.equal(doc.markdown, markdown);
