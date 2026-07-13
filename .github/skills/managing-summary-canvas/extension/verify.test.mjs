@@ -36,9 +36,12 @@ Build a canvas + skill for tracking and resuming work across sessions.
 
 | Reviewer | Safe to Merge | Closes Scope |
 |---|---|---|
-| Claude Opus | ✅ Pass | ✅ Pass |
-| GPT-5.x | ✅ Pass | ✅ Pass |
-| Gemini | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
+| Claude Opus 4.8 (reasoning: high) | ✅ Pass | ✅ Pass |
+| GPT-5.6 (reasoning: high) | ✅ Pass | ✅ Pass |
+| GPT-5.6 (reasoning: xhigh) | ⚠️ Pass with concerns | ✅ Pass |
+| Claude Haiku 4.5 | ✅ Pass | ✅ Pass |
+| Gemini 3.5 Flash (reasoning: high) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
+| (Model family unknown) (Version unknown) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
 
 ## What We Learned
 Markdown link/image syntax and raw-HTML passthrough are both real XSS surfaces
@@ -49,6 +52,7 @@ const WRITING_SAMPLE_MARKDOWN = SAMPLE_MARKDOWN
     .replace("| Reviewer | Safe to Merge | Closes Scope |", "| Reviewer | Evidence & Consistency | Readability & Tone |");
 
 const SKILL_MARKDOWN = await readFile(new URL("../SKILL.md", import.meta.url), "utf8");
+const SKILL_SCAFFOLD = SKILL_MARKDOWN.match(/```markdown\r?\n([\s\S]*?)\r?\n```/)?.[1] ?? "";
 
 function reviewerHeaders(markdown) {
     const html = renderMarkdown(markdown);
@@ -90,7 +94,15 @@ test("What Was Built collapses via a sanitized <details>/<summary> block", () =>
 test("code and feature Reviewer Matrix renders exactly the default two verdict columns", () => {
     const html = renderMarkdown(SAMPLE_MARKDOWN);
     assert.match(html, /<table>/);
-    assert.match(html, /Claude Opus/);
+    assert.match(html, /Claude Opus 4\.8 \(reasoning: high\)/);
+    assert.match(html, /GPT-5\.6 \(reasoning: high\)/);
+    assert.match(html, /GPT-5\.6 \(reasoning: xhigh\)/);
+    assert.match(html, /Claude Haiku 4\.5/);
+    assert.doesNotMatch(html, /Claude Haiku 4\.5 \(reasoning:/);
+    assert.match(html, /Gemini 3\.5 Flash \(reasoning: high\)/);
+    assert.match(html, /\(Model family unknown\) \(Version unknown\)/);
+    assert.doesNotMatch(html, /\(Model family unknown\) \(Version unknown\) \(reasoning:/);
+    assert.match(html, /Pass with concerns/);
     assert.match(html, /Not yet reviewed/);
     assert.deepEqual(reviewerHeaders(SAMPLE_MARKDOWN), ["Reviewer", "Safe to Merge", "Closes Scope"]);
 });
@@ -110,6 +122,37 @@ test("skill guidance defines a closed header selection with a fixed default", ()
         /\| Default: code, feature, mixed, ambiguous, or any other work \| Safe to Merge \| Closes Scope \|/
     );
     assert.match(SKILL_MARKDOWN, /This is a closed selection table\. Never invent reviewer headers\./);
+});
+
+test("skill guidance defaults reasoning-capable reviewers to high", () => {
+    assert.match(
+        SKILL_MARKDOWN,
+        /When selecting reviewers, use `high` for every reasoning-capable model/
+    );
+});
+
+test("skill guidance uses short unambiguous reviewer labels in Action Items", () => {
+    assert.match(SKILL_MARKDOWN, /shortest unambiguous reviewer shorthand/);
+    assert.match(SKILL_MARKDOWN, /`- \[x\] \(Opus\)/);
+    assert.match(SKILL_MARKDOWN, /`- \[ \] \(GPT-5\.6\)/);
+    assert.match(SKILL_MARKDOWN, /matrix\s+is the source of truth for full family, version, and reasoning metadata/);
+});
+
+test("skill scaffold does not seed a phantom unknown reviewer", () => {
+    assert.doesNotMatch(SKILL_SCAFFOLD, /\(Model family unknown\)/);
+    assert.match(SKILL_MARKDOWN, /Add an unknown-metadata row only for an actual reviewer/);
+});
+
+test("skill guidance safely rehydrates existing canvases before updating", () => {
+    assert.match(SKILL_MARKDOWN, /Reopening an existing `documentId` with no live instance/);
+    assert.match(SKILL_MARKDOWN, /omit `markdown` so\s+the extension rehydrates the saved document/);
+    assert.match(SKILL_MARKDOWN, /Never send recomposed Markdown before reading the\s+stored state/);
+});
+
+test("skill guidance migrates legacy abbreviated reviewer labels without merging verdicts", () => {
+    assert.match(SKILL_MARKDOWN, /Migrate a legacy abbreviated label/);
+    assert.match(SKILL_MARKDOWN, /use available execution metadata to restore its full\s+identity/);
+    assert.match(SKILL_MARKDOWN, /Never merge legacy rows or alter their verdicts during\s+migration/);
 });
 
 test("summarizeActionItems agrees with the checkbox states in the rendered document", () => {

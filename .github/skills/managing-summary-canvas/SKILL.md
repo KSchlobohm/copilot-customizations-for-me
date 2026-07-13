@@ -118,9 +118,9 @@ type not explicitly listed, use the default pair.
 
 | Reviewer | Safe to Merge | Closes Scope |
 |---|---|---|
-| Claude Opus | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
-| GPT-5.x | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
-| Gemini | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
+| Claude Opus 4.8 (reasoning: high) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
+| GPT-5.6 (reasoning: high) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
+| Gemini 3.5 Flash (reasoning: high) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
 
 ## What We Learned
 <insights / gotchas discovered during the work that aren't in the PR>
@@ -172,17 +172,58 @@ Rules:
 
   Any actual finding, concern, or comment a reviewer raises — whether it's
   still open or was fixed — goes into **Action Items** instead, as its own
-  line attributed to that reviewer by name, e.g.:
-  `- [x] (Claude Opus 4.8) Fixed a URL-scheme allow-list bypass via a
+  line attributed with the shortest unambiguous reviewer shorthand, e.g.:
+  `- [x] (Opus) Fixed a URL-scheme allow-list bypass via a
   leading C0 control character before \`javascript:\` — sanitized and
   regression-tested.`
-  `- [ ] (GPT-5.5) Missing \`name\` param in the \`install_extension\`
+  `- [ ] (GPT-5.6) Missing \`name\` param in the \`install_extension\`
   example would install under the wrong folder.`
+  Prefer familiar labels such as `Opus`, `Gemini`, or `GPT-5.6`; the matrix
+  is the source of truth for full family, version, and reasoning metadata.
+  If two matrix rows would share a shorthand, add only enough detail to make
+  the Action Item attribution unambiguous.
   Check the box once the concern is resolved and verified, same as any
   other action item; leave it unchecked while still outstanding. This way
   the matrix always answers "is it green" at a glance, and Action Items
   is the one place with the actual substance and history of what reviewers
   found.
+  Reviewer identity in the first column must always preserve model details:
+  - Use the full available family + version followed by the exact reasoning
+    depth as `<family> <version> (reasoning: <depth>)` when metadata is known
+    (for example `Claude Opus 4.8 (reasoning: high)`,
+    `GPT-5.6 (reasoning: high)`, or
+    `Gemini 3.5 Flash (reasoning: high)`).
+  - When selecting reviewers, use `high` for every reasoning-capable model
+    unless the user explicitly requests another supported depth. Once a
+    review runs, label it with the exact depth actually selected.
+  - If any part is missing, represent it explicitly in the label rather than
+    dropping it: `<family> (Version unknown) (reasoning: high)`,
+    `(Model family unknown) <version> (reasoning: high)`, or
+    `(Model family unknown) (Version unknown)`.
+    Add an unknown-metadata row only for an actual reviewer whose metadata is
+    unavailable; do not include a placeholder reviewer in a new matrix.
+  - Preserve the reported reasoning-depth value exactly; do not infer,
+    translate, or normalize it. Append the reasoning suffix only when
+    reasoning depth is a property supported by that model. For a
+    reasoning-capable model, use `(reasoning: unknown)` when its selected
+    depth is unavailable. For a model that does not expose reasoning depth,
+    or when reasoning capability itself is unavailable, omit the suffix
+    entirely (for example `Claude Haiku 4.5`).
+  - Never collapse or normalize distinct versions or reasoning depths into
+    one row (`GPT-5.x`, `Gemini`, `Claude Opus`, etc.). `GPT-5.6
+    (reasoning: high)` and `GPT-5.6 (reasoning: xhigh)` remain separate
+    reviewer identities with separate verdicts.
+  - On refresh/resume, call `get_state` before rewriting matrix rows. Preserve
+    labels that already follow the full identity rules exactly as stored.
+    Migrate a legacy abbreviated label (for example `GPT-5.x`, `Gemini`, or
+    `Claude Opus`) once: use available execution metadata to restore its full
+    identity, or use explicit unknown placeholders for unavailable family or
+    version metadata. Never merge legacy rows or alter their verdicts during
+    migration. This keeps reviewer identity stable without preserving
+    ambiguous labels indefinitely.
+  - Identity formatting does not alter verdict semantics. Keep verdict values
+    exactly the same statuses (`✅ Pass`, `❌ Fail`, `⚠️ Pass with concerns`,
+    `⏳ Not yet reviewed`) regardless of whether model metadata is complete.
 - **What We Learned** — last section. New insights/gotchas not captured
   elsewhere.
 
@@ -190,6 +231,11 @@ Rules:
 
 - **First time for this `documentId`:**
   `open_canvas({ canvasId: "conversation-summary-canvas", instanceId: "<pick-one>", input: { documentId, title: "<issue title>", markdown } })`
+- **Reopening an existing `documentId` with no live instance:**
+  call `open_canvas` with `documentId` and `title` only — omit `markdown` so
+  the extension rehydrates the saved document — then call `get_state` before
+  composing any update. Never send recomposed Markdown before reading the
+  stored state.
 - **"Update the conversation summary canvas" (or close variants), and an
   instance is already open for this `documentId`:**
   `invoke_canvas_action({ instanceId: "<same instance>", actionName: "update_markdown", input: { markdown } })`

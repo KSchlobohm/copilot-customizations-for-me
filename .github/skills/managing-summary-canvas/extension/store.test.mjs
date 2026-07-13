@@ -26,13 +26,13 @@ const CODE_MATRIX = `## Reviewer Matrix
 
 | Reviewer | Safe to Merge | Closes Scope |
 |---|---|---|
-| GPT-5.x | ⏳ Not yet reviewed | ⏳ Not yet reviewed |`;
+| GPT-5.6 (reasoning: high) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |`;
 
 const WRITING_MATRIX = `## Reviewer Matrix
 
 | Reviewer | Evidence & Consistency | Readability & Tone |
 |---|---|---|
-| GPT-5.x | ⏳ Not yet reviewed | ⏳ Not yet reviewed |`;
+| GPT-5.6 (reasoning: high) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |`;
 
 test("saveDocument then loadDocument round-trips the exact content written (Bug 4 precondition)", async () => {
     const markdown = `## Action Items\n- [ ] a\n\n${CODE_MATRIX}`;
@@ -53,6 +53,19 @@ test("writing reviewer headers survive durable reload and a full-document update
     const reloaded = await loadDocument("writing-doc");
     assert.equal(reloaded.markdown, updated);
     assert.match(reloaded.markdown, /\| Reviewer \| Evidence & Consistency \| Readability & Tone \|/);
+});
+
+test("reviewer identity labels (including distinct reasoning depths and unknown metadata) survive resume/reload unchanged", async () => {
+    const markdown = `## Reviewer Matrix
+| Reviewer | Safe to Merge | Closes Scope |
+|---|---|---|
+| GPT-5.6 (reasoning: high) | ✅ Pass | ✅ Pass |
+| GPT-5.6 (reasoning: xhigh) | ⚠️ Pass with concerns | ✅ Pass |
+| Claude Haiku 4.5 | ✅ Pass | ✅ Pass |
+| (Model family unknown) (Version unknown) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |`;
+    await saveDocument("doc-reviewers", { title: "Matrix", markdown });
+    const doc = await loadDocument("doc-reviewers");
+    assert.equal(doc.markdown, markdown);
 });
 
 test("loadDocument returns null for a documentId that was never saved", async () => {
