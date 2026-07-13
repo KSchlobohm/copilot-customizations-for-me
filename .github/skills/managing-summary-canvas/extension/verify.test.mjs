@@ -35,11 +35,11 @@ Build a canvas + skill for tracking and resuming work across sessions.
 
 | Reviewer | Safe to Merge | Closes Scope |
 |---|---|---|
-| Claude Opus 4.8 | ✅ Pass | ✅ Pass |
-| GPT-5.5 | ✅ Pass | ✅ Pass |
-| GPT-5.6 | ⚠️ Pass with concerns | ✅ Pass |
-| Gemini 3.5 Flash | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
-| (Model family unknown) (Version unknown) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
+| Claude Opus 4.8 (reasoning: high) | ✅ Pass | ✅ Pass |
+| GPT-5.6 (reasoning: high) | ✅ Pass | ✅ Pass |
+| GPT-5.6 (reasoning: xhigh) | ⚠️ Pass with concerns | ✅ Pass |
+| Gemini 3.5 Flash (reasoning: minimal) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
+| (Model family unknown) (Version unknown) (reasoning: unknown) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
 
 ## What We Learned
 Markdown link/image syntax and raw-HTML passthrough are both real XSS surfaces
@@ -80,11 +80,11 @@ test("What Was Built collapses via a sanitized <details>/<summary> block", () =>
 test("Reviewer Matrix renders as a table with per-reviewer verdicts, including a pending row", () => {
     const html = renderMarkdown(SAMPLE_MARKDOWN);
     assert.match(html, /<table>/);
-    assert.match(html, /Claude Opus 4\.8/);
-    assert.match(html, /GPT-5\.5/);
-    assert.match(html, /GPT-5\.6/);
-    assert.match(html, /Gemini 3\.5 Flash/);
-    assert.match(html, /\(Model family unknown\) \(Version unknown\)/);
+    assert.match(html, /Claude Opus 4\.8 \(reasoning: high\)/);
+    assert.match(html, /GPT-5\.6 \(reasoning: high\)/);
+    assert.match(html, /GPT-5\.6 \(reasoning: xhigh\)/);
+    assert.match(html, /Gemini 3\.5 Flash \(reasoning: minimal\)/);
+    assert.match(html, /\(Model family unknown\) \(Version unknown\) \(reasoning: unknown\)/);
     assert.match(html, /Pass with concerns/);
     assert.match(html, /Not yet reviewed/);
 });

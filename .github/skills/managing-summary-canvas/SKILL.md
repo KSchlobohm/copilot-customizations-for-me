@@ -106,10 +106,10 @@ omit the reviewer matrix.
 
 | Reviewer | Safe to Merge | Closes Scope |
 |---|---|---|
-| Claude Opus 4.8 | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
-| GPT-5.5 | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
-| Gemini 3.5 Flash | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
-| (Model family unknown) (Version unknown) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
+| Claude Opus 4.8 (reasoning: high) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
+| GPT-5.5 (reasoning: xhigh) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
+| Gemini 3.5 Flash (reasoning: minimal) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
+| (Model family unknown) (Version unknown) (reasoning: unknown) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
 
 ## What We Learned
 <insights / gotchas discovered during the work that aren't in the PR>
@@ -150,10 +150,10 @@ Rules:
   Any actual finding, concern, or comment a reviewer raises — whether it's
   still open or was fixed — goes into **Action Items** instead, as its own
   line attributed to that reviewer by name, e.g.:
-  `- [x] (Claude Opus 4.8) Fixed a URL-scheme allow-list bypass via a
+  `- [x] (Claude Opus 4.8 (reasoning: high)) Fixed a URL-scheme allow-list bypass via a
   leading C0 control character before \`javascript:\` — sanitized and
   regression-tested.`
-  `- [ ] (GPT-5.5) Missing \`name\` param in the \`install_extension\`
+  `- [ ] (GPT-5.5 (reasoning: xhigh)) Missing \`name\` param in the \`install_extension\`
   example would install under the wrong folder.`
   Check the box once the concern is resolved and verified, same as any
   other action item; leave it unchecked while still outstanding. This way
@@ -161,14 +161,21 @@ Rules:
   is the one place with the actual substance and history of what reviewers
   found.
   Reviewer identity in the first column must always preserve model details:
-  - Use the full available family + version as one label when metadata is
-    known (for example `Claude Opus 4.8`, `GPT-5.6`, `Gemini 3.5 Flash`).
-  - If either part is missing, represent it explicitly in the label rather
-    than dropping it: `<family> (Version unknown)`,
-    `(Model family unknown) <version>`, or
-    `(Model family unknown) (Version unknown)`.
-  - Never collapse or normalize distinct versions into one row (`GPT-5.x`,
-    `Gemini`, `Claude Opus`, etc.). `GPT-5.5` and `GPT-5.6` remain separate
+  - Use the full available family + version followed by the exact reasoning
+    depth as `<family> <version> (reasoning: <depth>)` when metadata is known
+    (for example `Claude Opus 4.8 (reasoning: high)`,
+    `GPT-5.6 (reasoning: xhigh)`, or
+    `Gemini 3.5 Flash (reasoning: minimal)`).
+  - If any part is missing, represent it explicitly in the label rather than
+    dropping it: `<family> (Version unknown) (reasoning: high)`,
+    `(Model family unknown) <version> (reasoning: high)`, or
+    `(Model family unknown) (Version unknown) (reasoning: unknown)`.
+  - Preserve the reported reasoning-depth value exactly; do not infer,
+    translate, or normalize it. Use `(reasoning: unknown)` when the metadata
+    is unavailable.
+  - Never collapse or normalize distinct versions or reasoning depths into
+    one row (`GPT-5.x`, `Gemini`, `Claude Opus`, etc.). `GPT-5.6
+    (reasoning: high)` and `GPT-5.6 (reasoning: xhigh)` remain separate
     reviewer identities with separate verdicts.
   - On refresh/resume, preserve existing reviewer labels exactly as stored in
     the current canvas state. Before rewriting matrix rows, call `get_state`
