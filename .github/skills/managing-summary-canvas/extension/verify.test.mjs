@@ -10,6 +10,7 @@
 // Run with: node --test .github/skills/managing-summary-canvas/extension/verify.test.mjs
 
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import { test } from "node:test";
 
 import { renderMarkdown } from "./markdown.mjs";
@@ -47,6 +48,17 @@ Markdown link/image syntax and raw-HTML passthrough are both real XSS surfaces
 in a hand-rolled renderer; both need explicit sanitization.
 `;
 
+const WRITING_SAMPLE_MARKDOWN = SAMPLE_MARKDOWN
+    .replace("| Reviewer | Safe to Merge | Closes Scope |", "| Reviewer | Evidence & Consistency | Readability & Tone |");
+
+const SKILL_MARKDOWN = await readFile(new URL("../SKILL.md", import.meta.url), "utf8");
+
+function reviewerHeaders(markdown) {
+    const html = renderMarkdown(markdown);
+    const header = html.match(/<thead><tr>(.*?)<\/tr><\/thead>/s)?.[1] ?? "";
+    return [...header.matchAll(/<th>(.*?)<\/th>/g)].map((match) => match[1]);
+}
+
 test("header renders with a working linked issue number and title", () => {
     const html = renderMarkdown(SAMPLE_MARKDOWN);
     assert.match(
@@ -78,7 +90,7 @@ test("What Was Built collapses via a sanitized <details>/<summary> block", () =>
     assert.match(html, /<\/details>/);
 });
 
-test("Reviewer Matrix renders as a table with per-reviewer verdicts, including a pending row", () => {
+test("code and feature Reviewer Matrix renders exactly the default two verdict columns", () => {
     const html = renderMarkdown(SAMPLE_MARKDOWN);
     assert.match(html, /<table>/);
     assert.match(html, /Claude Opus 4\.8 \(reasoning: high\)/);
@@ -91,6 +103,24 @@ test("Reviewer Matrix renders as a table with per-reviewer verdicts, including a
     assert.doesNotMatch(html, /\(Model family unknown\) \(Version unknown\) \(reasoning:/);
     assert.match(html, /Pass with concerns/);
     assert.match(html, /Not yet reviewed/);
+    assert.deepEqual(reviewerHeaders(SAMPLE_MARKDOWN), ["Reviewer", "Safe to Merge", "Closes Scope"]);
+});
+
+test("writing and editorial Reviewer Matrix renders exactly its two verdict columns", () => {
+    assert.deepEqual(reviewerHeaders(WRITING_SAMPLE_MARKDOWN), [
+        "Reviewer",
+        "Evidence &amp; Consistency",
+        "Readability &amp; Tone",
+    ]);
+});
+
+test("skill guidance defines a closed header selection with a fixed default", () => {
+    assert.match(SKILL_MARKDOWN, /\| Writing or editorial .* \| Evidence & Consistency \| Readability & Tone \|/);
+    assert.match(
+        SKILL_MARKDOWN,
+        /\| Default: code, feature, mixed, ambiguous, or any other work \| Safe to Merge \| Closes Scope \|/
+    );
+    assert.match(SKILL_MARKDOWN, /This is a closed selection table\. Never invent reviewer headers\./);
 });
 
 test("summarizeActionItems agrees with the checkbox states in the rendered document", () => {

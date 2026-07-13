@@ -1,12 +1,12 @@
 ---
 name: managing-summary-canvas
-description: Opens, refreshes, adds tasks to, and reads state from a reusable conversation summary canvas — a side-panel Markdown view with a linked issue header, pinned action items, a collapsed build-notes section, a learnings section, and an always-visible reviewer verdict matrix — for tracking and resuming engineering work across sessions. Use when the user explicitly asks to open, show, or update the conversation summary canvas, to add a task or action item to it, to check off or close out an existing task on it, or to ask how many tasks are left or what's still open on it.
+description: Opens, refreshes, adds tasks to, and reads state from a reusable conversation summary canvas — a side-panel Markdown view with a linked issue header, pinned action items, collapsed build notes, learnings, and a work-type-appropriate reviewer verdict matrix — for tracking and resuming work across sessions. Use when the user explicitly asks to open, show, or update the conversation summary canvas, to add a task or action item to it, to check off or close out an existing task on it, or to ask how many tasks are left or what's still open on it.
 ---
 
 # Managing the Summary Canvas
 
 Opens or refreshes a reusable **conversation summary canvas** — a side-panel
-view that lets an engineer track and resume work across sessions without
+view that lets a user track and resume work across sessions without
 hunting through chat history or committing scratch files to a repo.
 
 ## When to Use
@@ -70,6 +70,8 @@ one-off interactive testing:
 - "What Was Built" collapses via `<details>`/`<summary>`
 - the Reviewer Matrix renders as a table (including a pending row) above
   "What We Learned"
+- both allowed reviewer header pairs render with exactly two verdict columns
+- the selected header pair survives durable reload and full-document updates
 - `summarizeActionItems` agrees with the checkbox states in the document
 
 ### 2. Resolve a `documentId` and a backing issue
@@ -87,6 +89,16 @@ header.
 
 Always structure the Markdown in this order. Do not bury Action Items or
 omit the reviewer matrix.
+
+Select the reviewer headers from the primary deliverable:
+
+| Work type | Verdict column 1 | Verdict column 2 |
+|---|---|---|
+| Writing or editorial (the deliverable is prose/content) | Evidence & Consistency | Readability & Tone |
+| Default: code, feature, mixed, ambiguous, or any other work | Safe to Merge | Closes Scope |
+
+This is a closed selection table. Never invent reviewer headers. For a work
+type not explicitly listed, use the default pair.
 
 ```markdown
 ## [#<issue-number>](<issue-url>) — <issue title>
@@ -131,14 +143,26 @@ Rules:
 - **Reviewer Matrix** — placed directly after "What Was Built" and above
   "What We Learned". Always rendered, even before any review has happened.
   Show a "Not yet reviewed" pending state per reviewer/column rather than
-  omitting the section. Two verdict columns, kept separate because they're
-  different reviewer questions:
-  - **Safe to Merge** — is the code itself correct/secure (bugs, security,
-    lifecycle correctness)?
-  - **Closes Scope** — does the PR satisfy the full scope of the backing
-    issue's action items/requirements? (Not "does the code have bugs" —
-    a PR can be bug-free but still leave requirements unaddressed, or vice
-    versa.)
+  omitting the section. Use exactly two verdict columns after `Reviewer`,
+  selected only from the table above:
+  - **Safe to Merge** — is the code itself correct and secure (bugs,
+    security, lifecycle correctness)?
+  - **Closes Scope** — does the work satisfy the full scope of the backing
+    issue's action items and requirements?
+  - **Evidence & Consistency** — are claims supported and are facts,
+    citations, terminology, and internal details consistent?
+  - **Readability & Tone** — is the content clear, well structured, and
+    appropriate for its audience and intended tone?
+
+  Examples:
+  - Code/feature/default:
+    `| Reviewer | Safe to Merge | Closes Scope |`
+  - Writing/editorial:
+    `| Reviewer | Evidence & Consistency | Readability & Tone |`
+
+  Preserve the selected header pair verbatim through refreshes,
+  `update_markdown` calls, task-only edits, and checkbox changes. Change it
+  only when the work's primary deliverable is explicitly reclassified.
 
   Fill each cell with only a status: ✅ Pass / ❌ Fail / ⚠️ Pass with
   concerns. The matrix is a status board, not a place for prose — it should
