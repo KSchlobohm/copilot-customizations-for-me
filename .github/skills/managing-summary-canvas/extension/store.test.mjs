@@ -26,13 +26,13 @@ const CODE_MATRIX = `## Reviewer Matrix
 
 | Reviewer | Safe to Merge | Closes Scope |
 |---|---|---|
-| GPT-5.x | ⏳ Not yet reviewed | ⏳ Not yet reviewed |`;
+| GPT-5.6 (reasoning: high) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |`;
 
 const WRITING_MATRIX = `## Reviewer Matrix
 
 | Reviewer | Evidence & Consistency | Readability & Tone |
 |---|---|---|
-| GPT-5.x | ⏳ Not yet reviewed | ⏳ Not yet reviewed |`;
+| GPT-5.6 (reasoning: high) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |`;
 
 test("saveDocument then loadDocument round-trips the exact content written (Bug 4 precondition)", async () => {
     const markdown = `## Action Items\n- [ ] a\n\n${CODE_MATRIX}`;
