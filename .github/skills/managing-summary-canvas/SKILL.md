@@ -213,11 +213,14 @@ Rules:
     one row (`GPT-5.x`, `Gemini`, `Claude Opus`, etc.). `GPT-5.6
     (reasoning: high)` and `GPT-5.6 (reasoning: xhigh)` remain separate
     reviewer identities with separate verdicts.
-  - On refresh/resume, preserve existing reviewer labels exactly as stored in
-    the current canvas state. Before rewriting matrix rows, call `get_state`
-    and carry those labels forward unchanged unless the user explicitly asks
-    to rename them. This keeps reviewer identity stable across
-    `update_markdown`, `extensions_reload`, and later sessions.
+  - On refresh/resume, call `get_state` before rewriting matrix rows. Preserve
+    labels that already follow the full identity rules exactly as stored.
+    Migrate a legacy abbreviated label (for example `GPT-5.x`, `Gemini`, or
+    `Claude Opus`) once: use available execution metadata to restore its full
+    identity, or use explicit unknown placeholders for unavailable family or
+    version metadata. Never merge legacy rows or alter their verdicts during
+    migration. This keeps reviewer identity stable without preserving
+    ambiguous labels indefinitely.
   - Identity formatting does not alter verdict semantics. Keep verdict values
     exactly the same statuses (`✅ Pass`, `❌ Fail`, `⚠️ Pass with concerns`,
     `⏳ Not yet reviewed`) regardless of whether model metadata is complete.
@@ -228,6 +231,11 @@ Rules:
 
 - **First time for this `documentId`:**
   `open_canvas({ canvasId: "conversation-summary-canvas", instanceId: "<pick-one>", input: { documentId, title: "<issue title>", markdown } })`
+- **Reopening an existing `documentId` with no live instance:**
+  call `open_canvas` with `documentId` and `title` only — omit `markdown` so
+  the extension rehydrates the saved document — then call `get_state` before
+  composing any update. Never send recomposed Markdown before reading the
+  stored state.
 - **"Update the conversation summary canvas" (or close variants), and an
   instance is already open for this `documentId`:**
   `invoke_canvas_action({ instanceId: "<same instance>", actionName: "update_markdown", input: { markdown } })`

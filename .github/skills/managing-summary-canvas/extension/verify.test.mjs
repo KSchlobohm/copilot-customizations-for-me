@@ -143,6 +143,18 @@ test("skill scaffold does not seed a phantom unknown reviewer", () => {
     assert.match(SKILL_MARKDOWN, /Add an unknown-metadata row only for an actual reviewer/);
 });
 
+test("skill guidance safely rehydrates existing canvases before updating", () => {
+    assert.match(SKILL_MARKDOWN, /Reopening an existing `documentId` with no live instance/);
+    assert.match(SKILL_MARKDOWN, /omit `markdown` so\s+the extension rehydrates the saved document/);
+    assert.match(SKILL_MARKDOWN, /Never send recomposed Markdown before reading the\s+stored state/);
+});
+
+test("skill guidance migrates legacy abbreviated reviewer labels without merging verdicts", () => {
+    assert.match(SKILL_MARKDOWN, /Migrate a legacy abbreviated label/);
+    assert.match(SKILL_MARKDOWN, /use available execution metadata to restore its full\s+identity/);
+    assert.match(SKILL_MARKDOWN, /Never merge legacy rows or alter their verdicts during\s+migration/);
+});
+
 test("summarizeActionItems agrees with the checkbox states in the rendered document", () => {
     const summary = summarizeActionItems(SAMPLE_MARKDOWN);
     assert.equal(summary.total, 3);
