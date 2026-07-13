@@ -106,9 +106,10 @@ omit the reviewer matrix.
 
 | Reviewer | Safe to Merge | Closes Scope |
 |---|---|---|
-| Claude Opus | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
-| GPT-5.x | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
-| Gemini | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
+| Claude Opus 4.8 | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
+| GPT-5.5 | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
+| Gemini 3.5 Flash | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
+| (Model family unknown) (Version unknown) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
 
 ## What We Learned
 <insights / gotchas discovered during the work that aren't in the PR>
@@ -159,6 +160,24 @@ Rules:
   the matrix always answers "is it green" at a glance, and Action Items
   is the one place with the actual substance and history of what reviewers
   found.
+  Reviewer identity in the first column must always preserve model details:
+  - Use the full available family + version as one label when metadata is
+    known (for example `Claude Opus 4.8`, `GPT-5.6`, `Gemini 3.5 Flash`).
+  - If either part is missing, represent it explicitly in the label rather
+    than dropping it: `<family> (Version unknown)`,
+    `(Model family unknown) <version>`, or
+    `(Model family unknown) (Version unknown)`.
+  - Never collapse or normalize distinct versions into one row (`GPT-5.x`,
+    `Gemini`, `Claude Opus`, etc.). `GPT-5.5` and `GPT-5.6` remain separate
+    reviewer identities with separate verdicts.
+  - On refresh/resume, preserve existing reviewer labels exactly as stored in
+    the current canvas state. Before rewriting matrix rows, call `get_state`
+    and carry those labels forward unchanged unless the user explicitly asks
+    to rename them. This keeps reviewer identity stable across
+    `update_markdown`, `extensions_reload`, and later sessions.
+  - Identity formatting does not alter verdict semantics. Keep verdict values
+    exactly the same statuses (`✅ Pass`, `❌ Fail`, `⚠️ Pass with concerns`,
+    `⏳ Not yet reviewed`) regardless of whether model metadata is complete.
 - **What We Learned** — last section. New insights/gotchas not captured
   elsewhere.
 
