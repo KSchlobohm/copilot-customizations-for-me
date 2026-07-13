@@ -120,7 +120,7 @@ type not explicitly listed, use the default pair.
 |---|---|---|
 | Claude Opus 4.8 (reasoning: high) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
 | GPT-5.6 (reasoning: high) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
-| Gemini 3.5 Flash (reasoning: minimal) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
+| Gemini 3.5 Flash (reasoning: high) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
 | (Model family unknown) (Version unknown) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
 
 ## What We Learned
@@ -189,7 +189,10 @@ Rules:
     depth as `<family> <version> (reasoning: <depth>)` when metadata is known
     (for example `Claude Opus 4.8 (reasoning: high)`,
     `GPT-5.6 (reasoning: high)`, or
-    `Gemini 3.5 Flash (reasoning: minimal)`).
+    `Gemini 3.5 Flash (reasoning: high)`).
+  - When selecting reviewers, use `high` for every reasoning-capable model
+    unless the user explicitly requests another supported depth. Once a
+    review runs, label it with the exact depth actually selected.
   - If any part is missing, represent it explicitly in the label rather than
     dropping it: `<family> (Version unknown) (reasoning: high)`,
     `(Model family unknown) <version> (reasoning: high)`, or

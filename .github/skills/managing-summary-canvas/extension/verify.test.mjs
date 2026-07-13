@@ -40,7 +40,7 @@ Build a canvas + skill for tracking and resuming work across sessions.
 | GPT-5.6 (reasoning: high) | ✅ Pass | ✅ Pass |
 | GPT-5.6 (reasoning: xhigh) | ⚠️ Pass with concerns | ✅ Pass |
 | Claude Haiku 4.5 | ✅ Pass | ✅ Pass |
-| Gemini 3.5 Flash (reasoning: minimal) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
+| Gemini 3.5 Flash (reasoning: high) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
 | (Model family unknown) (Version unknown) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
 
 ## What We Learned
@@ -98,7 +98,7 @@ test("code and feature Reviewer Matrix renders exactly the default two verdict c
     assert.match(html, /GPT-5\.6 \(reasoning: xhigh\)/);
     assert.match(html, /Claude Haiku 4\.5/);
     assert.doesNotMatch(html, /Claude Haiku 4\.5 \(reasoning:/);
-    assert.match(html, /Gemini 3\.5 Flash \(reasoning: minimal\)/);
+    assert.match(html, /Gemini 3\.5 Flash \(reasoning: high\)/);
     assert.match(html, /\(Model family unknown\) \(Version unknown\)/);
     assert.doesNotMatch(html, /\(Model family unknown\) \(Version unknown\) \(reasoning:/);
     assert.match(html, /Pass with concerns/);
@@ -121,6 +121,13 @@ test("skill guidance defines a closed header selection with a fixed default", ()
         /\| Default: code, feature, mixed, ambiguous, or any other work \| Safe to Merge \| Closes Scope \|/
     );
     assert.match(SKILL_MARKDOWN, /This is a closed selection table\. Never invent reviewer headers\./);
+});
+
+test("skill guidance defaults reasoning-capable reviewers to high", () => {
+    assert.match(
+        SKILL_MARKDOWN,
+        /When selecting reviewers, use `high` for every reasoning-capable model/
+    );
 });
 
 test("summarizeActionItems agrees with the checkbox states in the rendered document", () => {
