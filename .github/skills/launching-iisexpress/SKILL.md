@@ -13,7 +13,9 @@ Start a .NET Framework ASP.NET web project with IIS Express from the terminal by
 1. **Verify the installed release**: Resolve the installed `launching-iisexpress` skill directory, then run its verifier before using its template:
 
    ```powershell
-   node <installed-skill-dir>\verify.mjs --skill-dir <installed-skill-dir>
+   powershell.exe -NoProfile -ExecutionPolicy Bypass -File `
+       "<installed-skill-dir>\Verify-LaunchingIISExpress.ps1" `
+       -SkillDirectory "<installed-skill-dir>"
    ```
 
    Stop if this fails. The verifier requires the installed `SKILL.md` version to match this release and the behavioral template's normalized SHA-256 fingerprint to match the canonical v1.1.1 contract. It intentionally does not hash `SKILL.md`, so repo-local workflow clarification can coexist with an exact canonical template.
@@ -22,7 +24,10 @@ Start a .NET Framework ASP.NET web project with IIS Express from the terminal by
    - If a script exists, validate its machine-readable marker:
 
      ```powershell
-     node <installed-skill-dir>\verify.mjs --skill-dir <installed-skill-dir> --generated-script <path-to-Start-IISExpress.ps1>
+     powershell.exe -NoProfile -ExecutionPolicy Bypass -File `
+         "<installed-skill-dir>\Verify-LaunchingIISExpress.ps1" `
+         -SkillDirectory "<installed-skill-dir>" `
+         -GeneratedScript "<path-to-Start-IISExpress.ps1>"
      ```
 
    - If the marker is absent or its version is older than the installed skill, do not launch or patch the stale script. Replace it by regenerating from the installed template in step 6.
@@ -60,7 +65,7 @@ Start a .NET Framework ASP.NET web project with IIS Express from the terminal by
    Use exact literal placeholder replacement so Windows paths and the application path are preserved:
 
    ```powershell
-   $rendered = Get-Content "<installed-skill-dir>\references\Start-IISExpress.template.ps1" -Raw
+   $template = Get-Content "<installed-skill-dir>\references\Start-IISExpress.template.ps1" -Raw
    function ConvertTo-PowerShellSingleQuotedContent {
        param([AllowEmptyString()][string]$Value)
        $Value.Replace("'", "''")
@@ -74,12 +79,17 @@ Start a .NET Framework ASP.NET web project with IIS Express from the terminal by
        "{{WEB_PROJECT_PATH}}" = (ConvertTo-PowerShellSingleQuotedContent "<absolute-web-project-path>")
        "{{SOLUTION_ROOT}}" = (ConvertTo-PowerShellSingleQuotedContent "<absolute-solution-root>")
    }
-   foreach ($entry in $replacements.GetEnumerator()) {
-       $rendered = $rendered.Replace($entry.Key, $entry.Value)
-   }
-   if ($rendered -match "\{\{[A-Z_]+\}\}") {
-       throw "Generated IIS Express script still contains unresolved placeholders."
-   }
+   $rendered = [regex]::Replace(
+       $template,
+       "\{\{[A-Z_]+\}\}",
+       {
+           param($match)
+           if (-not $replacements.Contains($match.Value)) {
+               throw "Unknown IIS Express template placeholder: $($match.Value)"
+           }
+           [string]$replacements[$match.Value]
+       }
+   )
    [System.IO.File]::WriteAllText(
        (Join-Path "<absolute-solution-root>" "Start-IISExpress.ps1"),
        $rendered,
@@ -147,7 +157,7 @@ For HTTPS localhost URLs, certificate trust warnings can be expected on some mac
 This skill (`SKILL.md` + `references/Start-IISExpress.template.ps1`) is the canonical upstream copy. Other locations that keep their own copy of this skill should treat this repository as the source of truth and sync from it rather than diverging independently.
 
 - The `version` field in the frontmatter follows semantic versioning and must be bumped whenever the skill's workflow or template behavior changes.
-- Before copying this skill elsewhere, run `node .github/skills/launching-iisexpress/verify.mjs`. The verifier checks both release version and the normalized SHA-256 fingerprint of `references/Start-IISExpress.template.ps1`; version equality alone is not sufficient.
+- Before copying this skill elsewhere, run `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .github/skills/launching-iisexpress/Verify-LaunchingIISExpress.ps1`. PowerShell 7 users may substitute `pwsh` for `powershell.exe`. The verifier checks both release version and the normalized SHA-256 fingerprint of `references/Start-IISExpress.template.ps1`; version equality alone is not sufficient.
 - Downstream repositories may customize `SKILL.md` instructions while retaining the canonical `version` frontmatter. The verifier hashes the behavioral template, not the customizable prose.
-- After generation, pass `--generated-script <path>` to detect scripts with missing, stale, or newer provenance before launch.
+- After generation, pass `-GeneratedScript <path>` to detect scripts with missing, stale, or newer provenance before launch.
 - When porting a fix here, bump the version and summarize the change in the pull request description.
