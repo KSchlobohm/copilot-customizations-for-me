@@ -4,7 +4,7 @@
 .DESCRIPTION
     Checks the installed skill version and normalized template SHA-256. When a
     generated launcher is supplied, also checks its machine-readable provenance
-    and reconstructs the canonical rendered body from its project settings.
+    and the required v1.1.1 non-root application safety invariants.
 .PARAMETER SkillDirectory
     Path to the installed launching-iisexpress skill. Defaults to this script's directory.
 .PARAMETER GeneratedScript
@@ -42,71 +42,37 @@ function Get-NormalizedSha256 {
     return ([System.BitConverter]::ToString($hash)).Replace("-", "").ToLowerInvariant()
 }
 
-function ConvertTo-PowerShellSingleQuotedContent {
-    param(
-        [AllowEmptyString()]
-        [string]$Value
-    )
-
-    return $Value.Replace("'", "''")
-}
-
-function Get-GeneratedScriptReplacements {
+function Test-GeneratedScriptSafetyInvariants {
     param(
         [Parameter(Mandatory = $true)]
         [string]$ScriptContent
     )
 
-    $assignmentPatterns = [ordered]@{
-        "{{SITE_NAME}}" = "(?m)^\`$siteName = '(?<value>(?:[^'\r\n]|'')*)'\r?$"
-        "{{SITE_PORT}}" = "(?m)^\`$sitePort = (?<value>\d+)\r?$"
-        "{{SITE_SCHEME}}" = "(?m)^\`$siteScheme = '(?<value>(?:[^'\r\n]|'')*)'\r?$"
-        "{{SITE_HOST}}" = "(?m)^\`$siteHost = '(?<value>(?:[^'\r\n]|'')*)'\r?$"
-        "{{APPLICATION_PATH}}" = "(?m)^\`$applicationPath = '(?<value>(?:[^'\r\n]|'')*)'\r?$"
-        "{{WEB_PROJECT_PATH}}" = "(?m)^\`$webProjectPath = '(?<value>(?:[^'\r\n]|'')*)'\r?$"
-        "{{SOLUTION_ROOT}}" = "(?m)^\`$solutionRoot = '(?<value>(?:[^'\r\n]|'')*)'\r?$"
+    $invariantPatterns = [ordered]@{
+        DedicatedBlankRoot = '(?m)^\$blankRootPath\s*=\s*Join-Path\s+\$configDir\s+"empty-root"\s*\r?$'
+        ConditionalNonRootDetection = '(?m)^\$isNonRootApp\s*=\s*\$applicationPath\s+-ne\s+"/"\s*\r?$'
+        ConditionalBlankRootCreation = '(?ms)^if\s*\(\$isNonRootApp\)\s*\{\s*\r?\n\s*New-Item\s+-ItemType\s+Directory\s+-Path\s+\$blankRootPath\s+-Force\s*\|\s*Out-Null\s*\r?\n\}'
+        DistinctRootPathSelection = '(?m)^\$rootPhysicalPath\s*=\s*if\s*\(\$isNonRootApp\)\s*\{\s*\$blankRootPath\s*\}\s*else\s*\{\s*\$webProjectPath\s*\}\s*\r?$'
+        RootPhysicalPathMapping = '(?m)^\$rootApp\.SelectSingleNode\("virtualDirectory"\)\.SetAttribute\("physicalPath",\s*\$rootPhysicalPath\)\s*\r?$'
+        VirtualAppPhysicalPathMapping = '(?ms)^if\s*\(\$isNonRootApp\)\s*\{\s*\r?\n\s*\$subApp\s*=\s*\$rootApp\.CloneNode\(\$true\)[^{}]*^\s*\$subApp\.SelectSingleNode\("virtualDirectory"\)\.SetAttribute\("physicalPath",\s*\$webProjectPath\)\s*\r?$[^{}]*^\}'
     }
 
-    $replacements = [ordered]@{}
-    foreach ($entry in $assignmentPatterns.GetEnumerator()) {
-        $matches = [regex]::Matches($ScriptContent, $entry.Value)
-        if ($matches.Count -ne 1) {
-            throw (
-                "Generated script must contain exactly one canonical assignment for {0}; " +
-                "regeneration is required." -f $entry.Key
-            )
+    $missingOrAmbiguous = @()
+    foreach ($entry in $invariantPatterns.GetEnumerator()) {
+        if ([regex]::Matches($ScriptContent, $entry.Value).Count -ne 1) {
+            $missingOrAmbiguous += $entry.Key
         }
-
-        $value = $matches[0].Groups["value"].Value
-        if ($entry.Key -ne "{{SITE_PORT}}") {
-            $value = $value.Replace("''", "'")
-            $value = ConvertTo-PowerShellSingleQuotedContent -Value $value
-        }
-        $replacements[$entry.Key] = $value
+    }
+    $directRootWebProjectMapping =
+        '(?m)^[ \t]*\$rootApp\.SelectSingleNode\("virtualDirectory"\)\.SetAttribute\("physicalPath",\s*\$webProjectPath\)\s*\r?$'
+    if ([regex]::IsMatch($ScriptContent, $directRootWebProjectMapping)) {
+        $missingOrAmbiguous += "NoDirectRootWebProjectMapping"
     }
 
-    return $replacements
-}
-
-function Render-CanonicalTemplate {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$Template,
-        [Parameter(Mandatory = $true)]
-        [System.Collections.IDictionary]$Replacements
-    )
-
-    return [regex]::Replace(
-        $Template,
-        "\{\{[A-Z_]+\}\}",
-        {
-            param($match)
-            if (-not $Replacements.Contains($match.Value)) {
-                throw "Unknown IIS Express template placeholder: $($match.Value)"
-            }
-            [string]$Replacements[$match.Value]
-        }
-    )
+    return [pscustomobject]@{
+        Valid = $missingOrAmbiguous.Count -eq 0
+        MissingOrAmbiguous = $missingOrAmbiguous
+    }
 }
 
 function Get-SkillVersion {
@@ -205,9 +171,8 @@ try {
 
     $resolvedGeneratedScript = $null
     $generatedScriptVersion = $null
-    $generatedScriptSha256 = $null
-    $expectedGeneratedScriptSha256 = $null
-    $generatedBodyValid = $null
+    $generatedSafetyValid = $null
+    $missingSafetyInvariants = @()
     if ($GeneratedScript) {
         $resolvedGeneratedScript = (Resolve-Path -LiteralPath $GeneratedScript).Path
         $generatedContent = [System.IO.File]::ReadAllText($resolvedGeneratedScript)
@@ -220,27 +185,15 @@ try {
         }
 
         if ($generatedProvenance.Valid) {
-            try {
-                $generatedReplacements = Get-GeneratedScriptReplacements `
-                    -ScriptContent $generatedContent
-                $expectedGeneratedContent = Render-CanonicalTemplate `
-                    -Template $template `
-                    -Replacements $generatedReplacements
-                $generatedScriptSha256 = Get-NormalizedSha256 -Content $generatedContent
-                $expectedGeneratedScriptSha256 = Get-NormalizedSha256 `
-                    -Content $expectedGeneratedContent
-                $generatedBodyValid = $generatedScriptSha256 -eq $expectedGeneratedScriptSha256
-                if (-not $generatedBodyValid) {
-                    $errors.Add(
-                        "Generated script body does not match the canonical $canonicalVersion " +
-                        "template rendered with its project settings; regeneration is required. " +
-                        "Actual sha256 $generatedScriptSha256; expected " +
-                        "$expectedGeneratedScriptSha256."
-                    )
-                }
-            } catch {
-                $generatedBodyValid = $false
-                $errors.Add($_.Exception.Message)
+            $safety = Test-GeneratedScriptSafetyInvariants -ScriptContent $generatedContent
+            $generatedSafetyValid = $safety.Valid
+            $missingSafetyInvariants = @($safety.MissingOrAmbiguous)
+            if (-not $generatedSafetyValid) {
+                $errors.Add(
+                    "Generated script does not satisfy the required $canonicalVersion " +
+                    "non-root safety invariants (missing or ambiguous: " +
+                    "$($missingSafetyInvariants -join ', ')); regeneration is required."
+                )
             }
         }
     }
@@ -258,9 +211,8 @@ try {
             TemplateSha256 = $templateSha256
             GeneratedScript = $resolvedGeneratedScript
             GeneratedScriptVersion = $generatedScriptVersion
-            GeneratedScriptSha256 = $generatedScriptSha256
-            ExpectedGeneratedScriptSha256 = $expectedGeneratedScriptSha256
-            GeneratedBodyValid = $generatedBodyValid
+            GeneratedSafetyValid = $generatedSafetyValid
+            MissingSafetyInvariants = $missingSafetyInvariants
         }
         Errors = @($errors)
     }

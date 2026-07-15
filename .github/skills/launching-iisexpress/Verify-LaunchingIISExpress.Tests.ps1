@@ -348,12 +348,8 @@ try {
         Assert-True $result.Valid "Current generated script should be valid."
         Assert-Equal $result.Checked.GeneratedScriptVersion "1.1.1" `
             "Generated marker should report v1.1.1."
-        Assert-True $result.Checked.GeneratedBodyValid `
-            "Current generated script body should match its canonical rendering."
-        Assert-Equal `
-            $result.Checked.GeneratedScriptSha256 `
-            $result.Checked.ExpectedGeneratedScriptSha256 `
-            "Current generated script body fingerprint should match the expected rendering."
+        Assert-True $result.Checked.GeneratedSafetyValid `
+            "Current generated script should satisfy the v1.1.1 safety invariants."
     }
 
     Invoke-Test "forged current marker does not hide a stale generated body" {
@@ -371,11 +367,58 @@ try {
         Assert-Equal $verification.ExitCode 1 `
             "A current marker on a stale body should fail verification."
         $result = $verification.Output | ConvertFrom-Json
-        Assert-True (-not $result.Checked.GeneratedBodyValid) `
-            "Forged generated body should be marked invalid."
+        Assert-True (-not $result.Checked.GeneratedSafetyValid) `
+            "Forged generated script should fail the v1.1.1 safety invariants."
+        Assert-True `
+            ($result.Checked.MissingSafetyInvariants -contains "DistinctRootPathSelection") `
+            "Forged script should report the missing distinct root path selection."
         Assert-Match ($result.Errors -join "`n") `
-            "body does not match the canonical 1\.1\.1 template.*regeneration is required" `
-            "Forged current marker should not bypass body verification."
+            "required 1\.1\.1 non-root safety invariants.*regeneration is required" `
+            "Forged current marker should not bypass safety verification."
+    }
+
+    Invoke-Test "virtual app mapping must remain inside the non-root block" {
+        $fixture = New-RenderedFixture -Name "mapping-outside-block" -ApplicationPath "/MyApp"
+        $mapping = '    $subApp.SelectSingleNode("virtualDirectory").SetAttribute("physicalPath", $webProjectPath)'
+        $append = '    $rootApp.ParentNode.AppendChild($subApp) | Out-Null'
+        $original = "$mapping`r`n$append`r`n}"
+        $moved = "$append`r`n}`r`n$mapping"
+        $content = [System.IO.File]::ReadAllText($fixture.ScriptPath)
+        if (-not $content.Contains($original)) {
+            $original = "$mapping`n$append`n}"
+            $moved = "$append`n}`n$mapping"
+        }
+        $content = $content.Replace($original, $moved)
+        [System.IO.File]::WriteAllText($fixture.ScriptPath, $content, $utf8NoBom)
+
+        $verification = Invoke-Verifier -GeneratedScript $fixture.ScriptPath
+        Assert-Equal $verification.ExitCode 1 `
+            "A virtual-app mapping outside the non-root block should fail verification."
+        $result = $verification.Output | ConvertFrom-Json
+        Assert-True `
+            ($result.Checked.MissingSafetyInvariants -contains "VirtualAppPhysicalPathMapping") `
+            "Out-of-block mapping should fail the scoped virtual-app invariant."
+    }
+
+    Invoke-Test "root application cannot map directly to the web project" {
+        $fixture = New-RenderedFixture -Name "direct-root-override" -ApplicationPath "/MyApp"
+        $safeMapping =
+            '$rootApp.SelectSingleNode("virtualDirectory").SetAttribute("physicalPath", $rootPhysicalPath)'
+        $staleMapping =
+            '    $rootApp.SelectSingleNode("virtualDirectory").SetAttribute("physicalPath", $webProjectPath)'
+        $content = [System.IO.File]::ReadAllText($fixture.ScriptPath).Replace(
+            $safeMapping,
+            "$safeMapping`r`n$staleMapping"
+        )
+        [System.IO.File]::WriteAllText($fixture.ScriptPath, $content, $utf8NoBom)
+
+        $verification = Invoke-Verifier -GeneratedScript $fixture.ScriptPath
+        Assert-Equal $verification.ExitCode 1 `
+            "A direct root-to-web-project mapping should fail verification."
+        $result = $verification.Output | ConvertFrom-Json
+        Assert-True `
+            ($result.Checked.MissingSafetyInvariants -contains "NoDirectRootWebProjectMapping") `
+            "Direct root mapping should fail its negative safety invariant."
     }
 
     Invoke-Test "missing provenance requires regeneration" {

@@ -30,10 +30,10 @@ Start a .NET Framework ASP.NET web project with IIS Express from the terminal by
          -GeneratedScript "<path-to-Start-IISExpress.ps1>"
      ```
 
-   - The verifier requires both a valid provenance marker and an exact normalized body match. It extracts the seven generated project settings, safely renders the canonical template with those values, and compares full-body SHA-256 fingerprints. A current-looking marker on stale or modified code does not pass.
-   - If the marker is absent or its version is older than the installed skill, or if the body does not match the canonical rendering, do not launch or patch the stale script. Replace it by regenerating from the installed template in step 6.
+   - The verifier requires both a valid provenance marker and the v1.1.1 non-root safety behavior: conditional non-root detection, a dedicated blank root directory, conditional blank-root creation and selection, root mapping only through the selected physical path (never directly to the web project), and virtual-app mapping to the web project. A current-looking marker on the older unsafe body does not pass.
+   - If the marker is absent or its version is older than the installed skill, or if a required safety invariant is missing or ambiguous, do not launch or patch the stale script. Replace it by regenerating from the installed template in step 6.
    - If the generated script reports a newer version than the installed skill, stop and update the installed skill instead of downgrading the script.
-   - Reuse an exact-version, body-verified script only after confirming its generated project settings still match the target project.
+   - Reuse an exact-version, safety-verified script only after confirming its generated project settings still match the target project.
 3. **Discover project settings** from the target `.csproj`:
    - Site name: the web project name.
    - URL parts: scheme, host, port, and path from `ProjectExtensions > VisualStudio > FlavorProperties > WebProjectProperties > IISUrl`.
@@ -160,5 +160,5 @@ This skill (`SKILL.md` + `references/Start-IISExpress.template.ps1`) is the cano
 - The `version` field in the frontmatter follows semantic versioning and must be bumped whenever the skill's workflow or template behavior changes.
 - Before copying this skill elsewhere, run `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .github/skills/launching-iisexpress/Verify-LaunchingIISExpress.ps1`. PowerShell 7 users may substitute `pwsh` for `powershell.exe`. The verifier checks both release version and the normalized SHA-256 fingerprint of `references/Start-IISExpress.template.ps1`; version equality alone is not sufficient.
 - Downstream repositories may customize `SKILL.md` instructions while retaining the canonical `version` frontmatter. The verifier hashes the behavioral template, not the customizable prose.
-- After generation, pass `-GeneratedScript <path>` to require both valid provenance and exact canonical rendered-body equality before launch. Missing or older provenance and any body mismatch require regeneration; newer provenance requires updating the installed skill.
+- After generation, pass `-GeneratedScript <path>` to require valid provenance plus the v1.1.1 non-root safety invariants before launch. Missing or older provenance and missing or ambiguous safety behavior require regeneration; newer provenance requires updating the installed skill.
 - When porting a fix here, bump the version and summarize the change in the pull request description.
