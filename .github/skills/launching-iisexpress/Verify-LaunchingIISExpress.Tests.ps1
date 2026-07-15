@@ -348,6 +348,34 @@ try {
         Assert-True $result.Valid "Current generated script should be valid."
         Assert-Equal $result.Checked.GeneratedScriptVersion "1.1.1" `
             "Generated marker should report v1.1.1."
+        Assert-True $result.Checked.GeneratedBodyValid `
+            "Current generated script body should match its canonical rendering."
+        Assert-Equal `
+            $result.Checked.GeneratedScriptSha256 `
+            $result.Checked.ExpectedGeneratedScriptSha256 `
+            "Current generated script body fingerprint should match the expected rendering."
+    }
+
+    Invoke-Test "forged current marker does not hide a stale generated body" {
+        $fixture = New-RenderedFixture -Name "forged-current" -ApplicationPath "/MyApp"
+        $forgedContent = [System.IO.File]::ReadAllText($fixture.ScriptPath).Replace(
+            '$rootPhysicalPath = if ($isNonRootApp) { $blankRootPath } else { $webProjectPath }',
+            '$rootPhysicalPath = $webProjectPath'
+        )
+        Assert-Match $forgedContent `
+            "(?m)^# IISExpressSkill-Provenance: skill=launching-iisexpress; version=1\.1\.1\r?$" `
+            "Forged fixture should retain a current provenance marker."
+        [System.IO.File]::WriteAllText($fixture.ScriptPath, $forgedContent, $utf8NoBom)
+
+        $verification = Invoke-Verifier -GeneratedScript $fixture.ScriptPath
+        Assert-Equal $verification.ExitCode 1 `
+            "A current marker on a stale body should fail verification."
+        $result = $verification.Output | ConvertFrom-Json
+        Assert-True (-not $result.Checked.GeneratedBodyValid) `
+            "Forged generated body should be marked invalid."
+        Assert-Match ($result.Errors -join "`n") `
+            "body does not match the canonical 1\.1\.1 template.*regeneration is required" `
+            "Forged current marker should not bypass body verification."
     }
 
     Invoke-Test "missing provenance requires regeneration" {

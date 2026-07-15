@@ -3,7 +3,8 @@
     Verifies the canonical launching-iisexpress release contract.
 .DESCRIPTION
     Checks the installed skill version and normalized template SHA-256. When a
-    generated launcher is supplied, also checks its machine-readable provenance.
+    generated launcher is supplied, also checks its machine-readable provenance
+    and reconstructs the canonical rendered body from its project settings.
 .PARAMETER SkillDirectory
     Path to the installed launching-iisexpress skill. Defaults to this script's directory.
 .PARAMETER GeneratedScript
@@ -39,6 +40,73 @@ function Get-NormalizedSha256 {
     }
 
     return ([System.BitConverter]::ToString($hash)).Replace("-", "").ToLowerInvariant()
+}
+
+function ConvertTo-PowerShellSingleQuotedContent {
+    param(
+        [AllowEmptyString()]
+        [string]$Value
+    )
+
+    return $Value.Replace("'", "''")
+}
+
+function Get-GeneratedScriptReplacements {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ScriptContent
+    )
+
+    $assignmentPatterns = [ordered]@{
+        "{{SITE_NAME}}" = "(?m)^\`$siteName = '(?<value>(?:[^'\r\n]|'')*)'\r?$"
+        "{{SITE_PORT}}" = "(?m)^\`$sitePort = (?<value>\d+)\r?$"
+        "{{SITE_SCHEME}}" = "(?m)^\`$siteScheme = '(?<value>(?:[^'\r\n]|'')*)'\r?$"
+        "{{SITE_HOST}}" = "(?m)^\`$siteHost = '(?<value>(?:[^'\r\n]|'')*)'\r?$"
+        "{{APPLICATION_PATH}}" = "(?m)^\`$applicationPath = '(?<value>(?:[^'\r\n]|'')*)'\r?$"
+        "{{WEB_PROJECT_PATH}}" = "(?m)^\`$webProjectPath = '(?<value>(?:[^'\r\n]|'')*)'\r?$"
+        "{{SOLUTION_ROOT}}" = "(?m)^\`$solutionRoot = '(?<value>(?:[^'\r\n]|'')*)'\r?$"
+    }
+
+    $replacements = [ordered]@{}
+    foreach ($entry in $assignmentPatterns.GetEnumerator()) {
+        $matches = [regex]::Matches($ScriptContent, $entry.Value)
+        if ($matches.Count -ne 1) {
+            throw (
+                "Generated script must contain exactly one canonical assignment for {0}; " +
+                "regeneration is required." -f $entry.Key
+            )
+        }
+
+        $value = $matches[0].Groups["value"].Value
+        if ($entry.Key -ne "{{SITE_PORT}}") {
+            $value = $value.Replace("''", "'")
+            $value = ConvertTo-PowerShellSingleQuotedContent -Value $value
+        }
+        $replacements[$entry.Key] = $value
+    }
+
+    return $replacements
+}
+
+function Render-CanonicalTemplate {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Template,
+        [Parameter(Mandatory = $true)]
+        [System.Collections.IDictionary]$Replacements
+    )
+
+    return [regex]::Replace(
+        $Template,
+        "\{\{[A-Z_]+\}\}",
+        {
+            param($match)
+            if (-not $Replacements.Contains($match.Value)) {
+                throw "Unknown IIS Express template placeholder: $($match.Value)"
+            }
+            [string]$Replacements[$match.Value]
+        }
+    )
 }
 
 function Get-SkillVersion {
@@ -137,6 +205,9 @@ try {
 
     $resolvedGeneratedScript = $null
     $generatedScriptVersion = $null
+    $generatedScriptSha256 = $null
+    $expectedGeneratedScriptSha256 = $null
+    $generatedBodyValid = $null
     if ($GeneratedScript) {
         $resolvedGeneratedScript = (Resolve-Path -LiteralPath $GeneratedScript).Path
         $generatedContent = [System.IO.File]::ReadAllText($resolvedGeneratedScript)
@@ -146,6 +217,31 @@ try {
         $generatedScriptVersion = $generatedProvenance.Version
         if (-not $generatedProvenance.Valid) {
             $errors.Add($generatedProvenance.Reason)
+        }
+
+        if ($generatedProvenance.Valid) {
+            try {
+                $generatedReplacements = Get-GeneratedScriptReplacements `
+                    -ScriptContent $generatedContent
+                $expectedGeneratedContent = Render-CanonicalTemplate `
+                    -Template $template `
+                    -Replacements $generatedReplacements
+                $generatedScriptSha256 = Get-NormalizedSha256 -Content $generatedContent
+                $expectedGeneratedScriptSha256 = Get-NormalizedSha256 `
+                    -Content $expectedGeneratedContent
+                $generatedBodyValid = $generatedScriptSha256 -eq $expectedGeneratedScriptSha256
+                if (-not $generatedBodyValid) {
+                    $errors.Add(
+                        "Generated script body does not match the canonical $canonicalVersion " +
+                        "template rendered with its project settings; regeneration is required. " +
+                        "Actual sha256 $generatedScriptSha256; expected " +
+                        "$expectedGeneratedScriptSha256."
+                    )
+                }
+            } catch {
+                $generatedBodyValid = $false
+                $errors.Add($_.Exception.Message)
+            }
         }
     }
 
@@ -162,6 +258,9 @@ try {
             TemplateSha256 = $templateSha256
             GeneratedScript = $resolvedGeneratedScript
             GeneratedScriptVersion = $generatedScriptVersion
+            GeneratedScriptSha256 = $generatedScriptSha256
+            ExpectedGeneratedScriptSha256 = $expectedGeneratedScriptSha256
+            GeneratedBodyValid = $generatedBodyValid
         }
         Errors = @($errors)
     }
