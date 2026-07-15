@@ -1,3 +1,4 @@
+# IISExpressSkill-Provenance: skill=launching-iisexpress; version=1.1.1
 <#
 .SYNOPSIS
     Launches IIS Express for a .NET Framework ASP.NET web project.
@@ -7,22 +8,26 @@
     the same generated config and site name.
 .PARAMETER Stop
     Stops the IIS Express process for this generated config and site, then exits.
+.PARAMETER PrepareConfigOnly
+    Writes applicationhost.config without checking the port or launching IIS Express.
+    This supports deterministic template regression testing.
 .NOTES
-    Skill version: 1.1.0 (see .github/skills/launching-iisexpress/SKILL.md)
+    Skill version: 1.1.1 (see .github/skills/launching-iisexpress/SKILL.md)
 #>
 param(
-    [switch]$Stop
+    [switch]$Stop,
+    [switch]$PrepareConfigOnly
 )
 
 $ErrorActionPreference = 'Stop'
 
-$siteName = "{{SITE_NAME}}"
+$siteName = '{{SITE_NAME}}'
 $sitePort = {{SITE_PORT}}
-$siteScheme = "{{SITE_SCHEME}}"
-$siteHost = "{{SITE_HOST}}"
-$applicationPath = "{{APPLICATION_PATH}}"
-$webProjectPath = "{{WEB_PROJECT_PATH}}"
-$solutionRoot = "{{SOLUTION_ROOT}}"
+$siteScheme = '{{SITE_SCHEME}}'
+$siteHost = '{{SITE_HOST}}'
+$applicationPath = '{{APPLICATION_PATH}}'
+$webProjectPath = '{{WEB_PROJECT_PATH}}'
+$solutionRoot = '{{SOLUTION_ROOT}}'
 
 $configDir = Join-Path $solutionRoot ".vs\config"
 $configPath = Join-Path $configDir "applicationhost.config"
@@ -205,17 +210,23 @@ if (-not $applicationPath.StartsWith("/")) {
 
 $siteUrl = "{0}://{1}:{2}{3}" -f $siteScheme, $siteHost, $sitePort, $applicationPath
 
-$existing = Get-GeneratedIISExpressProcess
-if ($existing) {
-    Write-Host "Stopping the IIS Express instance previously launched for site '$siteName' so this run can take over..."
-    $existing | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
-    Start-Sleep -Seconds 1
-} elseif ($Stop) {
-    Write-Host "No matching IIS Express process found for site '$siteName'."
+if ($Stop -and $PrepareConfigOnly) {
+    throw "Use either -Stop or -PrepareConfigOnly, not both."
 }
 
-if ($Stop) {
-    return
+if (-not $PrepareConfigOnly) {
+    $existing = Get-GeneratedIISExpressProcess
+    if ($existing) {
+        Write-Host "Stopping the IIS Express instance previously launched for site '$siteName' so this run can take over..."
+        $existing | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
+        Start-Sleep -Seconds 1
+    } elseif ($Stop) {
+        Write-Host "No matching IIS Express process found for site '$siteName'."
+    }
+
+    if ($Stop) {
+        return
+    }
 }
 
 if (-not (Test-Path $webProjectPath)) {
@@ -228,10 +239,12 @@ if (-not (Test-Path $templatePath)) {
     throw "IIS Express template not found at: $templatePath"
 }
 
-$conflictingListener = @(Get-PortListener -Port $sitePort)
-if ($conflictingListener.Count -gt 0) {
-    $details = Format-PortListener -Listener $conflictingListener
-    throw "Port $sitePort is already in use. Choose a free port, update the project's IISUrl, regenerate this script, and try again.$([Environment]::NewLine)$details"
+if (-not $PrepareConfigOnly) {
+    $conflictingListener = @(Get-PortListener -Port $sitePort)
+    if ($conflictingListener.Count -gt 0) {
+        $details = Format-PortListener -Listener $conflictingListener
+        throw "Port $sitePort is already in use. Choose a free port, update the project's IISUrl, regenerate this script, and try again.$([Environment]::NewLine)$details"
+    }
 }
 
 Write-Host "Preparing applicationhost.config..."
@@ -284,6 +297,12 @@ if ($isNonRootApp) {
 }
 Write-Host "URL:               $siteUrl"
 Write-Host ""
+
+if ($PrepareConfigOnly) {
+    Write-Host "Configuration-only preparation complete; IIS Express was not launched."
+    return
+}
+
 Write-Host "Launching IIS Express..."
 
 $proc = Start-Process -FilePath $iisExpressExe `
