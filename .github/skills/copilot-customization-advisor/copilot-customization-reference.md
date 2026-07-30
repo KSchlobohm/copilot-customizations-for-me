@@ -9,7 +9,7 @@ Detailed anatomy and examples for each customization type. Read this file when t
 | Flavor | File | Scope |
 |--------|------|-------|
 | Cross-agent / Shared (Default) | `AGENTS.md` or `CLAUDE.md` at repo root | Primary canonical shared instruction file |
-| Repo-wide (Product-specific) | `.github/copilot-instructions.md` | Every chat request (legacy or VS Code Copilot specific) |
+| Repo-wide (Copilot-specific) | `.github/copilot-instructions.md` | Every chat request (Copilot-specific repository instructions) |
 | Path-specific | `.github/instructions/*.instructions.md` | Files matching `applyTo` glob |
 | Local user-scoped (CLI, always-on) | `~/.copilot/copilot-instructions.md` | All repos for current user |
 | User path-specific (CLI) | `<dir-from-COPILOT_CUSTOM_INSTRUCTIONS_DIRS>/.github/instructions/*.instructions.md` | Files matching `applyTo` glob across configured local dirs |
@@ -23,7 +23,7 @@ Detailed anatomy and examples for each customization type. Read this file when t
 When advising or creating shared repository instructions, check for existing instruction files in scope before making a recommendation:
 
 1. **Neither file exists**: Default to creating `AGENTS.md` at the repository root as the canonical shared instruction format.
-2. **Only one file exists**: Merge new guidance directly into the existing file (whether `AGENTS.md` or `.github/copilot-instructions.md`). Do not create `AGENTS.md` beside an existing `.github/copilot-instructions.md` merely to enforce the default unless explicitly requested.
+2. **Only one file exists**: Merge new guidance directly into the existing file (whether `AGENTS.md`, `CLAUDE.md`, or `.github/copilot-instructions.md`). Do not create `AGENTS.md` beside an existing `.github/copilot-instructions.md` merely to enforce the default unless explicitly requested.
 3. **Both files exist (Mixed state)**:
    - Treat `AGENTS.md` as the canonical consolidation winner.
    - Recommend consolidating overlapping shared cross-agent guidance into `AGENTS.md`.

@@ -1,6 +1,6 @@
 ---
 name: copilot-customization-advisor
-description: Recommends the right GitHub Copilot customization type (instructions, prompt files, skills, agents, sub-agents, hooks) for a user's intent. Use when the user asks which customization type to use, whether something should be a skill or agent, or how to choose between Copilot customization options.
+description: Recommends the right GitHub Copilot customization type (instructions, prompt files, skills, agents, sub-agents, hooks) for a user's intent, and guides shared instruction file precedence, merging, and consolidation. Use when the user asks which customization type to use, whether something should be a skill or agent, how to choose between Copilot customization options, or how to create, merge, or consolidate shared instruction files (AGENTS.md / copilot-instructions.md).
 ---
 
 # Copilot Customization Advisor
@@ -57,9 +57,9 @@ When two types seem equally valid, use these tiebreakers:
 
 When recommending or creating shared repository instructions, inspect the repository hierarchy for existing instruction files before choosing a destination:
 
-1. **Inspect Existing Files**: Check the applicable directory hierarchy (starting from the target directory up to the repository root) for existing `AGENTS.md` (or `CLAUDE.md`) and `.github/copilot-instructions.md`.
+1. **Inspect Existing Files**: Check the applicable directory hierarchy (starting from the target directory up to the repository root) for existing cross-agent instruction files (`AGENTS.md` or `CLAUDE.md`) and `.github/copilot-instructions.md`.
 2. **Single Format Exists**:
-   - If only `AGENTS.md` exists in scope, merge new guidance into `AGENTS.md`.
+   - If only `AGENTS.md` (or `CLAUDE.md`) exists in scope, merge new guidance into that existing cross-agent instruction file.
    - If only `.github/copilot-instructions.md` exists in scope, merge new guidance in place into `.github/copilot-instructions.md` rather than creating `AGENTS.md`.
 3. **Neither Exists**: Default to creating `AGENTS.md` at the repository root.
 4. **Both Exist (Mixed Format)**:
