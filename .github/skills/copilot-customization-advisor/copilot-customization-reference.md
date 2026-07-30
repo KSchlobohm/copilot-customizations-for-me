@@ -8,15 +8,50 @@ Detailed anatomy and examples for each customization type. Read this file when t
 
 | Flavor | File | Scope |
 |--------|------|-------|
-| Repo-wide | `.github/copilot-instructions.md` | Every chat request |
+| Cross-agent / Shared (Default) | `AGENTS.md` or `CLAUDE.md` at repo root | Primary canonical shared instruction file |
+| Repo-wide (Copilot-specific) | `.github/copilot-instructions.md` | Every chat request (Copilot-specific repository instructions) |
 | Path-specific | `.github/instructions/*.instructions.md` | Files matching `applyTo` glob |
 | Local user-scoped (CLI, always-on) | `~/.copilot/copilot-instructions.md` | All repos for current user |
 | User path-specific (CLI) | `<dir-from-COPILOT_CUSTOM_INSTRUCTIONS_DIRS>/.github/instructions/*.instructions.md` | Files matching `applyTo` glob across configured local dirs |
-| Cross-agent | `AGENTS.md` or `CLAUDE.md` at repo root | Detected by VS Code, Claude Code |
 
 > Windows user-scope root example: `C:\Users\<username>\.copilot` (or `%USERPROFILE%\.copilot`; generic form: `~/.copilot`).
 >
 > Local always-on and path-specific instructions are complementary; both can apply to the same request.
+
+### Precedence and Merge Policy
+
+When advising or creating shared repository instructions, check for existing instruction files in scope before making a recommendation:
+
+1. **Neither file exists**: Default to creating `AGENTS.md` at the repository root as the canonical shared instruction format.
+2. **Only one file exists**: Merge new guidance directly into the existing file (whether `AGENTS.md`, `CLAUDE.md`, or `.github/copilot-instructions.md`). Do not create `AGENTS.md` beside an existing `.github/copilot-instructions.md` merely to enforce the default unless explicitly requested.
+3. **Both files exist (Mixed state)**:
+   - Treat `AGENTS.md` as the canonical consolidation winner.
+   - Recommend consolidating overlapping shared cross-agent guidance into `AGENTS.md`.
+   - Preserve product-specific language or features (such as `#file:` references or VS Code Copilot specific features) in `.github/copilot-instructions.md` rather than discarding or duplicating them.
+4. **Conflict Resolution**: Highlight conflicting existing rules to the user for explicit resolution rather than silently choosing or overwriting rules.
+5. **Preservation**: Preserve existing headings, comments, and unrelated instructions when merging.
+
+### Shared Instruction File Scenarios
+
+#### Scenario 1: Neither file exists
+- **Context**: Repository has neither `AGENTS.md` nor `.github/copilot-instructions.md`.
+- **Recommendation**: Create `AGENTS.md` at the repository root.
+- **Advisor Output Example**: "Since no shared instruction file currently exists in scope, create `AGENTS.md` at the repository root to hold these always-on guidelines."
+
+#### Scenario 2: Only `AGENTS.md` exists
+- **Context**: Repository already has `AGENTS.md`.
+- **Recommendation**: Merge new guidelines directly into `AGENTS.md`.
+- **Advisor Output Example**: "Found existing `AGENTS.md`. Append the new coding standards under the relevant section in `AGENTS.md` rather than creating a separate instruction file."
+
+#### Scenario 3: Only `.github/copilot-instructions.md` exists
+- **Context**: Repository already has `.github/copilot-instructions.md`.
+- **Recommendation**: Merge in place into `.github/copilot-instructions.md`.
+- **Advisor Output Example**: "Found existing `.github/copilot-instructions.md`. Merge the new rules into `.github/copilot-instructions.md` to avoid splitting repository instructions across multiple formats."
+
+#### Scenario 4: Both `AGENTS.md` and `.github/copilot-instructions.md` exist
+- **Context**: Repository contains both `AGENTS.md` and `.github/copilot-instructions.md`.
+- **Recommendation**: Consolidate shared rules into `AGENTS.md` (the canonical winner), keep product-specific features in `.github/copilot-instructions.md`, and prompt the user if conflicting rules are found.
+- **Advisor Output Example**: "Both `AGENTS.md` and `.github/copilot-instructions.md` are present. Consolidate overlapping shared guidelines into `AGENTS.md` as the canonical instruction file. Keep any product-specific features (e.g. `#file:` syntax) in `.github/copilot-instructions.md`. If conflicting rules are detected during merge, resolve them explicitly with the team."
 
 ### Path-specific frontmatter
 

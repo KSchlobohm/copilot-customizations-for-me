@@ -1,6 +1,6 @@
 ---
 name: copilot-customization-advisor
-description: Recommends the right GitHub Copilot customization type (instructions, prompt files, skills, agents, sub-agents, hooks) for a user's intent. Use when the user asks which customization type to use, whether something should be a skill or agent, or how to choose between Copilot customization options.
+description: Recommends the right GitHub Copilot customization type (instructions, prompt files, skills, agents, sub-agents, hooks) for a user's intent, and guides shared instruction file precedence, merging, and consolidation. Use when the user asks which customization type to use, whether something should be a skill or agent, how to choose between Copilot customization options, or how to create, merge, or consolidate shared instruction files (AGENTS.md / copilot-instructions.md).
 ---
 
 # Copilot Customization Advisor
@@ -11,7 +11,7 @@ Recommend the right customization type for a user's intent by applying the decis
 
 Walk through these questions in order. Stop at the first "yes."
 
-1. **Is this a rule that should ALWAYS apply?** -> Instructions (`.github/copilot-instructions.md`, `.github/instructions/*.instructions.md`, local user-scope `~/.copilot/copilot-instructions.md`, or user path-specific instruction dirs via `COPILOT_CUSTOM_INSTRUCTIONS_DIRS`)
+1. **Is this a rule that should ALWAYS apply?** -> Instructions (inspect scope first: `AGENTS.md` default, `.github/instructions/*.instructions.md` for `applyTo` globs; see [Shared Instruction Precedence](#shared-instruction-precedence))
 2. **Is this a repeatable recipe the user will invoke by name?** -> Prompt file (`.prompt.md`)
 3. **Is this a capability that any agent should be able to use?** -> Skill (`SKILL.md`)
 4. **Does it need its own identity, persona, or tool set?** -> Agent (`.agent.md`)
@@ -52,6 +52,25 @@ When two types seem equally valid, use these tiebreakers:
 **Prompt file vs. Skill**: Does the user invoke it explicitly by name, or should the agent discover it by task match? Explicit invocation with `/` is a prompt file. Auto-discovery is a skill.
 
 **Instruction vs. Hook**: Is compliance optional or mandatory? Instructions guide the AI (non-deterministic). Hooks execute shell commands (deterministic, guaranteed). If the agent might forget or skip it, use a hook.
+
+## Shared Instruction Precedence
+
+When recommending or creating shared repository instructions, inspect the repository hierarchy for existing instruction files before choosing a destination:
+
+1. **Inspect Existing Files**: Check the applicable directory hierarchy (starting from the target directory up to the repository root) for existing cross-agent instruction files (`AGENTS.md` or `CLAUDE.md`) and `.github/copilot-instructions.md`.
+2. **Single Format Exists**:
+   - If only `AGENTS.md` (or `CLAUDE.md`) exists in scope, merge new guidance into that existing cross-agent instruction file.
+   - If only `.github/copilot-instructions.md` exists in scope, merge new guidance in place into `.github/copilot-instructions.md` rather than creating `AGENTS.md`.
+3. **Neither Exists**: Default to creating `AGENTS.md` at the repository root.
+4. **Both Exist (Mixed Format)**:
+   - Treat `AGENTS.md` as the canonical consolidation destination.
+   - Recommend consolidating overlapping shared cross-agent guidance into `AGENTS.md`.
+   - Keep intentionally product-specific rules or features (e.g., `#file:` references or VS Code Copilot-specific syntax) in `.github/copilot-instructions.md`.
+5. **Conflict Resolution**:
+   - Surface conflicting existing guidance to the user for explicit resolution rather than silently choosing or overwriting rules.
+   - Preserve headings, comments, and unrelated instructions while merging.
+6. **Path-Specific Scoping**:
+   - Continue recommending `.github/instructions/*.instructions.md` when path-specific `applyTo` glob matching is required (these are scoped instruction files, not competing shared-file formats).
 
 ## Responding to the User
 
