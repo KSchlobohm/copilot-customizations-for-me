@@ -51,6 +51,16 @@ in a hand-rolled renderer; both need explicit sanitization.
 const WRITING_SAMPLE_MARKDOWN = SAMPLE_MARKDOWN
     .replace("| Reviewer | Safe to Merge | Closes Scope |", "| Reviewer | Evidence & Consistency | Readability & Tone |");
 
+const UNLINKED_SAMPLE_MARKDOWN = `# Work Summary: Unlinked Feature Work
+
+> 💡 **Unlinked Summary**: No GitHub Issue is attached to this work. Ask Copilot to create an issue anytime to link it.
+
+Working on unlinked task tracking support.
+
+## Action Items
+- [ ] Implement unlinked summary support
+`;
+
 const SKILL_MARKDOWN = await readFile(new URL("../SKILL.md", import.meta.url), "utf8");
 const SKILL_SCAFFOLD = SKILL_MARKDOWN.match(/```markdown\r?\n([\s\S]*?)\r?\n```/)?.[1] ?? "";
 
@@ -68,6 +78,14 @@ test("header renders with a working linked issue number and title", () => {
         "expected the issue header to render as a working link containing #42"
     );
     assert.match(html, /Reusable conversation summary canvas skill/);
+});
+
+test("unlinked summary header renders title and callout banner correctly", () => {
+    const html = renderMarkdown(UNLINKED_SAMPLE_MARKDOWN);
+    assert.match(html, /<h1>Work Summary: Unlinked Feature Work<\/h1>/);
+    assert.match(html, /<blockquote>/);
+    assert.match(html, /Unlinked Summary/);
+    assert.match(html, /No GitHub Issue is attached to this work/);
 });
 
 test("Action Items section appears directly below the header, before other sections", () => {

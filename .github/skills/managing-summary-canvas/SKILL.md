@@ -64,7 +64,7 @@ asserts the layout invariants below still hold. Run it after any change to
 `markdown.mjs` or the section conventions in this file, so "reload and
 verify" leaves a reproducible, committed artifact instead of relying on
 one-off interactive testing:
-- the header renders as a working link containing the issue number
+- the header renders as a working link containing the issue number (for issue-backed) or plain topic title with callout banner (for unlinked)
 - Action Items appears directly below the header
 - Action Items render with visible "To Do" and "Completed" group labels
 - "What Was Built" collapses via `<details>`/`<summary>`
@@ -74,16 +74,21 @@ one-off interactive testing:
 - the selected header pair survives durable reload and full-document updates
 - `summarizeActionItems` agrees with the checkbox states in the document
 
-### 2. Resolve a `documentId` and a backing issue
+### 2. Resolve a `documentId` and backing issue status
 
 Every canvas instance needs a stable `documentId` independent of the panel
-(e.g. `issue-42`) so reopening it, or a second panel on the same document,
+(e.g. `issue-42` for linked summaries, or `session-<sessionId>` / `summary-<topic-slug>`
+for unlinked summaries) so reopening it, or a second panel on the same document,
 shows the same content.
 
-The header always needs something to link to. If the work being summarized
-has no backing GitHub issue yet, **create one first** (via `create_issue` or
-the equivalent repo convention) — don't invent a "no issue" fallback for the
-header.
+Summaries support both **issue-backed** and **unlinked** modes:
+- **Issue-backed summary**: Used when a GitHub Issue link is available. The header links directly to `#<issue-number>`.
+- **Unlinked summary**: Used when no GitHub Issue link is available (e.g. local or unlinked workspace, or disabled GitHub Issues). Unlinked summaries render a plain topic title and a persistent callout banner:
+  ```markdown
+  > 💡 **Unlinked Summary**: No GitHub Issue is attached to this work. Ask Copilot to create an issue anytime to link it.
+  ```
+- **Transient Chat Nudge**: When initializing or opening an unlinked summary, mention in chat that no issue is attached and that you can create one if requested.
+- **In-Place Upgrade**: If the user asks to create an issue for an unlinked summary, create the issue (via `create_issue`), then call `update_markdown` to replace the unlinked banner with `# Work Summary: [#<number> <Title>](<url>)`, preserving all Action Items, Build Notes, Learnings, and Reviewer Matrix.
 
 ### 3. Compose the Markdown
 
@@ -103,6 +108,11 @@ type not explicitly listed, use the default pair.
 ```markdown
 ## [#<issue-number>](<issue-url>) — <issue title>
 <one-sentence summary of the work>
+
+<!-- For unlinked summaries, use this header structure instead: -->
+<!-- # Work Summary: <Topic/Session Name> -->
+<!-- > 💡 **Unlinked Summary**: No GitHub Issue is attached to this work. Ask Copilot to create an issue anytime to link it. -->
+<!-- <one-sentence summary of the work> -->
 
 ## Action Items
 - [ ] <actionable item>
@@ -127,8 +137,10 @@ type not explicitly listed, use the default pair.
 ```
 
 Rules:
-- **Header** — issue number linked to the GitHub issue URL, issue title, one
-  sentence of context. Always first.
+- **Header** — For linked summaries: issue number linked to the GitHub issue URL, issue title, one
+  sentence of context. For unlinked summaries: `# Work Summary: <Topic>` header followed by
+  `> 💡 **Unlinked Summary**: No GitHub Issue is attached to this work. Ask Copilot to create an issue anytime to link it.`
+  and one sentence of context. Always first.
 - **Action Items** — pinned directly below the header. Real, actionable
   items only. This is also where reviewer feedback lives (see below) —
   don't duplicate it in the matrix. Keep one flat checklist in the source
