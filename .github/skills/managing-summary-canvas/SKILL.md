@@ -1,6 +1,7 @@
 ---
 name: managing-summary-canvas
 description: Opens, refreshes, adds tasks to, and reads state from a reusable conversation summary canvas — a side-panel Markdown view with a linked issue header, pinned action items, collapsed build notes, learnings, and a work-type-appropriate reviewer verdict matrix — for tracking and resuming work across sessions. Use when the user explicitly asks to open, show, or update the conversation summary canvas, to add a task or action item to it, to check off or close out an existing task on it, or to ask how many tasks are left or what's still open on it.
+license: MIT
 ---
 
 # Managing the Summary Canvas

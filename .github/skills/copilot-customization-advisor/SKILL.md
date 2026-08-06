@@ -1,6 +1,7 @@
 ---
 name: copilot-customization-advisor
 description: Recommends the right GitHub Copilot customization type (instructions, prompt files, skills, agents, sub-agents, hooks) for a user's intent, and guides shared instruction file precedence, merging, and consolidation. Use when the user asks which customization type to use, whether something should be a skill or agent, how to choose between Copilot customization options, or how to create, merge, or consolidate shared instruction files (AGENTS.md / copilot-instructions.md).
+license: MIT
 ---
 
 # Copilot Customization Advisor

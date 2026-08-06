@@ -1,6 +1,7 @@
 ---
 name: copilot-customization-agent-authoring
 description: Helps create and review custom agent files (.agent.md) in .github/agents/. Use when the user asks to create a new agent, review an existing agent, grade agent quality, or get guidance on agent frontmatter fields. Applies best practices from large-scale community analysis.
+license: MIT
 ---
 
 # Agent Authoring
