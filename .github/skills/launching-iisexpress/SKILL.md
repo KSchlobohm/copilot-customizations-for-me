@@ -2,6 +2,7 @@
 name: launching-iisexpress
 version: 1.1.1
 description: Launches .NET Framework ASP.NET projects with IIS Express from the command line, mirroring Visual Studio local debugging. Use when the user needs to start, run, debug, test, or verify a .NET Framework ASP.NET MVC, Web API, or Web Forms app locally, especially during migration. Do not use for ASP.NET Core or modern .NET apps; use dotnet run instead.
+license: MIT
 ---
 
 # Launching IIS Express

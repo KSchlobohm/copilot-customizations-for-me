@@ -1,6 +1,7 @@
 ---
 name: copilot-customization-skill-authoring
 description: Creates and reviews skill files in .github/skills/. Use this skill when asked to create a new skill, review an existing skill, or improve skill quality. Applies best practices from agent-skills-best-practices.md to ensure skills are concise, discoverable, and effective.
+license: MIT
 ---
 
 # Skill Authoring
