@@ -174,13 +174,29 @@ test("skill guidance runs independent reviews and aggregates high-confidence con
     assert.match(SKILL_MARKDOWN, /not an automated merge gate/);
 });
 
-test("skill guidance bounds reviewer recovery and preserves blocked or replaced seats", () => {
-    assert.match(SKILL_MARKDOWN, /transient execution failure or unusable output, retry that reviewer\s+once/);
-    assert.match(SKILL_MARKDOWN, /keep its failed row and add one clearly labeled\s+replacement row/);
-    assert.match(SKILL_MARKDOWN, /preferring one not already\s+in the council but allowing a duplicate when necessary/);
-    assert.match(SKILL_MARKDOWN, /requested model is\s+unavailable, replace it without the initial retry/);
+test("skill guidance keeps execution attempts out of the matrix while preserving council coverage", () => {
+    assert.match(SKILL_MARKDOWN, /Keep a seat `⏳ Pending` while recovering from an execution failure/);
+    assert.match(SKILL_MARKDOWN, /transient failure or unusable output, retry that reviewer once/);
+    assert.match(SKILL_MARKDOWN, /Prefer a model not already in the\s+council, but allow a duplicate when necessary/);
+    assert.match(SKILL_MARKDOWN, /update that seat to the replacement's identity and\s+verdict/);
+    assert.match(SKILL_MARKDOWN, /do not retain failed-attempt rows in the matrix/);
+    assert.match(SKILL_MARKDOWN, /mark the seat\s+`🚫 Unavailable`, leave the council incomplete/);
+    assert.match(SKILL_MARKDOWN, /Report execution failures and replacements in chat,\s+not in the matrix/);
+    assert.doesNotMatch(SKILL_MARKDOWN, /Invocation failed/);
     assert.match(SKILL_MARKDOWN, /Blocked: required content inaccessible/);
     assert.match(SKILL_MARKDOWN, /Do not substitute another model unless it has\s+confirmed access/);
+});
+
+test("Reviewer Matrix renders an unavailable seat distinctly from review verdicts", () => {
+    const markdown = `## Reviewer Matrix
+| Reviewer | Safe to Merge | Closes Scope |
+|---|---|---|
+| GPT-5.6 (reasoning: high) | 🚫 Unavailable | 🚫 Unavailable |
+| Claude Sonnet 5 (reasoning: high) | ✅ Pass | ✅ Pass |`;
+    const html = renderMarkdown(markdown);
+    assert.match(html, /🚫 Unavailable/);
+    assert.match(html, /✅ Pass/);
+    assert.doesNotMatch(html, /Invocation failed/);
 });
 
 test("skill guidance renews only the current matrix and leaves existing summaries readable", () => {

@@ -62,10 +62,12 @@ test("reviewer identity labels (including distinct reasoning depths and unknown 
 | GPT-5.6 (reasoning: high) | ✅ Pass | ✅ Pass |
 | GPT-5.6 (reasoning: xhigh) | ⚠️ Pass with concerns | ✅ Pass |
 | Claude Haiku 4.5 | ✅ Pass | ✅ Pass |
+| Gemini 3.1 Pro Preview (reasoning: high) | 🚫 Unavailable | 🚫 Unavailable |
 | (Model family unknown) (Version unknown) | ⏳ Pending | ⏳ Pending |`;
     await saveDocument("doc-reviewers", { title: "Matrix", markdown });
     const doc = await loadDocument("doc-reviewers");
     assert.equal(doc.markdown, markdown);
+    assert.match(doc.markdown, /🚫 Unavailable/);
 });
 
 test("loadDocument returns null for a documentId that was never saved", async () => {

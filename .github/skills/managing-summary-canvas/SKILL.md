@@ -180,10 +180,10 @@ Rules:
   only when the work's primary deliverable is explicitly reclassified.
 
   Fill each cell with only a status: ⏳ Pending / ✅ Pass / ❌ Fail /
-  ⚠️ Pass with concerns / 🚫 Unavailable / ❌ Invocation failed /
-  ⛔ Blocked: required content inaccessible. The matrix is a status board,
-  not a place for prose — it should stay scannable at a glance with no
-  per-reviewer comment column.
+  ⚠️ Pass with concerns / 🚫 Unavailable /
+  ⛔ Blocked: required content inaccessible. The matrix shows council
+  coverage and review verdicts, not failed execution attempts. It should
+  stay scannable at a glance with no per-reviewer comment column.
 
   Any actual finding, concern, or comment a reviewer raises — whether it's
   still open or was fixed — goes into **Action Items** instead, as its own
@@ -272,15 +272,17 @@ council.
    speculative concerns. A verdict is `✅ Pass` with no actionable concerns,
    `⚠️ Pass with concerns` with only non-blocking actionable concerns, and
    `❌ Fail` with any blocking concern.
-5. For a transient execution failure or unusable output, retry that reviewer
-   once. If it still fails, keep its failed row and add one clearly labeled
-   replacement row. Select any available model, preferring one not already
-   in the council but allowing a duplicate when necessary. Retry the
-   replacement once if needed; after that, leave the council incomplete and
-   ask the user before trying another model. If the requested model is
-   unavailable, replace it without the initial retry. A council with
-   successful replacements is complete and can provide its decision-support
-   result.
+5. Keep a seat `⏳ Pending` while recovering from an execution failure. For
+   a transient failure or unusable output, retry that reviewer once, then
+   select one replacement model if needed. Prefer a model not already in the
+   council, but allow a duplicate when necessary. If the requested model is
+   unavailable, select the replacement without retrying it first. When the
+   replacement succeeds, update that seat to the replacement's identity and
+   verdict; do not retain failed-attempt rows in the matrix. Retry the
+   replacement once if needed. If it still cannot complete, mark the seat
+   `🚫 Unavailable`, leave the council incomplete, and ask the user before
+   trying another model. Report execution failures and replacements in chat,
+   not in the matrix.
 6. If required content is inaccessible, let other reviewers finish, mark the
    affected seat `⛔ Blocked: required content inaccessible`, and leave the
    council incomplete. Do not substitute another model unless it has
@@ -293,7 +295,8 @@ council.
    problem, impact, affected location when known, and all agreeing reviewers,
    without a fix plan.
 
-The overall council result is: any `❌ Fail` means not ready; otherwise any
+The council is complete only when all three seats have review verdicts. For a
+complete council, any `❌ Fail` means not ready; otherwise any
 `⚠️ Pass with concerns` means ready with concerns; all `✅ Pass` means ready.
 This result supports the user's decision and is not an automated merge gate.
 
