@@ -199,15 +199,18 @@ test("Reviewer Matrix renders an unavailable seat distinctly from review verdict
     assert.doesNotMatch(html, /Invocation failed/);
 });
 
-test("skill guidance renews only the current matrix and leaves existing summaries readable", () => {
-    assert.match(SKILL_MARKDOWN, /On renewal, replace the current matrix with the fresh roster/);
-    assert.match(SKILL_MARKDOWN, /Do not keep a\s+review history in the summary/);
-    assert.match(SKILL_MARKDOWN, /verdict changes materially, such as Pass to Fail, mention that change in chat\s+only/);
-    assert.match(SKILL_MARKDOWN, /Existing saved summaries remain readable and unchanged/);
+test("skill guidance renews verdicts without changing durable Action Items", () => {
+    assert.match(SKILL_MARKDOWN, /On renewal, replace only the current matrix with the fresh roster/);
+    assert.match(SKILL_MARKDOWN, /Do not\s+keep previous matrices or verdicts/);
+    assert.match(SKILL_MARKDOWN, /Preserve all Action Items and their\s+checkbox states/);
+    assert.match(SKILL_MARKDOWN, /renewal never deletes, resets, or completes them/);
+    assert.match(SKILL_MARKDOWN, /fixed, deferred, accepted, or\s+explicitly not planned/);
+    assert.match(SKILL_MARKDOWN, /verdict changes materially, such as Pass\s+to Fail, mention that change in chat\s+only/);
+    assert.match(SKILL_MARKDOWN, /Existing saved summaries remain\s+readable and unchanged/);
 });
 
 test("skill guidance uses short unambiguous reviewer labels in Action Items", () => {
-    assert.match(SKILL_MARKDOWN, /shortest unambiguous reviewer shorthand/);
+    assert.match(SKILL_MARKDOWN, /shortest unambiguous\s+reviewer shorthand/);
     assert.match(SKILL_MARKDOWN, /`- \[x\] \(Opus\)/);
     assert.match(SKILL_MARKDOWN, /`- \[ \] \(GPT-5\.6\)/);
     assert.match(SKILL_MARKDOWN, /matrix\s+is the source of truth for full family, version, and reasoning metadata/);

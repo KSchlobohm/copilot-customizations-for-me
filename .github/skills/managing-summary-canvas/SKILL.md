@@ -185,9 +185,9 @@ Rules:
   coverage and review verdicts, not failed execution attempts. It should
   stay scannable at a glance with no per-reviewer comment column.
 
-  Any actual finding, concern, or comment a reviewer raises — whether it's
-  still open or was fixed — goes into **Action Items** instead, as its own
-  line attributed with the shortest unambiguous reviewer shorthand, e.g.:
+  Any actual finding, concern, or comment a reviewer raises goes into
+  **Action Items** as its own line attributed with the shortest unambiguous
+  reviewer shorthand, e.g.:
   `- [x] (Opus) Fixed a URL-scheme allow-list bypass via a
   leading C0 control character before \`javascript:\` — sanitized and
   regression-tested.`
@@ -197,11 +197,12 @@ Rules:
   is the source of truth for full family, version, and reasoning metadata.
   If two matrix rows would share a shorthand, add only enough detail to make
   the Action Item attribution unambiguous.
-  Check the box once the concern is resolved and verified, same as any
-  other action item; leave it unchecked while still outstanding. This way
-  the matrix always answers "is it green" at a glance, and Action Items
-  is the one place with the actual substance and history of what reviewers
-  found.
+  Leave the item unchecked while it still needs a decision before merge.
+  Check it once it is disposed for this work: fixed, deferred, accepted, or
+  explicitly not planned. Preserve every Action Item and its checkbox state
+  across council renewals. This way the matrix shows the current council
+  verdicts while Action Items remain the fast, durable view of what is still
+  open.
   Reviewer identity in the first column must always preserve model details:
   - Use the full available family + version followed by the exact reasoning
     depth as `<family> <version> (reasoning: <depth>)` when metadata is known
@@ -300,12 +301,13 @@ complete council, any `❌ Fail` means not ready; otherwise any
 `⚠️ Pass with concerns` means ready with concerns; all `✅ Pass` means ready.
 This result supports the user's decision and is not an automated merge gate.
 
-On renewal, replace the current matrix with the fresh roster. Do not keep a
-review history in the summary or claim that a review maps to a commit or
-exact code version. The user decides when earlier results are stale. If a
-verdict changes materially, such as Pass to Fail, mention that change in chat
-only. Existing saved summaries remain readable and unchanged until the user
-starts or renews their council.
+On renewal, replace only the current matrix with the fresh roster. Do not
+keep previous matrices or verdicts. Preserve all Action Items and their
+checkbox states; renewal never deletes, resets, or completes them. Do not
+claim that a review maps to a commit or exact code version. The user decides
+when earlier results are stale. If a verdict changes materially, such as Pass
+to Fail, mention that change in chat only. Existing saved summaries remain
+readable and unchanged until the user starts or renews their council.
 
 ### 4. Open or refresh
 
