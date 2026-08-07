@@ -24,6 +24,7 @@ Use this repository to collect reusable Copilot customization building blocks, s
 | `.github/skills/launching-iisexpress/` | Guidance for launching .NET Framework ASP.NET projects with IIS Express |
 | `.github/skills/managing-summary-canvas/` | A reusable Copilot App side-panel canvas skill for tracking and resuming engineering work across sessions (requires the Copilot App's canvas support) |
 | `docs/` | Recommended tool setup guides, installation steps, and workshops |
+| `docs/skill-releases.md` | Versioned skill installation, migration, upgrade, and publishing guide |
 | `docs/lessons-learned/` | Focused notes on practical AI-assisted engineering lessons worth revisiting |
 | `docs/mcp-tools/` | MCP tool configuration guides with rationale and walkthroughs |
 | `docs/reading-list.md` | Shared reading list of reference material and useful articles |
@@ -40,6 +41,7 @@ Use this repository to collect reusable Copilot customization building blocks, s
 | Verification | `launching-iisexpress` release contract | Detects canonical template drift and stale generated launchers using dependency-free PowerShell, release provenance, and required v1.1.1 non-root safety invariants | `.github/skills/launching-iisexpress/Verify-LaunchingIISExpress.ps1` |
 | Validation | `launching-iisexpress` regressions | Executes the rendered launcher under Windows PowerShell or PowerShell 7 to verify root and virtual-path mappings, provenance and safety-invariant validation, and safe substitution without external modules | `.github/skills/launching-iisexpress/Verify-LaunchingIISExpress.Tests.ps1` |
 | Skill | `managing-summary-canvas` | Opens, refreshes, and reads a reusable Copilot App side-panel summary canvas (linked issue header, pinned action items, collapsed build notes, learnings, reviewer verdict matrix) for tracking and resuming work across sessions — requires the Copilot App's canvas support | `.github/skills/managing-summary-canvas/SKILL.md` |
+| Guide | Versioned skill releases | Explains how to install a pinned release, adopt manually copied skills, upgrade deliberately, and publish subsequent versions | `docs/skill-releases.md` |
 | Guide | Copilot CLI Chronicle lesson | Explains why `/chronicle` matters, what architectural idea sits behind it, and when to go deeper | `docs/lessons-learned/copilot-cli-chronicle.md` |
 | Guide | Skill reuse vs knowledge reuse lesson | Explains when skills are personal accelerators vs shared knowledge artifacts, and when evals are worth the investment | `docs/lessons-learned/skill-reuse-is-knowledge-reuse.md` |
 | Guide | Playwright MCP Setup | Full setup guide + workshop for visual verification with Playwright MCP | `docs/mcp-tools/playwright-mcp/README.md` |
