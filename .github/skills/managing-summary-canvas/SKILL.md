@@ -263,7 +263,9 @@ council.
    review or rubber-duck session as a current council member. Add the complete
    selected roster to the matrix as `⏳ Pending` before starting reviews,
    using family, version, and reasoning metadata from these current
-   invocations.
+   invocations. Use one separate `task` call per seat and launch all three
+   calls together in one `multi_tool_use.parallel` invocation. Do not reuse an
+   existing `agent_id` through `write_agent`.
 3. Run all reviewers in parallel with the same complete deliverable and
    relevant context. Each reviewer independently returns both matrix
    verdicts. Do not expose one current reviewer's findings to another before

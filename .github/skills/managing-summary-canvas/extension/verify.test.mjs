@@ -156,6 +156,8 @@ test("skill guidance creates a fresh three-reviewer council only on explicit rev
     assert.match(SKILL_MARKDOWN, /Create a new reviewer session for every seat/);
     assert.match(SKILL_MARKDOWN, /Never reuse an existing\s+review or rubber-duck session/);
     assert.match(SKILL_MARKDOWN, /using family, version, and reasoning metadata from these current\s+invocations/);
+    assert.match(SKILL_MARKDOWN, /Use one separate `task` call per seat and launch all three\s+calls together in one `multi_tool_use\.parallel` invocation/);
+    assert.match(SKILL_MARKDOWN, /Do not reuse an\s+existing `agent_id` through `write_agent`/);
 });
 
 test("skill guidance keeps automatic reviewer configuration near high or medium", () => {
