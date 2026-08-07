@@ -26,13 +26,13 @@ const CODE_MATRIX = `## Reviewer Matrix
 
 | Reviewer | Safe to Merge | Closes Scope |
 |---|---|---|
-| GPT-5.6 (reasoning: high) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |`;
+| GPT-5.6 (reasoning: high) | ⏳ Pending | ⏳ Pending |`;
 
 const WRITING_MATRIX = `## Reviewer Matrix
 
 | Reviewer | Evidence & Consistency | Readability & Tone |
 |---|---|---|
-| GPT-5.6 (reasoning: high) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |`;
+| GPT-5.6 (reasoning: high) | ⏳ Pending | ⏳ Pending |`;
 
 test("saveDocument then loadDocument round-trips the exact content written (Bug 4 precondition)", async () => {
     const markdown = `## Action Items\n- [ ] a\n\n${CODE_MATRIX}`;
@@ -62,7 +62,7 @@ test("reviewer identity labels (including distinct reasoning depths and unknown 
 | GPT-5.6 (reasoning: high) | ✅ Pass | ✅ Pass |
 | GPT-5.6 (reasoning: xhigh) | ⚠️ Pass with concerns | ✅ Pass |
 | Claude Haiku 4.5 | ✅ Pass | ✅ Pass |
-| (Model family unknown) (Version unknown) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |`;
+| (Model family unknown) (Version unknown) | ⏳ Pending | ⏳ Pending |`;
     await saveDocument("doc-reviewers", { title: "Matrix", markdown });
     const doc = await loadDocument("doc-reviewers");
     assert.equal(doc.markdown, markdown);
