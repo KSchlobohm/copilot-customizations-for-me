@@ -1,6 +1,6 @@
 ---
 name: managing-summary-canvas
-description: Opens, refreshes, adds tasks to, and reads state from a reusable conversation summary canvas — a side-panel Markdown view with a linked issue header, pinned action items, collapsed build notes, learnings, and a work-type-appropriate reviewer verdict matrix — for tracking and resuming work across sessions. Use when the user explicitly asks to open, show, or update the conversation summary canvas, to add a task or action item to it, to check off or close out an existing task on it, or to ask how many tasks are left or what's still open on it.
+description: Opens, refreshes, adds tasks to, reads state from, and runs a fresh model council for a reusable conversation summary canvas — a side-panel Markdown view with a linked issue header, pinned action items, collapsed build notes, learnings, and a reviewer verdict matrix. Use when the user explicitly asks to open, show, or update the conversation summary canvas; start or renew its model council; review again; manage an action item; or read its current task state.
 license: MIT
 ---
 
@@ -16,6 +16,9 @@ Only when the user **explicitly** asks for it, e.g.:
 - "open the conversation summary canvas"
 - "show a summary canvas for this work"
 - "update the conversation summary canvas" (and close variants)
+- "start the model council", "renew the model council", or "review again" —
+  runs fresh, independent reviewers for the current summary. See "Running a
+  model council" below.
 - "add a task for <description>" (and close variants, e.g. "add an action
   item for...") — appends a new, unchecked Action Item to the currently open
   canvas instance. See "Adding a single task" below.
@@ -129,9 +132,9 @@ type not explicitly listed, use the default pair.
 
 | Reviewer | Safe to Merge | Closes Scope |
 |---|---|---|
-| Claude Opus 4.8 (reasoning: high) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
-| GPT-5.6 (reasoning: high) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
-| Gemini 3.5 Flash (reasoning: high) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
+| Claude reviewer (not selected) | ⏳ Pending | ⏳ Pending |
+| GPT reviewer (not selected) | ⏳ Pending | ⏳ Pending |
+| Gemini reviewer (not selected) | ⏳ Pending | ⏳ Pending |
 
 ## What We Learned
 <insights / gotchas discovered during the work that aren't in the PR>
@@ -154,7 +157,7 @@ Rules:
   bullets. The PR diff already has full detail; don't duplicate it here.
 - **Reviewer Matrix** — placed directly after "What Was Built" and above
   "What We Learned". Always rendered, even before any review has happened.
-  Show a "Not yet reviewed" pending state per reviewer/column rather than
+  Show a pending state per reviewer/column rather than
   omitting the section. Use exactly two verdict columns after `Reviewer`,
   selected only from the table above:
   - **Safe to Merge** — is the code itself correct and secure (bugs,
@@ -176,16 +179,15 @@ Rules:
   `update_markdown` calls, task-only edits, and checkbox changes. Change it
   only when the work's primary deliverable is explicitly reclassified.
 
-  Fill each cell with only a status: ✅ Pass / ❌ Fail / ⚠️ Pass with
-  concerns. The matrix is a status board, not a place for prose — it should
-  stay scannable at a glance with no per-reviewer comment column. If a
-  reviewer's verdict is based on an earlier commit than what's currently on
-  the branch, encode that in the status itself (e.g. a distinct pending/
-  stale marker) rather than adding a text column to explain it.
+  Fill each cell with only a status: ⏳ Pending / ✅ Pass / ❌ Fail /
+  ⚠️ Pass with concerns / 🚫 Unavailable /
+  ⛔ Blocked: required content inaccessible. The matrix shows council
+  coverage and review verdicts, not failed execution attempts. It should
+  stay scannable at a glance with no per-reviewer comment column.
 
-  Any actual finding, concern, or comment a reviewer raises — whether it's
-  still open or was fixed — goes into **Action Items** instead, as its own
-  line attributed with the shortest unambiguous reviewer shorthand, e.g.:
+  Any actual finding, concern, or comment a reviewer raises goes into
+  **Action Items** as its own line attributed with the shortest unambiguous
+  reviewer shorthand, e.g.:
   `- [x] (Opus) Fixed a URL-scheme allow-list bypass via a
   leading C0 control character before \`javascript:\` — sanitized and
   regression-tested.`
@@ -195,12 +197,18 @@ Rules:
   is the source of truth for full family, version, and reasoning metadata.
   If two matrix rows would share a shorthand, add only enough detail to make
   the Action Item attribution unambiguous.
-  Check the box once the concern is resolved and verified, same as any
-  other action item; leave it unchecked while still outstanding. This way
-  the matrix always answers "is it green" at a glance, and Action Items
-  is the one place with the actual substance and history of what reviewers
-  found.
-  Reviewer identity in the first column must always preserve model details:
+  Leave the item unchecked while it still needs a decision before merge.
+  Check it once it is disposed for this work: fixed, deferred, accepted, or
+  explicitly not planned. Preserve every Action Item and its checkbox state
+  across council renewals. This way the matrix shows the current council
+  verdicts while Action Items remain the fast, durable view of what is still
+  open.
+  Before the first council starts, the scaffold's three `(not selected)`
+  labels are placeholders, not reviewer identities. Preserve them exactly
+  during ordinary refreshes. When the council starts or renews, replace the
+  complete matrix with the selected roster from the current invocations.
+  After a council starts, reviewer identity in the first column must preserve
+  model details:
   - Use the full available family + version followed by the exact reasoning
     depth as `<family> <version> (reasoning: <depth>)` when metadata is known
     (for example `Claude Opus 4.8 (reasoning: high)`,
@@ -214,7 +222,7 @@ Rules:
     `(Model family unknown) <version> (reasoning: high)`, or
     `(Model family unknown) (Version unknown)`.
     Add an unknown-metadata row only for an actual reviewer whose metadata is
-    unavailable; do not include a placeholder reviewer in a new matrix.
+    unavailable; do not use unknown metadata as a pre-council placeholder.
   - Preserve the reported reasoning-depth value exactly; do not infer,
     translate, or normalize it. Append the reasoning suffix only when
     reasoning depth is a property supported by that model. For a
@@ -226,19 +234,84 @@ Rules:
     one row (`GPT-5.x`, `Gemini`, `Claude Opus`, etc.). `GPT-5.6
     (reasoning: high)` and `GPT-5.6 (reasoning: xhigh)` remain separate
     reviewer identities with separate verdicts.
-  - On refresh/resume, call `get_state` before rewriting matrix rows. Preserve
-    labels that already follow the full identity rules exactly as stored.
-    Migrate a legacy abbreviated label (for example `GPT-5.x`, `Gemini`, or
-    `Claude Opus`) once: use available execution metadata to restore its full
-    identity, or use explicit unknown placeholders for unavailable family or
-    version metadata. Never merge legacy rows or alter their verdicts during
-    migration. This keeps reviewer identity stable without preserving
-    ambiguous labels indefinitely.
+  - On refresh/resume, call `get_state` before rewriting matrix rows and
+    preserve every reviewer label and verdict exactly as stored. Do not infer
+    or migrate placeholder or abbreviated labels. Only an explicit council
+    start or renewal replaces the entire matrix with current reviewer
+    identities and verdicts.
   - Identity formatting does not alter verdict semantics. Keep verdict values
     exactly the same statuses (`✅ Pass`, `❌ Fail`, `⚠️ Pass with concerns`,
-    `⏳ Not yet reviewed`) regardless of whether model metadata is complete.
+    `⏳ Pending`) regardless of whether model metadata is complete.
+
 - **What We Learned** — last section. New insights/gotchas not captured
   elsewhere.
+
+### Running a model council
+
+A model council is decision support for the user. It assesses the work and
+reports verdicts and concerns; it does not plan or implement repairs.
+
+Start one only when the user explicitly asks to start the council for the
+first time, renew it, or review again. Opening, creating, or refreshing a
+summary does not start reviewers. "Review again" always means a fresh
+council.
+
+1. Select three available reviewers from different model families,
+   preferring strong review capability. For each reasoning-capable model,
+   use `high`, then `medium` if `high` is unsupported. Never select `xhigh`,
+   `max`, or `none` automatically. If neither `high` nor `medium` is
+   supported, select another model.
+2. Create a new reviewer session for every seat. Never reuse an existing
+   review or rubber-duck session as a current council member. Add the complete
+   selected roster to the matrix as `⏳ Pending` before starting reviews,
+   using family, version, and reasoning metadata from these current
+   invocations. Use one separate `task` call per seat and launch all three
+   calls together in one `multi_tool_use.parallel` invocation. Do not reuse an
+   existing `agent_id` through `write_agent`.
+3. Run all reviewers in parallel with the same complete deliverable and
+   relevant context. Each reviewer independently returns both matrix
+   verdicts. Do not expose one current reviewer's findings to another before
+   aggregation.
+4. Ask reviewers to report only high-confidence correctness, security,
+   reliability, and scope concerns. Exclude style, minor nits, and
+   speculative concerns. A verdict is `✅ Pass` with no actionable concerns,
+   `⚠️ Pass with concerns` with only non-blocking actionable concerns, and
+   `❌ Fail` with any blocking concern.
+5. Keep a seat `⏳ Pending` while recovering from an execution failure. For
+   a transient failure or unusable output, retry that reviewer once, then
+   select one replacement model if needed. Prefer a model not already in the
+   council, but allow a duplicate when necessary. If the requested model is
+   unavailable, select the replacement without retrying it first. When the
+   replacement succeeds, update that seat to the replacement's identity and
+   verdict; do not retain failed-attempt rows in the matrix. Retry the
+   replacement once if needed. If it still cannot complete, mark the seat
+   `🚫 Unavailable`, leave the council incomplete, and ask the user before
+   trying another model. Report execution failures and replacements in chat,
+   not in the matrix.
+6. If required content is inaccessible, let other reviewers finish, mark the
+   affected seat `⛔ Blocked: required content inaccessible`, and leave the
+   council incomplete. Do not substitute another model unless it has
+   confirmed access to the missing content. Explain the unavailable scope in
+   chat; an incomplete council cannot provide a full merge-ready verdict.
+7. Aggregate only after every seat reaches a terminal state. Surface every
+   actionable concern in Action Items, merging findings only when they
+   describe the same root cause or affected behavior. Order shared concerns
+   first, then by blocking severity and security impact. Each item states the
+   problem, impact, affected location when known, and all agreeing reviewers,
+   without a fix plan.
+
+The council is complete only when all three seats have review verdicts. For a
+complete council, any `❌ Fail` means not ready; otherwise any
+`⚠️ Pass with concerns` means ready with concerns; all `✅ Pass` means ready.
+This result supports the user's decision and is not an automated merge gate.
+
+On renewal, replace only the current matrix with the fresh roster. Do not
+keep previous matrices or verdicts. Preserve all Action Items and their
+checkbox states; renewal never deletes, resets, or completes them. Do not
+claim that a review maps to a commit or exact code version. The user decides
+when earlier results are stale. If a verdict changes materially, such as Pass
+to Fail, mention that change in chat only. Existing saved summaries remain
+readable and unchanged until the user starts or renews their council.
 
 ### 4. Open or refresh
 

@@ -40,8 +40,8 @@ Build a canvas + skill for tracking and resuming work across sessions.
 | GPT-5.6 (reasoning: high) | ✅ Pass | ✅ Pass |
 | GPT-5.6 (reasoning: xhigh) | ⚠️ Pass with concerns | ✅ Pass |
 | Claude Haiku 4.5 | ✅ Pass | ✅ Pass |
-| Gemini 3.5 Flash (reasoning: high) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
-| (Model family unknown) (Version unknown) | ⏳ Not yet reviewed | ⏳ Not yet reviewed |
+| Gemini 3.5 Flash (reasoning: high) | ⏳ Pending | ⏳ Pending |
+| (Model family unknown) (Version unknown) | ⏳ Pending | ⏳ Pending |
 
 ## What We Learned
 Markdown link/image syntax and raw-HTML passthrough are both real XSS surfaces
@@ -62,7 +62,11 @@ Working on unlinked task tracking support.
 `;
 
 const SKILL_MARKDOWN = await readFile(new URL("../SKILL.md", import.meta.url), "utf8");
-const SKILL_SCAFFOLD = SKILL_MARKDOWN.match(/```markdown\r?\n([\s\S]*?)\r?\n```/)?.[1] ?? "";
+const scaffoldStart = SKILL_MARKDOWN.indexOf("## Reviewer Matrix");
+const scaffoldEnd = SKILL_MARKDOWN.indexOf("## What We Learned", scaffoldStart);
+const SKILL_SCAFFOLD = scaffoldStart >= 0 && scaffoldEnd > scaffoldStart
+    ? SKILL_MARKDOWN.slice(scaffoldStart, scaffoldEnd)
+    : "";
 
 function reviewerHeaders(markdown) {
     const html = renderMarkdown(markdown);
@@ -121,7 +125,7 @@ test("code and feature Reviewer Matrix renders exactly the default two verdict c
     assert.match(html, /\(Model family unknown\) \(Version unknown\)/);
     assert.doesNotMatch(html, /\(Model family unknown\) \(Version unknown\) \(reasoning:/);
     assert.match(html, /Pass with concerns/);
-    assert.match(html, /Not yet reviewed/);
+    assert.match(html, /Pending/);
     assert.deepEqual(reviewerHeaders(SAMPLE_MARKDOWN), ["Reviewer", "Safe to Merge", "Closes Scope"]);
 });
 
@@ -149,8 +153,70 @@ test("skill guidance defaults reasoning-capable reviewers to high", () => {
     );
 });
 
+test("skill guidance creates a fresh three-reviewer council only on explicit review requests", () => {
+    assert.match(SKILL_MARKDOWN, /"review again" —\s+runs fresh, independent reviewers/);
+    assert.match(SKILL_MARKDOWN, /Opening, creating, or refreshing a\s+summary does not start reviewers/);
+    assert.match(SKILL_MARKDOWN, /Select three available reviewers from different model families/);
+    assert.match(SKILL_MARKDOWN, /Create a new reviewer session for every seat/);
+    assert.match(SKILL_MARKDOWN, /Never reuse an existing\s+review or rubber-duck session/);
+    assert.match(SKILL_MARKDOWN, /using family, version, and reasoning metadata from these current\s+invocations/);
+    assert.match(SKILL_MARKDOWN, /Use one separate `task` call per seat and launch all three\s+calls together in one `multi_tool_use\.parallel` invocation/);
+    assert.match(SKILL_MARKDOWN, /Do not reuse an\s+existing `agent_id` through `write_agent`/);
+});
+
+test("skill guidance keeps automatic reviewer configuration near high or medium", () => {
+    assert.match(SKILL_MARKDOWN, /use `high`, then `medium` if `high` is unsupported/);
+    assert.match(SKILL_MARKDOWN, /Never select `xhigh`,\s+`max`, or `none` automatically/);
+});
+
+test("skill guidance runs independent reviews and aggregates high-confidence concerns without repair work", () => {
+    assert.match(SKILL_MARKDOWN, /Run all reviewers in parallel with the same complete deliverable/);
+    assert.match(SKILL_MARKDOWN, /Do not expose one current reviewer's findings to another before\s+aggregation/);
+    assert.match(SKILL_MARKDOWN, /only high-confidence correctness, security,\s+reliability, and scope concerns/);
+    assert.match(SKILL_MARKDOWN, /Exclude style, minor nits, and\s+speculative concerns/);
+    assert.match(SKILL_MARKDOWN, /merging findings only when they\s+describe the same root cause or affected behavior/);
+    assert.match(SKILL_MARKDOWN, /without a fix plan/);
+    assert.match(SKILL_MARKDOWN, /decision support for the user/);
+    assert.match(SKILL_MARKDOWN, /not an automated merge gate/);
+});
+
+test("skill guidance keeps execution attempts out of the matrix while preserving council coverage", () => {
+    assert.match(SKILL_MARKDOWN, /Keep a seat `⏳ Pending` while recovering from an execution failure/);
+    assert.match(SKILL_MARKDOWN, /transient failure or unusable output, retry that reviewer once/);
+    assert.match(SKILL_MARKDOWN, /Prefer a model not already in the\s+council, but allow a duplicate when necessary/);
+    assert.match(SKILL_MARKDOWN, /update that seat to the replacement's identity and\s+verdict/);
+    assert.match(SKILL_MARKDOWN, /do not retain failed-attempt rows in the matrix/);
+    assert.match(SKILL_MARKDOWN, /mark the seat\s+`🚫 Unavailable`, leave the council incomplete/);
+    assert.match(SKILL_MARKDOWN, /Report execution failures and replacements in chat,\s+not in the matrix/);
+    assert.doesNotMatch(SKILL_MARKDOWN, /Invocation failed/);
+    assert.match(SKILL_MARKDOWN, /Blocked: required content inaccessible/);
+    assert.match(SKILL_MARKDOWN, /Do not substitute another model unless it has\s+confirmed access/);
+});
+
+test("Reviewer Matrix renders an unavailable seat distinctly from review verdicts", () => {
+    const markdown = `## Reviewer Matrix
+| Reviewer | Safe to Merge | Closes Scope |
+|---|---|---|
+| GPT-5.6 (reasoning: high) | 🚫 Unavailable | 🚫 Unavailable |
+| Claude Sonnet 5 (reasoning: high) | ✅ Pass | ✅ Pass |`;
+    const html = renderMarkdown(markdown);
+    assert.match(html, /🚫 Unavailable/);
+    assert.match(html, /✅ Pass/);
+    assert.doesNotMatch(html, /Invocation failed/);
+});
+
+test("skill guidance renews verdicts without changing durable Action Items", () => {
+    assert.match(SKILL_MARKDOWN, /On renewal, replace only the current matrix with the fresh roster/);
+    assert.match(SKILL_MARKDOWN, /Do not\s+keep previous matrices or verdicts/);
+    assert.match(SKILL_MARKDOWN, /Preserve all Action Items and their\s+checkbox states/);
+    assert.match(SKILL_MARKDOWN, /renewal never deletes, resets, or completes them/);
+    assert.match(SKILL_MARKDOWN, /fixed, deferred, accepted, or\s+explicitly not planned/);
+    assert.match(SKILL_MARKDOWN, /verdict changes materially, such as Pass\s+to Fail, mention that change in chat\s+only/);
+    assert.match(SKILL_MARKDOWN, /Existing saved summaries remain\s+readable and unchanged/);
+});
+
 test("skill guidance uses short unambiguous reviewer labels in Action Items", () => {
-    assert.match(SKILL_MARKDOWN, /shortest unambiguous reviewer shorthand/);
+    assert.match(SKILL_MARKDOWN, /shortest unambiguous\s+reviewer shorthand/);
     assert.match(SKILL_MARKDOWN, /`- \[x\] \(Opus\)/);
     assert.match(SKILL_MARKDOWN, /`- \[ \] \(GPT-5\.6\)/);
     assert.match(SKILL_MARKDOWN, /matrix\s+is the source of truth for full family, version, and reasoning metadata/);
@@ -158,6 +224,10 @@ test("skill guidance uses short unambiguous reviewer labels in Action Items", ()
 
 test("skill scaffold does not seed a phantom unknown reviewer", () => {
     assert.doesNotMatch(SKILL_SCAFFOLD, /\(Model family unknown\)/);
+    assert.match(SKILL_SCAFFOLD, /Claude reviewer \(not selected\)/);
+    assert.match(SKILL_SCAFFOLD, /GPT reviewer \(not selected\)/);
+    assert.match(SKILL_SCAFFOLD, /Gemini reviewer \(not selected\)/);
+    assert.doesNotMatch(SKILL_SCAFFOLD, /<selected reviewer/);
     assert.match(SKILL_MARKDOWN, /Add an unknown-metadata row only for an actual reviewer/);
 });
 
@@ -167,10 +237,11 @@ test("skill guidance safely rehydrates existing canvases before updating", () =>
     assert.match(SKILL_MARKDOWN, /Never send recomposed Markdown before reading the\s+stored state/);
 });
 
-test("skill guidance migrates legacy abbreviated reviewer labels without merging verdicts", () => {
-    assert.match(SKILL_MARKDOWN, /Migrate a legacy abbreviated label/);
-    assert.match(SKILL_MARKDOWN, /use available execution metadata to restore its full\s+identity/);
-    assert.match(SKILL_MARKDOWN, /Never merge legacy rows or alter their verdicts during\s+migration/);
+test("skill guidance preserves pre-council placeholders until explicit council activation", () => {
+    assert.match(SKILL_MARKDOWN, /Before the first council starts, the scaffold's three `\(not selected\)`\s+labels are placeholders/);
+    assert.match(SKILL_MARKDOWN, /preserve every reviewer label and verdict exactly as stored/);
+    assert.match(SKILL_MARKDOWN, /Do not infer\s+or migrate placeholder or abbreviated labels/);
+    assert.match(SKILL_MARKDOWN, /Only an explicit council\s+start or renewal replaces the entire matrix/);
 });
 
 test("summarizeActionItems agrees with the checkbox states in the rendered document", () => {
