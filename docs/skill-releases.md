@@ -1,6 +1,6 @@
 # Versioned Skill Releases
 
-This repository publishes its complete skill collection through GitHub releases. The current collection release is [`v0.1.0`](https://github.com/KSchlobohm/copilot-customizations-for-me/releases/tag/v0.1.0), and the full release history is available on the [Releases](https://github.com/KSchlobohm/copilot-customizations-for-me/releases) page.
+This repository publishes its complete skill collection through GitHub releases. The current collection release is [`v0.2.0`](https://github.com/KSchlobohm/copilot-customizations-for-me/releases/tag/v0.2.0), and the full release history is available on the [Releases](https://github.com/KSchlobohm/copilot-customizations-for-me/releases) page.
 
 Repository release versions identify the complete collection. A skill may also declare its own version when it has an independent behavioral contract, such as `launching-iisexpress`.
 
@@ -15,10 +15,10 @@ gh skill --help
 Preview a skill before installing it:
 
 ```powershell
-gh skill preview KSchlobohm/copilot-customizations-for-me copilot-customization-advisor@v0.1.0 --allow-hidden-dirs
+gh skill preview KSchlobohm/copilot-customizations-for-me copilot-customization-advisor@v0.2.0 --allow-hidden-dirs
 ```
 
-Install every skill for GitHub Copilot at user scope and pin the collection to `v0.1.0`:
+Install every skill for GitHub Copilot at user scope and pin the collection to `v0.2.0`:
 
 ```powershell
 gh skill install KSchlobohm/copilot-customizations-for-me `
@@ -26,7 +26,7 @@ gh skill install KSchlobohm/copilot-customizations-for-me `
   --allow-hidden-dirs `
   --agent github-copilot `
   --scope user `
-  --pin v0.1.0
+  --pin v0.2.0
 ```
 
 `--allow-hidden-dirs` is required because the published skills live under `.github/skills`. Pinning prevents an update from silently moving the installation to a different release.
@@ -71,11 +71,11 @@ gh skill install KSchlobohm/copilot-customizations-for-me `
   --allow-hidden-dirs `
   --agent github-copilot `
   --scope user `
-  --pin v0.1.0 `
+  --pin v0.2.0 `
   --force
 ```
 
-Verify that the installed skills now report the repository source, `v0.1.0`, and `pinned: true`:
+Verify that the installed skills now report the repository source, `v0.2.0`, and `pinned: true`:
 
 ```powershell
 gh skill list `
@@ -126,13 +126,13 @@ gh skill publish .github --dry-run
 After the release commit is merged to `main`, publish a GitHub release from a clean `main` checkout:
 
 ```powershell
-gh skill publish .github --tag v0.2.0
+gh skill publish .github --tag v0.3.0
 ```
 
 The command validates the Agent Skills specification, creates the tag and GitHub release, and generates release notes. Verify the published artifact without modifying an existing installation:
 
 ```powershell
-$version = "v0.2.0"
+$version = "v0.3.0"
 $testDirectory = Join-Path $env:TEMP "copilot-customizations-$version"
 
 gh skill install KSchlobohm/copilot-customizations-for-me `
@@ -150,4 +150,5 @@ gh skill list `
 
 | Version | Published | Summary |
 |---------|-----------|---------|
+| [`v0.2.0`](https://github.com/KSchlobohm/copilot-customizations-for-me/releases/tag/v0.2.0) | 2026-08-07 | Added explicit fresh model councils for conversation summaries, including independent parallel reviewers and durable action items |
 | [`v0.1.0`](https://github.com/KSchlobohm/copilot-customizations-for-me/releases/tag/v0.1.0) | 2026-08-06 | Initial versioned release of the five reusable skills |
