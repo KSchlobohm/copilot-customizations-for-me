@@ -132,9 +132,9 @@ type not explicitly listed, use the default pair.
 
 | Reviewer | Safe to Merge | Closes Scope |
 |---|---|---|
-| <selected reviewer 1 identity> | ⏳ Pending | ⏳ Pending |
-| <selected reviewer 2 identity> | ⏳ Pending | ⏳ Pending |
-| <selected reviewer 3 identity> | ⏳ Pending | ⏳ Pending |
+| Claude reviewer (not selected) | ⏳ Pending | ⏳ Pending |
+| GPT reviewer (not selected) | ⏳ Pending | ⏳ Pending |
+| Gemini reviewer (not selected) | ⏳ Pending | ⏳ Pending |
 
 ## What We Learned
 <insights / gotchas discovered during the work that aren't in the PR>
@@ -203,7 +203,12 @@ Rules:
   across council renewals. This way the matrix shows the current council
   verdicts while Action Items remain the fast, durable view of what is still
   open.
-  Reviewer identity in the first column must always preserve model details:
+  Before the first council starts, the scaffold's three `(not selected)`
+  labels are placeholders, not reviewer identities. Preserve them exactly
+  during ordinary refreshes. When the council starts or renews, replace the
+  complete matrix with the selected roster from the current invocations.
+  After a council starts, reviewer identity in the first column must preserve
+  model details:
   - Use the full available family + version followed by the exact reasoning
     depth as `<family> <version> (reasoning: <depth>)` when metadata is known
     (for example `Claude Opus 4.8 (reasoning: high)`,
@@ -217,7 +222,7 @@ Rules:
     `(Model family unknown) <version> (reasoning: high)`, or
     `(Model family unknown) (Version unknown)`.
     Add an unknown-metadata row only for an actual reviewer whose metadata is
-    unavailable; do not include a placeholder reviewer in a new matrix.
+    unavailable; do not use unknown metadata as a pre-council placeholder.
   - Preserve the reported reasoning-depth value exactly; do not infer,
     translate, or normalize it. Append the reasoning suffix only when
     reasoning depth is a property supported by that model. For a
@@ -229,14 +234,11 @@ Rules:
     one row (`GPT-5.x`, `Gemini`, `Claude Opus`, etc.). `GPT-5.6
     (reasoning: high)` and `GPT-5.6 (reasoning: xhigh)` remain separate
     reviewer identities with separate verdicts.
-  - On refresh/resume, call `get_state` before rewriting matrix rows. Preserve
-    labels that already follow the full identity rules exactly as stored.
-    Migrate a legacy abbreviated label (for example `GPT-5.x`, `Gemini`, or
-    `Claude Opus`) once: use available execution metadata to restore its full
-    identity, or use explicit unknown placeholders for unavailable family or
-    version metadata. Never merge legacy rows or alter their verdicts during
-    migration. This keeps reviewer identity stable without preserving
-    ambiguous labels indefinitely.
+  - On refresh/resume, call `get_state` before rewriting matrix rows and
+    preserve every reviewer label and verdict exactly as stored. Do not infer
+    or migrate placeholder or abbreviated labels. Only an explicit council
+    start or renewal replaces the entire matrix with current reviewer
+    identities and verdicts.
   - Identity formatting does not alter verdict semantics. Keep verdict values
     exactly the same statuses (`✅ Pass`, `❌ Fail`, `⚠️ Pass with concerns`,
     `⏳ Pending`) regardless of whether model metadata is complete.

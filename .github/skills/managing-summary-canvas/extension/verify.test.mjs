@@ -62,7 +62,11 @@ Working on unlinked task tracking support.
 `;
 
 const SKILL_MARKDOWN = await readFile(new URL("../SKILL.md", import.meta.url), "utf8");
-const SKILL_SCAFFOLD = SKILL_MARKDOWN.match(/```markdown\r?\n([\s\S]*?)\r?\n```/)?.[1] ?? "";
+const scaffoldStart = SKILL_MARKDOWN.indexOf("## Reviewer Matrix");
+const scaffoldEnd = SKILL_MARKDOWN.indexOf("## What We Learned", scaffoldStart);
+const SKILL_SCAFFOLD = scaffoldStart >= 0 && scaffoldEnd > scaffoldStart
+    ? SKILL_MARKDOWN.slice(scaffoldStart, scaffoldEnd)
+    : "";
 
 function reviewerHeaders(markdown) {
     const html = renderMarkdown(markdown);
@@ -220,6 +224,10 @@ test("skill guidance uses short unambiguous reviewer labels in Action Items", ()
 
 test("skill scaffold does not seed a phantom unknown reviewer", () => {
     assert.doesNotMatch(SKILL_SCAFFOLD, /\(Model family unknown\)/);
+    assert.match(SKILL_SCAFFOLD, /Claude reviewer \(not selected\)/);
+    assert.match(SKILL_SCAFFOLD, /GPT reviewer \(not selected\)/);
+    assert.match(SKILL_SCAFFOLD, /Gemini reviewer \(not selected\)/);
+    assert.doesNotMatch(SKILL_SCAFFOLD, /<selected reviewer/);
     assert.match(SKILL_MARKDOWN, /Add an unknown-metadata row only for an actual reviewer/);
 });
 
@@ -229,10 +237,11 @@ test("skill guidance safely rehydrates existing canvases before updating", () =>
     assert.match(SKILL_MARKDOWN, /Never send recomposed Markdown before reading the\s+stored state/);
 });
 
-test("skill guidance migrates legacy abbreviated reviewer labels without merging verdicts", () => {
-    assert.match(SKILL_MARKDOWN, /Migrate a legacy abbreviated label/);
-    assert.match(SKILL_MARKDOWN, /use available execution metadata to restore its full\s+identity/);
-    assert.match(SKILL_MARKDOWN, /Never merge legacy rows or alter their verdicts during\s+migration/);
+test("skill guidance preserves pre-council placeholders until explicit council activation", () => {
+    assert.match(SKILL_MARKDOWN, /Before the first council starts, the scaffold's three `\(not selected\)`\s+labels are placeholders/);
+    assert.match(SKILL_MARKDOWN, /preserve every reviewer label and verdict exactly as stored/);
+    assert.match(SKILL_MARKDOWN, /Do not infer\s+or migrate placeholder or abbreviated labels/);
+    assert.match(SKILL_MARKDOWN, /Only an explicit council\s+start or renewal replaces the entire matrix/);
 });
 
 test("summarizeActionItems agrees with the checkbox states in the rendered document", () => {
