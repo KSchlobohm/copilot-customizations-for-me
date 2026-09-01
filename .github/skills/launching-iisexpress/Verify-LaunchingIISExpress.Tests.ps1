@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Runs dependency-free regression tests for launching-iisexpress v1.1.1.
+    Runs dependency-free regression tests for launching-iisexpress v1.1.2.
 .DESCRIPTION
     Execute with Windows PowerShell or PowerShell 7. No Pester installation or
     other external module is required.
@@ -346,10 +346,252 @@ try {
         Assert-Equal $verification.ExitCode 0 "Current generated script should verify."
         $result = $verification.Output | ConvertFrom-Json
         Assert-True $result.Valid "Current generated script should be valid."
-        Assert-Equal $result.Checked.GeneratedScriptVersion "1.1.1" `
-            "Generated marker should report v1.1.1."
+        Assert-Equal $result.Checked.GeneratedScriptVersion "1.1.2" `
+            "Generated marker should report v1.1.2."
         Assert-True $result.Checked.GeneratedSafetyValid `
-            "Current generated script should satisfy the v1.1.1 safety invariants."
+            "Current generated script should satisfy the v1.1.2 safety invariants."
+    }
+
+    Invoke-Test "launcher is hidden and redirects stdout and stderr separately" {
+        $template = [System.IO.File]::ReadAllText($templatePath)
+        Assert-Match $template '(?m)^\s*-WindowStyle Hidden\s*`?\r?$' `
+            "IIS Express should launch without opening a visible console window."
+        Assert-Match $template '(?m)^\s*-RedirectStandardOutput \$stdoutLogPath\s*`?\r?$' `
+            "IIS Express stdout should be redirected to its log file."
+        Assert-Match $template '(?m)^\s*-RedirectStandardError \$stderrLogPath\s*`?\r?$' `
+            "IIS Express stderr should be redirected to its log file."
+        Assert-Match $template '(?m)^\$stdoutLogPath\s*=\s*Join-Path\s+\$configDir\s+"iisexpress\.stdout\.log"\s*\r?$' `
+            "The stdout log should use a stable path under the generated config directory."
+        Assert-Match $template '(?m)^\$stderrLogPath\s*=\s*Join-Path\s+\$configDir\s+"iisexpress\.stderr\.log"\s*\r?$' `
+            "The stderr log should use a distinct stable path under the generated config directory."
+    }
+
+    Invoke-Test "visible generated launch requires regeneration" {
+        $fixture = New-RenderedFixture -Name "visible-launch" -ApplicationPath "/"
+        $content = [System.IO.File]::ReadAllText($fixture.ScriptPath).Replace(
+            "    -WindowStyle Hidden ```r`n",
+            ""
+        ).Replace(
+            "    -WindowStyle Hidden ```n",
+            ""
+        )
+        [System.IO.File]::WriteAllText($fixture.ScriptPath, $content, $utf8NoBom)
+
+        $verification = Invoke-Verifier -GeneratedScript $fixture.ScriptPath
+        Assert-Equal $verification.ExitCode 1 `
+            "A generated script with a visible launch should fail verification."
+        $result = $verification.Output | ConvertFrom-Json
+        Assert-True `
+            ($result.Checked.MissingSafetyInvariants -contains "HiddenWindowLaunch") `
+            "Visible launch should fail the hidden-window invariant."
+    }
+
+    Invoke-Test "unrelated hidden launch does not satisfy IIS Express invariants" {
+        $fixture = New-RenderedFixture -Name "unrelated-hidden-launch" -ApplicationPath "/"
+        $content = [regex]::Replace(
+            [System.IO.File]::ReadAllText($fixture.ScriptPath),
+            '(?m)^\s+-(?:WindowStyle Hidden|RedirectStandardOutput \$stdoutLogPath|RedirectStandardError \$stderrLogPath)\s*`?\r?\n',
+            ""
+        )
+        $content += @'
+
+if ($false) {
+    Start-Process -FilePath $env:ComSpec `
+        -WindowStyle Hidden `
+        -RedirectStandardOutput $stdoutLogPath `
+        -RedirectStandardError $stderrLogPath
+}
+'@
+        [System.IO.File]::WriteAllText($fixture.ScriptPath, $content, $utf8NoBom)
+
+        $verification = Invoke-Verifier -GeneratedScript $fixture.ScriptPath
+        Assert-Equal $verification.ExitCode 1 `
+            "Hidden flags on another process should not satisfy IIS Express launch invariants."
+        $result = $verification.Output | ConvertFrom-Json
+        foreach ($invariant in @(
+            "HiddenWindowLaunch"
+            "StandardOutputRedirection"
+            "StandardErrorRedirection"
+        )) {
+            Assert-True `
+                ($result.Checked.MissingSafetyInvariants -contains $invariant) `
+                "The IIS Express launch should report missing $invariant."
+        }
+    }
+
+    Invoke-Test "inert flag text does not satisfy IIS Express invariants" {
+        $fixture = New-RenderedFixture -Name "inert-flag-text" -ApplicationPath "/"
+        $content = [regex]::Replace(
+            [System.IO.File]::ReadAllText($fixture.ScriptPath),
+            '(?m)^\s+-(?:WindowStyle Hidden|RedirectStandardOutput \$stdoutLogPath|RedirectStandardError \$stderrLogPath)\s*`?\r?\n',
+            ""
+        )
+        $lineEnding = if ($content.Contains("`r`n")) { "`r`n" } else { "`n" }
+        $inertArgumentList = @(
+            '    -ArgumentList @('
+            "@'"
+            '    -WindowStyle Hidden `'
+            '    -RedirectStandardOutput $stdoutLogPath `'
+            '    -RedirectStandardError $stderrLogPath `'
+            "'@"
+            '    ) `'
+        ) -join $lineEnding
+        $content = [regex]::Replace(
+            $content,
+            '(?m)^\s+-ArgumentList\s+".*"\s*`\r?$',
+            $inertArgumentList,
+            1
+        )
+        [System.IO.File]::WriteAllText($fixture.ScriptPath, $content, $utf8NoBom)
+
+        $verification = Invoke-Verifier -GeneratedScript $fixture.ScriptPath
+        Assert-Equal $verification.ExitCode 1 `
+            "Flag text inside an argument should not satisfy IIS Express launch invariants."
+        $result = $verification.Output | ConvertFrom-Json
+        foreach ($invariant in @(
+            "HiddenWindowLaunch"
+            "StandardOutputRedirection"
+            "StandardErrorRedirection"
+        )) {
+            Assert-True `
+                ($result.Checked.MissingSafetyInvariants -contains $invariant) `
+                "The IIS Express launch should report missing $invariant."
+        }
+    }
+
+    Invoke-Test "inert canonical launch does not hide an alternate invocation" {
+        $fixture = New-RenderedFixture -Name "alternate-invocation" -ApplicationPath "/"
+        $content = [System.IO.File]::ReadAllText($fixture.ScriptPath)
+        $lineEnding = if ($content.Contains("`r`n")) { "`r`n" } else { "`n" }
+        $launchBlock = @(
+            '$proc = Start-Process -FilePath $iisExpressExe `'
+            '    -ArgumentList "/config:`"$configPath`" /site:`"$siteName`"" `'
+            '    -WindowStyle Hidden `'
+            '    -RedirectStandardOutput $stdoutLogPath `'
+            '    -RedirectStandardError $stderrLogPath `'
+            '    -PassThru'
+        ) -join $lineEnding
+        $forgedLaunchBlock = @(
+            'if ($false) {'
+            '    $decoy = Start-Process -FilePath $iisExpressExe `'
+            '        -ArgumentList "/config:`"$configPath`" /site:`"$siteName`"" `'
+            '        -WindowStyle Hidden `'
+            '        -RedirectStandardOutput $stdoutLogPath `'
+            '        -RedirectStandardError $stderrLogPath `'
+            '        -PassThru'
+            '}'
+            '$proc = & $iisExpressExe "/config:`"$configPath`" /site:`"$siteName`""'
+        ) -join $lineEnding
+        $content = $content.Replace($launchBlock, $forgedLaunchBlock)
+        [System.IO.File]::WriteAllText($fixture.ScriptPath, $content, $utf8NoBom)
+
+        $verification = Invoke-Verifier -GeneratedScript $fixture.ScriptPath
+        Assert-Equal $verification.ExitCode 1 `
+            "An inert canonical launch should not hide an alternate IIS Express invocation."
+        $result = $verification.Output | ConvertFrom-Json
+        Assert-True `
+            ($result.Checked.MissingSafetyInvariants -contains "NoAlternateIISExpressInvocation") `
+            "A direct IIS Express invocation should fail its negative invariant."
+        Assert-True `
+            ($result.Checked.MissingSafetyInvariants -contains "HiddenWindowLaunch") `
+            "The canonical launch should be rejected when it is not the top-level proc assignment."
+    }
+
+    Invoke-Test "log path reassignment requires regeneration" {
+        $fixture = New-RenderedFixture -Name "log-path-reassignment" -ApplicationPath "/"
+        $content = [System.IO.File]::ReadAllText($fixture.ScriptPath)
+        $lineEnding = if ($content.Contains("`r`n")) { "`r`n" } else { "`n" }
+        $content = $content.Replace(
+            'Write-Host "Launching IIS Express..."',
+            '$stderrLogPath = $stdoutLogPath' + $lineEnding +
+                'Write-Host "Launching IIS Express..."'
+        )
+        [System.IO.File]::WriteAllText($fixture.ScriptPath, $content, $utf8NoBom)
+
+        $verification = Invoke-Verifier -GeneratedScript $fixture.ScriptPath
+        Assert-Equal $verification.ExitCode 1 `
+            "Reassigning a launch log path should fail verification."
+        $result = $verification.Output | ConvertFrom-Json
+        Assert-True `
+            ($result.Checked.MissingSafetyInvariants -contains "StandardErrorLogPath") `
+            "The stderr log path should have one canonical top-level assignment."
+    }
+
+    Invoke-Test "missing PassThru requires regeneration" {
+        $fixture = New-RenderedFixture -Name "missing-pass-thru" -ApplicationPath "/"
+        $content = [regex]::Replace(
+            [System.IO.File]::ReadAllText($fixture.ScriptPath),
+            '(?m)^\s+-PassThru\s*\r?\n',
+            ""
+        )
+        [System.IO.File]::WriteAllText($fixture.ScriptPath, $content, $utf8NoBom)
+
+        $verification = Invoke-Verifier -GeneratedScript $fixture.ScriptPath
+        Assert-Equal $verification.ExitCode 1 `
+            "A launch without PassThru should fail verification."
+        $result = $verification.Output | ConvertFrom-Json
+        Assert-True `
+            ($result.Checked.MissingSafetyInvariants -contains "ProcessObjectReturn") `
+            "The IIS Express launch should require a process object for readiness tracking."
+    }
+
+    Invoke-Test "additional Start-Process launch requires regeneration" {
+        $fixture = New-RenderedFixture -Name "additional-start-process" -ApplicationPath "/"
+        $content = [System.IO.File]::ReadAllText($fixture.ScriptPath)
+        $lineEnding = if ($content.Contains("`r`n")) { "`r`n" } else { "`n" }
+        $content += $lineEnding + (
+            'Start-Process -FilePath "$iisExpressExe" ' +
+                '-ArgumentList "/config:`"$configPath`" /site:`"$siteName`""'
+        ) + $lineEnding
+        [System.IO.File]::WriteAllText($fixture.ScriptPath, $content, $utf8NoBom)
+
+        $verification = Invoke-Verifier -GeneratedScript $fixture.ScriptPath
+        Assert-Equal $verification.ExitCode 1 `
+            "An additional IIS Express Start-Process launch should fail verification."
+        $result = $verification.Output | ConvertFrom-Json
+        Assert-True `
+            ($result.Checked.MissingSafetyInvariants -contains "NoAlternateIISExpressInvocation") `
+            "All Start-Process forms that reference IIS Express should be counted."
+    }
+
+    Invoke-Test "positional Start-Process launch requires regeneration" {
+        $fixture = New-RenderedFixture -Name "positional-start-process" -ApplicationPath "/"
+        $content = [System.IO.File]::ReadAllText($fixture.ScriptPath)
+        $lineEnding = if ($content.Contains("`r`n")) { "`r`n" } else { "`n" }
+        $content += $lineEnding + (
+            'Start-Process $iisExpressExe ' +
+                '-ArgumentList "/config:`"$configPath`" /site:`"$siteName`""'
+        ) + $lineEnding
+        [System.IO.File]::WriteAllText($fixture.ScriptPath, $content, $utf8NoBom)
+
+        $verification = Invoke-Verifier -GeneratedScript $fixture.ScriptPath
+        Assert-Equal $verification.ExitCode 1 `
+            "A positional IIS Express Start-Process launch should fail verification."
+        $result = $verification.Output | ConvertFrom-Json
+        Assert-True `
+            ($result.Checked.MissingSafetyInvariants -contains "NoAlternateIISExpressInvocation") `
+            "Positional Start-Process FilePath arguments should be counted."
+    }
+
+    Invoke-Test "proc reassignment requires regeneration" {
+        $fixture = New-RenderedFixture -Name "proc-reassignment" -ApplicationPath "/"
+        $content = [System.IO.File]::ReadAllText($fixture.ScriptPath)
+        $lineEnding = if ($content.Contains("`r`n")) { "`r`n" } else { "`n" }
+        $content = $content.Replace(
+            'Write-Host "IIS Express started (PID $($proc.Id)). Waiting for an HTTP response from $siteUrl..."',
+            '$proc = Start-Process -FilePath $env:ComSpec -ArgumentList "/c exit 0" -PassThru' +
+                $lineEnding +
+                'Write-Host "IIS Express started (PID $($proc.Id)). Waiting for an HTTP response from $siteUrl..."'
+        )
+        [System.IO.File]::WriteAllText($fixture.ScriptPath, $content, $utf8NoBom)
+
+        $verification = Invoke-Verifier -GeneratedScript $fixture.ScriptPath
+        Assert-Equal $verification.ExitCode 1 `
+            "Reassigning the tracked process should fail verification."
+        $result = $verification.Output | ConvertFrom-Json
+        Assert-True `
+            ($result.Checked.MissingSafetyInvariants -contains "ProcessObjectReturn") `
+            "The canonical launch should be the only proc assignment."
     }
 
     Invoke-Test "forged current marker does not hide a stale generated body" {
@@ -359,7 +601,7 @@ try {
             '$rootPhysicalPath = $webProjectPath'
         )
         Assert-Match $forgedContent `
-            "(?m)^# IISExpressSkill-Provenance: skill=launching-iisexpress; version=1\.1\.1\r?$" `
+            "(?m)^# IISExpressSkill-Provenance: skill=launching-iisexpress; version=1\.1\.2\r?$" `
             "Forged fixture should retain a current provenance marker."
         [System.IO.File]::WriteAllText($fixture.ScriptPath, $forgedContent, $utf8NoBom)
 
@@ -368,12 +610,12 @@ try {
             "A current marker on a stale body should fail verification."
         $result = $verification.Output | ConvertFrom-Json
         Assert-True (-not $result.Checked.GeneratedSafetyValid) `
-            "Forged generated script should fail the v1.1.1 safety invariants."
+            "Forged generated script should fail the v1.1.2 safety invariants."
         Assert-True `
             ($result.Checked.MissingSafetyInvariants -contains "DistinctRootPathSelection") `
             "Forged script should report the missing distinct root path selection."
         Assert-Match ($result.Errors -join "`n") `
-            "required 1\.1\.1 non-root safety invariants.*regeneration is required" `
+            "required 1\.1\.2 safety invariants.*regeneration is required" `
             "Forged current marker should not bypass safety verification."
     }
 
@@ -435,14 +677,14 @@ try {
         $path = Join-Path $tempRoot "Start-IISExpress.stale.ps1"
         [System.IO.File]::WriteAllText(
             $path,
-            "# IISExpressSkill-Provenance: skill=launching-iisexpress; version=1.1.0`n",
+            "# IISExpressSkill-Provenance: skill=launching-iisexpress; version=1.1.1`n",
             $utf8NoBom
         )
         $verification = Invoke-Verifier -GeneratedScript $path
         Assert-Equal $verification.ExitCode 1 "Older marker should fail."
         $result = $verification.Output | ConvertFrom-Json
         Assert-Match ($result.Errors -join "`n") `
-            "stale \(1\.1\.0 < 1\.1\.1\); regeneration is required" `
+            "stale \(1\.1\.1 < 1\.1\.2\); regeneration is required" `
             "Older marker should require regeneration."
     }
 
@@ -457,7 +699,7 @@ try {
         Assert-Equal $verification.ExitCode 1 "Newer marker should fail."
         $result = $verification.Output | ConvertFrom-Json
         Assert-Match ($result.Errors -join "`n") `
-            "newer \(1\.2\.0 > 1\.1\.1\); update the installed skill before launch" `
+            "newer \(1\.2\.0 > 1\.1\.2\); update the installed skill before launch" `
             "Newer marker should require an installed skill update."
     }
 

@@ -1,4 +1,4 @@
-# IISExpressSkill-Provenance: skill=launching-iisexpress; version=1.1.1
+# IISExpressSkill-Provenance: skill=launching-iisexpress; version=1.1.2
 <#
 .SYNOPSIS
     Launches IIS Express for a .NET Framework ASP.NET web project.
@@ -12,7 +12,7 @@
     Writes applicationhost.config without checking the port or launching IIS Express.
     This supports deterministic template regression testing.
 .NOTES
-    Skill version: 1.1.1 (see .github/skills/launching-iisexpress/SKILL.md)
+    Skill version: 1.1.2 (see .github/skills/launching-iisexpress/SKILL.md)
 #>
 param(
     [switch]$Stop,
@@ -32,6 +32,8 @@ $solutionRoot = '{{SOLUTION_ROOT}}'
 $configDir = Join-Path $solutionRoot ".vs\config"
 $configPath = Join-Path $configDir "applicationhost.config"
 $blankRootPath = Join-Path $configDir "empty-root"
+$stdoutLogPath = Join-Path $configDir "iisexpress.stdout.log"
+$stderrLogPath = Join-Path $configDir "iisexpress.stderr.log"
 
 function Get-IISExpressInstallRoot {
     $candidateRoots = @(
@@ -307,9 +309,13 @@ Write-Host "Launching IIS Express..."
 
 $proc = Start-Process -FilePath $iisExpressExe `
     -ArgumentList "/config:`"$configPath`" /site:`"$siteName`"" `
+    -WindowStyle Hidden `
+    -RedirectStandardOutput $stdoutLogPath `
+    -RedirectStandardError $stderrLogPath `
     -PassThru
 
 Write-Host "IIS Express started (PID $($proc.Id)). Waiting for an HTTP response from $siteUrl..."
+Write-Host "IIS Express logs: $stdoutLogPath and $stderrLogPath"
 
 $ready = $false
 $readinessTimeoutSeconds = 60
@@ -334,7 +340,7 @@ if ($ready) {
     Write-Host "IIS Express is responding at $siteUrl"
 } else {
     if ($proc.HasExited) {
-        throw "IIS Express exited before responding at $siteUrl. Check the IIS Express logs for startup errors."
+        throw "IIS Express exited before responding at $siteUrl. Check $stdoutLogPath and $stderrLogPath for startup errors."
     }
 
     $currentListener = @(Get-PortListener -Port $sitePort)

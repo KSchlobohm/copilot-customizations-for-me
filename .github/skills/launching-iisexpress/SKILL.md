@@ -1,7 +1,7 @@
 ---
 name: launching-iisexpress
-version: 1.1.1
-description: Launches .NET Framework ASP.NET projects with IIS Express from the command line, mirroring Visual Studio local debugging. Use when the user needs to start, run, debug, test, or verify a .NET Framework ASP.NET MVC, Web API, or Web Forms app locally, especially during migration. Do not use for ASP.NET Core or modern .NET apps; use dotnet run instead.
+version: 1.1.2
+description: Launches .NET Framework ASP.NET projects with IIS Express from the command line, mirroring Visual Studio local debugging. Use when the user needs to start, run, debug, test, or verify a .NET Framework ASP.NET MVC, Web API, or Web Forms app locally, especially during migration. Do not use for ASP.NET Core or modern .NET apps; run dotnet run with the terminal tool in async mode instead.
 license: MIT
 ---
 
@@ -19,7 +19,7 @@ Start a .NET Framework ASP.NET web project with IIS Express from the terminal by
        -SkillDirectory "<installed-skill-dir>"
    ```
 
-   Stop if this fails. The verifier requires the installed `SKILL.md` version to match this release and the behavioral template's normalized SHA-256 fingerprint to match the canonical v1.1.1 contract. It intentionally does not hash `SKILL.md`, so repo-local workflow clarification can coexist with an exact canonical template.
+   Stop if this fails. The verifier requires the installed `SKILL.md` version to match this release and the behavioral template's normalized SHA-256 fingerprint to match the canonical v1.1.2 contract. It intentionally does not hash `SKILL.md`, so repo-local workflow clarification can coexist with an exact canonical template.
 2. **Verify the generated script**: Look for `Start-IISExpress.ps1` in the solution root or a `scripts/` directory.
    - If no script exists, generate one in step 6.
    - If a script exists, validate its machine-readable marker:
@@ -31,7 +31,7 @@ Start a .NET Framework ASP.NET web project with IIS Express from the terminal by
          -GeneratedScript "<path-to-Start-IISExpress.ps1>"
      ```
 
-   - The verifier requires both a valid provenance marker and the v1.1.1 non-root safety behavior: conditional non-root detection, a dedicated blank root directory, conditional blank-root creation and selection, root mapping only through the selected physical path (never directly to the web project), and virtual-app mapping to the web project. A current-looking marker on the older unsafe body does not pass.
+   - The verifier requires both a valid provenance marker and the v1.1.2 safety behavior: conditional non-root detection, a dedicated blank root directory, conditional blank-root creation and selection, root mapping only through the selected physical path (never directly to the web project), virtual-app mapping to the web project, and hidden IIS Express launch with separate stdout and stderr logs. A current-looking marker on an older unsafe body does not pass.
    - If the marker is absent or its version is older than the installed skill, or if a required safety invariant is missing or ambiguous, do not launch or patch the stale script. Replace it by regenerating from the installed template in step 6.
    - If the generated script reports a newer version than the installed skill, stop and update the installed skill instead of downgrading the script.
    - Reuse an exact-version, safety-verified script only after confirming its generated project settings still match the target project.
@@ -113,7 +113,7 @@ msbuild <solution-path> /p:Configuration=Debug
 .\Start-IISExpress.ps1
 ```
 
-The generated script writes `.vs/config/applicationhost.config` with the selected port, starts IIS Express with `Start-Process`, and returns control to the terminal after confirming the site responds over HTTP. IIS Express reads the binding from `applicationhost.config`; `.csproj` `IISUrl` is the durable project setting for future runs and Visual Studio alignment.
+The generated script writes `.vs/config/applicationhost.config` with the selected port, starts IIS Express in a hidden window with stdout and stderr redirected to separate files under `.vs/config`, and returns control to the terminal after confirming the site responds over HTTP. IIS Express reads the binding from `applicationhost.config`; `.csproj` `IISUrl` is the durable project setting for future runs and Visual Studio alignment.
 
 9. **Verify** with the discovered or approved URL:
 
@@ -132,7 +132,9 @@ For HTTPS localhost URLs, certificate trust warnings can be expected on some mac
 ## Notes
 
 - IIS Express is usually installed at `C:\Program Files\IIS Express\iisexpress.exe`.
+- For ASP.NET Core or another Kestrel-hosted app, do not use this template. Run `dotnet run` with the terminal tool's `async` mode so the server remains persistent without opening another console window.
 - The template writes `.vs/config/applicationhost.config` under the solution root and configures `Clr4IntegratedAppPool`.
+- The template launches IIS Express with a hidden window and writes `.vs/config/iisexpress.stdout.log` and `.vs/config/iisexpress.stderr.log`.
 - Re-running `Start-IISExpress.ps1` automatically stops the IIS Express instance previously launched for the same generated config/site, so the new run can take over. It does not affect IIS Express processes from other sites or solutions.
 - Stop only the IIS Express process launched for the generated config/site. Do not kill all `iisexpress.exe` processes by name.
 - IIS Express HTTP listeners can appear as `OwningProcess = 4` (`System`) because of HTTP.SYS. Do not use `Get-NetTCPConnection` ownership (`OwningProcess == iisexpress PID`) as a readiness check; use an HTTP-level probe to confirm startup.
@@ -161,5 +163,5 @@ This skill (`SKILL.md` + `references/Start-IISExpress.template.ps1`) is the cano
 - The `version` field in the frontmatter follows semantic versioning and must be bumped whenever the skill's workflow or template behavior changes.
 - Before copying this skill elsewhere, run `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .github/skills/launching-iisexpress/Verify-LaunchingIISExpress.ps1`. PowerShell 7 users may substitute `pwsh` for `powershell.exe`. The verifier checks both release version and the normalized SHA-256 fingerprint of `references/Start-IISExpress.template.ps1`; version equality alone is not sufficient.
 - Downstream repositories may customize `SKILL.md` instructions while retaining the canonical `version` frontmatter. The verifier hashes the behavioral template, not the customizable prose.
-- After generation, pass `-GeneratedScript <path>` to require valid provenance plus the v1.1.1 non-root safety invariants before launch. Missing or older provenance and missing or ambiguous safety behavior require regeneration; newer provenance requires updating the installed skill.
+- After generation, pass `-GeneratedScript <path>` to require valid provenance plus the v1.1.2 mapping and hidden-launch safety invariants before launch. Missing or older provenance and missing or ambiguous safety behavior require regeneration; newer provenance requires updating the installed skill.
 - When porting a fix here, bump the version and summarize the change in the pull request description.
