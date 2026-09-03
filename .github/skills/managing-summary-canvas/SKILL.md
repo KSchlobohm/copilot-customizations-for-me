@@ -259,8 +259,8 @@ council.
 #### Model discovery (best-effort)
 
 Before selecting reviewers, use a `task` call to run `copilot --model auto -p "List exact model invocation IDs available for sub-agents, with family, version, and reasoning levels; mark unknowns and do not guess."`
-Use only exact IDs from the advisory response; if it fails, use exact model IDs
-surfaced by the current `task` tool/runtime choices or ask the user; never
+Use only exact IDs from the advisory response. If the discovery `task` call fails, use exact model IDs
+surfaced by the current `task` tool/runtime choices, or ask the user; never
 hardcode.
 Select three models with no duplicate model IDs within the current council
 roster, from distinct reported families, preferring `high`, then `medium`,
