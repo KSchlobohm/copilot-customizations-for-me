@@ -256,18 +256,27 @@ first time, renew it, or review again. Opening, creating, or refreshing a
 summary does not start reviewers. "Review again" always means a fresh
 council.
 
-1. Select three available reviewers from different model families,
-   preferring strong review capability. For each reasoning-capable model,
-   use `high`, then `medium` if `high` is unsupported. Never select `xhigh`,
-   `max`, or `none` automatically. If neither `high` nor `medium` is
-   supported, select another model.
+#### Model discovery (best effort)
+
+Before selecting reviewers, run `copilot --model auto -p "List exact model invocation IDs available for sub-agents, with family, version, and reasoning levels; mark unknowns and do not guess."`
+Use only exact IDs from the advisory response; if it fails, use exact values in
+the current `task` choices or ask the user; never hardcode.
+Select three unused models from distinct reported families, preferring `high`,
+then `medium`, reasoning. Exclude the previous council only when explicitly
+requested. Preserve unknown metadata, and replace a failed launch from the
+remaining choices without retrying it first.
+
+1. Select three available reviewers from the discovered choices, using the
+   rules above. If fewer than three distinct families are reported, stop rather
+   than silently duplicating a family.
 2. Create a new reviewer session for every seat. Never reuse an existing
    review or rubber-duck session as a current council member. Add the complete
    selected roster to the matrix as `⏳ Pending` before starting reviews,
-   using family, version, and reasoning metadata from these current
-   invocations. Use one separate `task` call per seat and launch all three
-   calls together in one `multi_tool_use.parallel` invocation. Do not reuse an
-   existing `agent_id` through `write_agent`.
+   using the discovered metadata and marking it as requested/model-reported
+   metadata until the runtime reports effective values. Use one separate `task`
+   call per seat and launch all three calls together in one
+   `multi_tool_use.parallel` invocation. Do not reuse an existing `agent_id`
+   through `write_agent`.
 3. Run all reviewers in parallel with the same complete deliverable and
    relevant context. Each reviewer independently returns both matrix
    verdicts. Do not expose one current reviewer's findings to another before
@@ -278,16 +287,11 @@ council.
    `⚠️ Pass with concerns` with only non-blocking actionable concerns, and
    `❌ Fail` with any blocking concern.
 5. Keep a seat `⏳ Pending` while recovering from an execution failure. For
-   a transient failure or unusable output, retry that reviewer once, then
-   select one replacement model if needed. Prefer a model not already in the
-   council, but allow a duplicate when necessary. If the requested model is
-   unavailable, select the replacement without retrying it first. When the
-   replacement succeeds, update that seat to the replacement's identity and
-   verdict; do not retain failed-attempt rows in the matrix. Retry the
-   replacement once if needed. If it still cannot complete, mark the seat
-   `🚫 Unavailable`, leave the council incomplete, and ask the user before
-   trying another model. Report execution failures and replacements in chat,
-   not in the matrix.
+   a transient failure or unusable output, retry once, then replace it from the
+   remaining discovered choices without retrying a failed-to-start ID first.
+   Update the seat when replacement succeeds; retry that replacement once. If
+   it still fails, mark the seat `🚫 Unavailable`, leave the council incomplete,
+   and report the failure and replacement in chat.
 6. If required content is inaccessible, let other reviewers finish, mark the
    affected seat `⛔ Blocked: required content inaccessible`, and leave the
    council incomplete. Do not substitute another model unless it has
