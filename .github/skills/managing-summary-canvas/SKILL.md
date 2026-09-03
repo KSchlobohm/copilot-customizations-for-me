@@ -256,7 +256,7 @@ first time, renew it, or review again. Opening, creating, or refreshing a
 summary does not start reviewers. "Review again" always means a fresh
 council.
 
-#### Model discovery (best effort)
+#### Model discovery (best-effort)
 
 Before selecting reviewers, run `copilot --model auto -p "List exact model invocation IDs available for sub-agents, with family, version, and reasoning levels; mark unknowns and do not guess."`
 Use only exact IDs from the advisory response; if it fails, use exact values in
