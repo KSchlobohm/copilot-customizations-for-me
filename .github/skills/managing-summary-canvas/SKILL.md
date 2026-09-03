@@ -258,15 +258,15 @@ council.
 
 #### Model discovery (best-effort)
 
-Before selecting reviewers, run `copilot --model auto -p "List exact model invocation IDs available for sub-agents, with family, version, and reasoning levels; mark unknowns and do not guess."`
+Before selecting reviewers, use a `task` call to run `copilot --model auto -p "List exact model invocation IDs available for sub-agents, with family, version, and reasoning levels; mark unknowns and do not guess."`
 Use only exact IDs from the advisory response; if it fails, use exact model IDs
 surfaced by the current `task` tool/runtime choices or ask the user; never
 hardcode.
 Select three models with no duplicate model IDs within the current council
 roster, from distinct reported families, preferring `high`, then `medium`,
 reasoning. Exclude models used by the previous council only when explicitly
-requested. Preserve unknown metadata, and replace a failed launch from the
-remaining choices without retrying it first.
+requested. Preserve unknown metadata, and replace a failed-to-start reviewer
+from the remaining choices without retrying that failed-to-start ID first.
 
 1. Select three available reviewers from the discovered choices, using the
    rules above. If fewer than three distinct families are reported, stop rather
