@@ -262,8 +262,9 @@ Before selecting reviewers, run `copilot --model auto -p "List exact model invoc
 Use only exact IDs from the advisory response; if it fails, use exact model IDs
 surfaced by the current `task` tool/runtime choices or ask the user; never
 hardcode.
-Select three unused models from distinct reported families, preferring `high`,
-then `medium`, reasoning. Exclude the previous council only when explicitly
+Select three models with no duplicate model IDs within the current council
+roster, from distinct reported families, preferring `high`, then `medium`,
+reasoning. Exclude models used by the previous council only when explicitly
 requested. Preserve unknown metadata, and replace a failed launch from the
 remaining choices without retrying it first.
 
