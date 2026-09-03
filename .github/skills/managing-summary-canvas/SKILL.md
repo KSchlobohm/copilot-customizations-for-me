@@ -288,8 +288,9 @@ remaining choices without retrying it first.
    `⚠️ Pass with concerns` with only non-blocking actionable concerns, and
    `❌ Fail` with any blocking concern.
 5. Keep a seat `⏳ Pending` while recovering from an execution failure. For
-   a transient failure or unusable output, retry once, then replace it from the
-   remaining discovered choices without retrying a failed-to-start ID first.
+   a transient failure or unusable output, retry the same ID once. If an ID
+   fails to start, replace it from the remaining discovered choices without
+   retrying that failed-to-start ID.
    Update the seat when replacement succeeds; retry that replacement once. If
    it still fails, mark the seat `🚫 Unavailable`, leave the council incomplete,
    and report the failure and replacement in chat.
