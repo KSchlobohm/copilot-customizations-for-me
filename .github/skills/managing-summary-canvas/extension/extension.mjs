@@ -2,8 +2,8 @@
 //
 // Reusable, user-scope canvas that renders a Markdown work summary: issue
 // header, pinned Action Items, a condensed "What Was Built", "What We
-// Learned", and a reviewer merge-readiness matrix. The canvas itself is a
-// generic Markdown -> HTML renderer with a live-refresh action; the section
+// Learned", and complementary reviews with one combined recommendation.
+// The canvas is a generic Markdown -> HTML renderer with a live-refresh action; the section
 // structure and ordering are a documented authoring convention owned by the
 // paired skill (see the managing-summary-canvas skill), not a schema enforced here.
 
@@ -104,7 +104,7 @@ await joinSession({
             id: "conversation-summary-canvas",
             displayName: "Conversation summary",
             description:
-                "Renders a Markdown work summary (issue header, pinned action items, condensed build notes, learnings, reviewer merge-readiness matrix). Open once per piece of work with a stable documentId, then refresh it with update_markdown when asked to update the summary.",
+                "Renders a Markdown work summary with action items, build notes, learnings, and perspective-owned assessments contributing to one combined recommendation. Open with a stable documentId; refresh with update_markdown when asked.",
             inputSchema: {
                 type: "object",
                 required: ["documentId"],

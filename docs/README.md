@@ -17,6 +17,7 @@ Not every tool belongs in every session. I think about MCP tools on a spectrum:
 | Topic | Status | Guide |
 |-------|--------|-------|
 | Versioned Skill Releases | ✅ Complete | [Install, migrate, upgrade, and publish](skill-releases.md) |
+| Summary Canvas Reviewer Contract | ✅ Complete | [Reviewer results and combined recommendation rules](../.github/skills/managing-summary-canvas/reviewer-contract.md) |
 | Copilot CLI Chronicle | ✅ Complete | [Why it matters early](lessons-learned/copilot-cli-chronicle.md) |
 | Skill Reuse vs Knowledge Reuse | ✅ Complete | [Why shared skills matter differently](lessons-learned/skill-reuse-is-knowledge-reuse.md) |
 | Playwright MCP | ✅ Complete | [Setup & Workshop](mcp-tools/playwright-mcp/README.md) |
