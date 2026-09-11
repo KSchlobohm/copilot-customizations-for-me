@@ -1,6 +1,6 @@
 ---
 name: managing-summary-canvas
-description: Opens, refreshes, adds tasks to, reads state from, and runs a fresh model council for a reusable conversation summary canvas — a side-panel Markdown view with a linked issue header, pinned action items, collapsed build notes, learnings, and a reviewer verdict matrix. Use when the user explicitly asks to open, show, or update the conversation summary canvas; start or renew its model council; review again; manage an action item; or read its current task state.
+description: Opens, refreshes, and manages a reusable conversation summary canvas with action items and a reviewer matrix. Runs three fresh independent reviews with deliverable-specific perspectives and preferred models, including repeated models. Use when the user explicitly asks to open, show, or update the summary canvas; run or rerun the reviewer matrix; start or renew its model council; review again; manage an action item; or read its current task state.
 license: MIT
 ---
 
@@ -16,7 +16,8 @@ Only when the user **explicitly** asks for it, e.g.:
 - "open the conversation summary canvas"
 - "show a summary canvas for this work"
 - "update the conversation summary canvas" (and close variants)
-- "start the model council", "renew the model council", or "review again" —
+- "run the reviewer matrix", "rerun the reviewer matrix",
+  "start the model council", "renew the model council", or "review again" —
   runs fresh, independent reviewers for the current summary. See "Running a
   model council" below.
 - "add a task for <description>" (and close variants, e.g. "add an action
@@ -29,6 +30,8 @@ Only when the user **explicitly** asks for it, e.g.:
 
 Never open or refresh this canvas proactively/automatically. It is
 user-invoked only.
+Showing or updating the reviewer matrix refreshes existing results only;
+it never starts reviewers.
 
 ## Underlying mechanism
 
@@ -76,6 +79,7 @@ one-off interactive testing:
   "What We Learned"
 - both allowed reviewer header pairs render with exactly two verdict columns
 - the selected header pair survives durable reload and full-document updates
+- repeated models, perspective labels, and per-summary preferences survive updates
 - `summarizeActionItems` agrees with the checkbox states in the document
 
 ### 2. Resolve a `documentId` and backing issue status
@@ -99,15 +103,19 @@ Summaries support both **issue-backed** and **unlinked** modes:
 Always structure the Markdown in this order. Do not bury Action Items or
 omit the reviewer matrix.
 
-Select the reviewer headers from the primary deliverable:
+Select the reviewer headers from the primary deliverable. For mixed work or
+materially ambiguous classification, follow
+[Deliverable-specific perspectives](#deliverable-specific-perspectives)
+before selecting headers; mixed work is not automatically code work.
 
 | Work type | Verdict column 1 | Verdict column 2 |
 |---|---|---|
 | Writing or editorial (the deliverable is prose/content) | Evidence & Consistency | Readability & Tone |
-| Default: code, feature, mixed, ambiguous, or any other work | Safe to Merge | Closes Scope |
+| Default: code, feature, or other non-writing work | Safe to Merge | Closes Scope |
 
 This is a closed selection table. Never invent reviewer headers. For a work
-type not explicitly listed, use the default pair.
+type not explicitly listed, use the default pair only after resolving the
+primary deliverable.
 
 ```markdown
 ## [#<issue-number>](<issue-url>) — <issue title>
@@ -132,9 +140,9 @@ type not explicitly listed, use the default pair.
 
 | Reviewer | Safe to Merge | Closes Scope |
 |---|---|---|
-| Claude reviewer (not selected) | ⏳ Pending | ⏳ Pending |
-| GPT reviewer (not selected) | ⏳ Pending | ⏳ Pending |
-| Gemini reviewer (not selected) | ⏳ Pending | ⏳ Pending |
+| Reviewer 1 (not selected) | ⏳ Pending | ⏳ Pending |
+| Reviewer 2 (not selected) | ⏳ Pending | ⏳ Pending |
+| Reviewer 3 (not selected) | ⏳ Pending | ⏳ Pending |
 
 ## What We Learned
 <insights / gotchas discovered during the work that aren't in the PR>
@@ -169,12 +177,6 @@ Rules:
   - **Readability & Tone** — is the content clear, well structured, and
     appropriate for its audience and intended tone?
 
-  Examples:
-  - Code/feature/default:
-    `| Reviewer | Safe to Merge | Closes Scope |`
-  - Writing/editorial:
-    `| Reviewer | Evidence & Consistency | Readability & Tone |`
-
   Preserve the selected header pair verbatim through refreshes,
   `update_markdown` calls, task-only edits, and checkbox changes. Change it
   only when the work's primary deliverable is explicitly reclassified.
@@ -186,17 +188,15 @@ Rules:
   stay scannable at a glance with no per-reviewer comment column.
 
   Any actual finding, concern, or comment a reviewer raises goes into
-  **Action Items** as its own line attributed with the shortest unambiguous
-  reviewer shorthand, e.g.:
-  `- [x] (Opus) Fixed a URL-scheme allow-list bypass via a
+  **Action Items** as its own line attributed by perspective, e.g.:
+  `- [x] (Failure) Fixed a URL-scheme allow-list bypass via a
   leading C0 control character before \`javascript:\` — sanitized and
   regression-tested.`
-  `- [ ] (GPT-5.6) Missing \`name\` param in the \`install_extension\`
+  `- [ ] (Intent, Maintenance) Missing \`name\` param in the \`install_extension\`
   example would install under the wrong folder.`
-  Prefer familiar labels such as `Opus`, `Gemini`, or `GPT-5.6`; the matrix
-  is the source of truth for full family, version, and reasoning metadata.
-  If two matrix rows would share a shorthand, add only enough detail to make
-  the Action Item attribution unambiguous.
+  Perspective labels distinguish reviewers even when every model is identical.
+  The matrix is the source of truth for model and reasoning metadata.
+  Preserve historical attribution on existing items during renewals.
   Leave the item unchecked while it still needs a decision before merge.
   Check it once it is disposed for this work: fixed, deferred, accepted, or
   explicitly not planned. Preserve every Action Item and its checkbox state
@@ -207,42 +207,23 @@ Rules:
   labels are placeholders, not reviewer identities. Preserve them exactly
   during ordinary refreshes. When the council starts or renews, replace the
   complete matrix with the selected roster from the current invocations.
-  After a council starts, reviewer identity in the first column must preserve
-  model details:
-  - Use the full available family + version followed by the exact reasoning
-    depth as `<family> <version> (reasoning: <depth>)` when metadata is known
-    (for example `Claude Opus 4.8 (reasoning: high)`,
-    `GPT-5.6 (reasoning: high)`, or
-    `Gemini 3.5 Flash (reasoning: high)`).
-  - When selecting reviewers, use `high` for every reasoning-capable model
-    unless the user explicitly requests another supported depth. Once a
-    review runs, label it with the exact depth actually selected.
-  - If any part is missing, represent it explicitly in the label rather than
-    dropping it: `<family> (Version unknown) (reasoning: high)`,
-    `(Model family unknown) <version> (reasoning: high)`, or
-    `(Model family unknown) (Version unknown)`.
-    Add an unknown-metadata row only for an actual reviewer whose metadata is
-    unavailable; do not use unknown metadata as a pre-council placeholder.
-  - Preserve the reported reasoning-depth value exactly; do not infer,
-    translate, or normalize it. Append the reasoning suffix only when
-    reasoning depth is a property supported by that model. For a
-    reasoning-capable model, use `(reasoning: unknown)` when its selected
-    depth is unavailable. For a model that does not expose reasoning depth,
-    or when reasoning capability itself is unavailable, omit the suffix
-    entirely (for example `Claude Haiku 4.5`).
-  - Never collapse or normalize distinct versions or reasoning depths into
-    one row (`GPT-5.x`, `Gemini`, `Claude Opus`, etc.). `GPT-5.6
-    (reasoning: high)` and `GPT-5.6 (reasoning: xhigh)` remain separate
-    reviewer identities with separate verdicts.
+  After a council starts, label each first-column cell as
+  `<Perspective> — <family> <version> (reasoning: <depth>)`, for example
+  `Style & Tone — GPT-6 Astra (reasoning: medium)`.
+  - Preserve the exact model version and selected reasoning depth. Mark labels
+    as `(requested)` until effective runtime metadata confirms them; do not
+    present requested settings as independently verified effective settings.
+  - Use `(Model family unknown)`, `(Version unknown)`, or
+    `(reasoning: unknown)` for missing metadata. Add an unknown-metadata row
+    only for an actual reviewer. Omit reasoning for models that do not expose
+    it or whose reasoning capability is unknown.
+  - Never collapse rows by model ID, version, or reasoning depth. Each
+    perspective has its own row and verdicts, even with identical models.
   - On refresh/resume, call `get_state` before rewriting matrix rows and
     preserve every reviewer label and verdict exactly as stored. Do not infer
     or migrate placeholder or abbreviated labels. Only an explicit council
     start or renewal replaces the entire matrix with current reviewer
     identities and verdicts.
-  - Identity formatting does not alter verdict semantics. Keep verdict values
-    exactly the same statuses (`✅ Pass`, `❌ Fail`, `⚠️ Pass with concerns`,
-    `⏳ Pending`) regardless of whether model metadata is complete.
-
 - **What We Learned** — last section. New insights/gotchas not captured
   elsewhere.
 
@@ -256,45 +237,97 @@ first time, renew it, or review again. Opening, creating, or refreshing a
 summary does not start reviewers. "Review again" always means a fresh
 council.
 
-#### Model discovery (best-effort)
+#### Deliverable-specific perspectives
 
-Before selecting reviewers, use a `task` call to run `copilot --model auto -p "List exact model invocation IDs available for sub-agents, with family, version, and reasoning levels; mark unknowns and do not guess."`
-Use only exact IDs from the advisory response. If the discovery `task` call fails, use exact model IDs
-surfaced by the current `task` tool/runtime choices, or ask the user; never
-hardcode.
-Select three models with no duplicate model IDs within the current council
-roster, from distinct reported families, preferring `high`, then `medium`,
-reasoning. Exclude models used by the previous council only when explicitly
-requested. Preserve unknown metadata, and replace a failed-to-start reviewer
-from the remaining choices without retrying that failed-to-start ID first.
+Read an existing summary with `get_state` before selecting a roster; for a new
+summary, compose it using steps 2-3 above. Select a profile from the primary deliverable:
 
-1. Select three available reviewers from the discovered choices, using the
-   rules above. If fewer than three distinct families are reported, stop rather
-   than silently duplicating a family.
+| Profile | Reviewer 1 | Reviewer 2 | Reviewer 3 |
+|---|---|---|---|
+| Code | Intent: user outcomes, acceptance criteria, scope | Failure: correctness, edge cases, reliability, unsafe behavior | Maintenance: clarity, existing patterns, safe future changes |
+| Writing | Purpose & Audience: usefulness, completeness, reader needs | Evidence & Consistency: supported claims, sound reasoning, internal agreement | Style & Tone: clarity, structure, voice, readability |
+
+For mixed work, use the primary outcome and explicitly assign coverage of
+supporting deliverables in the reviewer prompts. If classification or coverage
+is materially ambiguous, ask one focused question before launching; do not
+invent a third profile. Retain the selected profile on reruns unless the
+deliverable changes or the user overrides it. Writing uses the writing verdict
+headers; Code uses the default headers. A changed deliverable may reclassify
+the headers on an explicit review run, never on an ordinary refresh.
+
+Perspectives are primary assignments, not blinders: reviewers should flag
+obvious blocking problems outside their focus. Every reviewer still evaluates
+both verdict columns against the complete deliverable. Style and tone are
+substantive scope for writing, not excluded as code-style nits.
+
+#### Model preferences (per summary)
+
+The user's default `gpt-6-astra-medium` means model ID `gpt-6-astra` with
+`reasoning_effort: "medium"`, not a model ID with a `-medium` suffix.
+Use this default for all three seats. Repeated model IDs and families are
+allowed, including three identical model/reasoning selections.
+
+Selection order: explicit user override, saved per-summary preferences, then
+the default above. Overrides are remembered for that summary, not globally.
+If the user overrides a model without specifying reasoning, use the runtime
+default for that model rather than transferring another model's reasoning level.
+Validate IDs and supported reasoning levels against current runtime/tool choices;
+do not invoke a nested CLI to guess availability. If a selection is unavailable
+or ambiguous, ask the user rather than silently choosing another model or depth.
+
+Persist the selected profile and three preferences inside the Reviewer Matrix
+section in a collapsed "Review preferences" block before launching:
+
+````markdown
+<details>
+<summary>Review preferences</summary>
+
+```json
+{"profile":"code","seats":[{"perspective":"Intent","model":"gpt-6-astra","reasoning_effort":"medium"},{"perspective":"Failure","model":"gpt-6-astra","reasoning_effort":"medium"},{"perspective":"Maintenance","model":"gpt-6-astra","reasoning_effort":"medium"}]}
+```
+</details>
+````
+
+Use `"writing"` for the writing profile and its exact perspective names. Omit
+`reasoning_effort` when using the runtime default. On profile changes, retain
+model preferences by seat number unless the user overrides them. Read this
+block on resume; preserve it through refreshes, task edits, and renewals.
+If it is malformed or conflicts with the three-seat profile, ask rather than
+discarding preferences. Older summaries without it remain unchanged until an
+explicit review run; on that run use explicit choices or the default, not
+guessed preferences from historical reviewer labels.
+
+#### Run and aggregate
+
+1. Resolve perspectives and validated model preferences as above. Present three
+   pending rows with perspective and model labels. Save the preferences block
+   with the roster via `update_markdown` (or first `open_canvas` for a new
+   summary) before launching. A preference-only change never starts reviews or
+   rewrites existing verdicts.
 2. Create a new reviewer session for every seat. Never reuse an existing
-   review or rubber-duck session as a current council member. Add the complete
-   selected roster to the matrix as `⏳ Pending` before starting reviews,
-   using the discovered metadata and marking it as requested/model-reported
-   metadata until the runtime reports effective values. Use one separate `task`
-   call per seat and launch all three calls together in one
+   review or rubber-duck session as a current council member. Use one separate
+   `task` call per seat and launch all three calls together in one
    `multi_tool_use.parallel` invocation. Do not reuse an existing `agent_id`
-   through `write_agent`.
+   through `write_agent`. Pass each seat's selected `model` and, when specified,
+   `reasoning_effort` to its `task` call.
 3. Run all reviewers in parallel with the same complete deliverable and
-   relevant context. Each reviewer independently returns both matrix
-   verdicts. Do not expose one current reviewer's findings to another before
+   relevant context, plus its distinct perspective assignment and the selected
+   verdict definitions. Request read-only review, not implementation. Each
+   reviewer independently returns both matrix verdicts and actionable concerns.
+   Do not expose one current reviewer's findings to another before
    aggregation.
-4. Ask reviewers to report only high-confidence correctness, security,
-   reliability, and scope concerns. Exclude style, minor nits, and
-   speculative concerns. A verdict is `✅ Pass` with no actionable concerns,
+4. Ask reviewers to report only high-confidence, actionable concerns relevant
+   to the deliverable and explain their concrete impact. Exclude code-style
+   preferences, minor nits, and speculative concerns, not writing-style issues
+   that affect the intended reader. A verdict is `✅ Pass` with no actionable concerns,
    `⚠️ Pass with concerns` with only non-blocking actionable concerns, and
    `❌ Fail` with any blocking concern.
 5. Keep a seat `⏳ Pending` while recovering from an execution failure. For
-   a transient failure or unusable output, retry the same ID once. If an ID
-   fails to start, replace it from the remaining discovered choices without
-   retrying that failed-to-start ID.
-   Update the seat when replacement succeeds; retry that replacement once. If
-   it still fails, mark the seat `🚫 Unavailable`, leave the council incomplete,
-   and report the failure and replacement in chat.
+   a transient failure or unusable output, retry the same selection once.
+   If it cannot start or the retry fails, mark the seat `🚫 Unavailable`,
+   leave the council incomplete, and report the execution failure in chat.
+   Ask before substituting a model or reasoning depth. Any approved replacement
+   retains the seat's perspective; do not retain failed-attempt rows in the matrix.
 6. If required content is inaccessible, let other reviewers finish, mark the
    affected seat `⛔ Blocked: required content inaccessible`, and leave the
    council incomplete. Do not substitute another model unless it has
@@ -307,6 +340,7 @@ from the remaining choices without retrying that failed-to-start ID first.
    problem, impact, affected location when known, and all agreeing reviewers,
    without a fix plan.
 
+Independent sessions are not evidence of model diversity when models repeat.
 The council is complete only when all three seats have review verdicts. For a
 complete council, any `❌ Fail` means not ready; otherwise any
 `⚠️ Pass with concerns` means ready with concerns; all `✅ Pass` means ready.
