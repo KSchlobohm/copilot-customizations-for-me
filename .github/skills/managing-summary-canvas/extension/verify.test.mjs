@@ -176,9 +176,22 @@ test("skill guidance defines a closed header selection with a fixed default", ()
     assert.match(SKILL_MARKDOWN, /\| Writing or editorial .* \| Evidence & Consistency \| Readability & Tone \|/);
     assert.match(
         SKILL_MARKDOWN,
-        /\| Default: code, feature, mixed, ambiguous, or any other work \| Safe to Merge \| Closes Scope \|/
+        /\| Default: code, feature, or other non-writing work \| Safe to Merge \| Closes Scope \|/
     );
     assert.match(SKILL_MARKDOWN, /This is a closed selection table\. Never invent reviewer headers\./);
+});
+
+test("mixed-work headers follow the primary-deliverable perspective policy", () => {
+    const headerGuidance = SKILL_MARKDOWN.slice(
+        SKILL_MARKDOWN.indexOf("Select the reviewer headers"),
+        SKILL_MARKDOWN.indexOf("```markdown", SKILL_MARKDOWN.indexOf("Select the reviewer headers"))
+    );
+    assert.match(headerGuidance, /\[Deliverable-specific perspectives\]\(#deliverable-specific-perspectives\)/);
+    assert.match(headerGuidance, /mixed work is not automatically code work/);
+    assert.doesNotMatch(headerGuidance, /\| Default:[^\n]*(?:mixed|ambiguous)/);
+    assert.match(SKILL_MARKDOWN, /For mixed work, use the primary outcome/);
+    assert.match(SKILL_MARKDOWN, /classification or coverage\s+is materially ambiguous, ask one focused question/);
+    assert.match(SKILL_MARKDOWN, /Writing uses the writing verdict\s+headers; Code uses the default headers/);
 });
 
 test("skill guidance uses the user's exact default and allows repeated models", () => {

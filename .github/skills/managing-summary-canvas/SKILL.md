@@ -103,15 +103,19 @@ Summaries support both **issue-backed** and **unlinked** modes:
 Always structure the Markdown in this order. Do not bury Action Items or
 omit the reviewer matrix.
 
-Select the reviewer headers from the primary deliverable:
+Select the reviewer headers from the primary deliverable. For mixed work or
+materially ambiguous classification, follow
+[Deliverable-specific perspectives](#deliverable-specific-perspectives)
+before selecting headers; mixed work is not automatically code work.
 
 | Work type | Verdict column 1 | Verdict column 2 |
 |---|---|---|
 | Writing or editorial (the deliverable is prose/content) | Evidence & Consistency | Readability & Tone |
-| Default: code, feature, mixed, ambiguous, or any other work | Safe to Merge | Closes Scope |
+| Default: code, feature, or other non-writing work | Safe to Merge | Closes Scope |
 
 This is a closed selection table. Never invent reviewer headers. For a work
-type not explicitly listed, use the default pair.
+type not explicitly listed, use the default pair only after resolving the
+primary deliverable.
 
 ```markdown
 ## [#<issue-number>](<issue-url>) — <issue title>
