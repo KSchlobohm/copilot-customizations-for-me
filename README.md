@@ -22,7 +22,7 @@ Use this repository to collect reusable Copilot customization building blocks, s
 | `.github/skills/copilot-customization-advisor/` | Guidance for choosing the right customization type for a new idea |
 | `.github/skills/copilot-customization-agent-authoring/` | Guidance for creating, reviewing, and grading custom agent files |
 | `.github/skills/launching-iisexpress/` | Guidance for launching .NET Framework ASP.NET projects with IIS Express |
-| `.github/skills/managing-summary-canvas/` | A reusable Copilot App side-panel canvas skill for tracking work and running fresh model councils across sessions (requires the Copilot App's canvas support) |
+| `.github/skills/managing-summary-canvas/` | A reusable Copilot App side-panel canvas skill and reviewer contract reference for tracking work and running fresh model councils across sessions (requires the Copilot App's canvas support) |
 | `docs/` | Recommended tool setup guides, installation steps, and workshops |
 | `docs/skill-releases.md` | Versioned skill installation, migration, upgrade, and publishing guide |
 | `docs/lessons-learned/` | Focused notes on practical AI-assisted engineering lessons worth revisiting |
@@ -43,6 +43,7 @@ Use this repository to collect reusable Copilot customization building blocks, s
 | Validation | `launching-iisexpress` regressions | Executes the rendered launcher under Windows PowerShell or PowerShell 7 to verify root and virtual-path mappings, provenance and safety-invariant validation, and safe substitution without external modules | `.github/skills/launching-iisexpress/Verify-LaunchingIISExpress.Tests.ps1` |
 | Skill | `managing-summary-canvas` | Shows three code or writing perspectives, each owning a different question, and one combined recommendation; explicit review requests start fresh reviews. Model preferences are separate and may repeat (default: GPT-6 Astra, medium reasoning) — requires the Copilot App's canvas support | `.github/skills/managing-summary-canvas/SKILL.md` |
 | Reference | Shared glossary | Defines perspective, assessment, combined recommendation, and review preferences | `GLOSSARY.md` |
+| Reference | Summary canvas reviewer contract | Defines reviewer result fields, unusable-output handling, and ordered combined recommendation rules | `.github/skills/managing-summary-canvas/reviewer-contract.md` |
 | Guide | Versioned skill releases | Explains how to install a pinned release, adopt manually copied skills, upgrade deliberately, and publish subsequent versions | `docs/skill-releases.md` |
 | Guide | Copilot CLI Chronicle lesson | Explains why `/chronicle` matters, what architectural idea sits behind it, and when to go deeper | `docs/lessons-learned/copilot-cli-chronicle.md` |
 | Guide | Skill reuse vs knowledge reuse lesson | Explains when skills are personal accelerators vs shared knowledge artifacts, and when evals are worth the investment | `docs/lessons-learned/skill-reuse-is-knowledge-reuse.md` |

@@ -17,6 +17,10 @@ import { renderMarkdown } from "./markdown.mjs";
 import { summarizeActionItems } from "./tasks.mjs";
 
 const SKILL_MARKDOWN = (await readFile(new URL("../SKILL.md", import.meta.url), "utf8")).replace(/\r\n/g, "\n");
+const contractLinks = [...SKILL_MARKDOWN.matchAll(/\[reviewer result and recommendation contract\]\(([^)]+)\)/g)];
+assert.equal(contractLinks.length, 2, "expected direct contract links at reviewer prompting and aggregation");
+assert.ok(contractLinks.every((match) => match[1] === "reviewer-contract.md"), "keep the contract beside SKILL.md");
+const REVIEWER_CONTRACT = (await readFile(new URL(`../${contractLinks[0][1]}`, import.meta.url), "utf8")).replace(/\r\n/g, "\n");
 const markdownExamples = [...SKILL_MARKDOWN.matchAll(/^```markdown\n([\s\S]*?)\n```$/gm)].map((match) => match[1]);
 const scaffold = markdownExamples.find((example) => example.includes("## Reviewer Matrix"));
 assert.ok(scaffold, "expected the full summary scaffold in SKILL.md");
@@ -224,8 +228,15 @@ test("skill guidance remembers per-summary choices and does not silently substit
     assert.doesNotMatch(SKILL_MARKDOWN, /copilot --model auto/);
 });
 
+test("the workflow loads the companion contract for prompting and synthesis without nested references", () => {
+    assert.match(SKILL_MARKDOWN, /Read the\s+\[reviewer result and recommendation contract\]\(reviewer-contract\.md\) and\s+include its result contract in every reviewer prompt/);
+    assert.match(SKILL_MARKDOWN, /Apply the combined recommendation rules in the\s+\[reviewer result and recommendation contract\]\(reviewer-contract\.md\)/);
+    assert.doesNotMatch(SKILL_MARKDOWN, /#### Reviewer result contract|#### Combined recommendation|^Perspective:|^\| Condition \|/m);
+    assert.doesNotMatch(REVIEWER_CONTRACT, /\[[^\]]+\]\([^)]+\)|^\[[^\]]+\]:/m, "the companion must not chain to another reference");
+});
+
 test("reviewer contract requests one owned assessment and separate cross-cutting blockers, never overall votes", () => {
-    const result = SKILL_MARKDOWN.match(/```text\n([\s\S]*?)\n```/)?.[1];
+    const result = REVIEWER_CONTRACT.match(/```text\n([\s\S]*?)\n```/)?.[1];
     assert.ok(result, "expected an explicit prompt/result contract");
     for (const field of ["Perspective", "Question", "Assessment", "Rationale", "Findings", "Cross-cutting blockers"]) {
         assert.match(result, new RegExp(`^${field}:`, "m"));
@@ -233,18 +244,16 @@ test("reviewer contract requests one owned assessment and separate cross-cutting
     assert.match(result, /^Assessment: <✅ Pass \/ ⚠️ Pass with concerns \/ ❌ Fail \/ ⛔ Blocked: required content inaccessible>$/m);
     assert.match(result, /blocking\/non-blocking severity/);
     assert.match(SKILL_MARKDOWN, /Each reviewer\s+assesses only its owned question/);
-    assert.match(SKILL_MARKDOWN, /Do not request a merge vote, answers to other perspectives' questions, or a\s+combined recommendation from an individual reviewer/);
-    assert.match(SKILL_MARKDOWN, /Missing required fields,\s+mismatched perspective\/question, invalid status, or contradictory assessment\/findings\s+are unusable output/);
+    assert.match(REVIEWER_CONTRACT, /Do not request a merge vote, answers to other perspectives' questions, or a\s+combined recommendation from an individual reviewer/);
+    assert.match(REVIEWER_CONTRACT, /Missing required fields,\s+mismatched perspective\/question, invalid status, or contradictory assessment\/findings\s+are unusable output; apply the retry rule rather than inferring a Pass/);
+    assert.match(REVIEWER_CONTRACT, /Keep rationale in synthesis, not a new column; effective metadata needs runtime evidence/);
     assert.match(SKILL_MARKDOWN, /Style and tone are\s+substantive scope for writing/);
     assert.match(SKILL_MARKDOWN, /Perspectives are primary assignments, not blinders/);
     assert.doesNotMatch(SKILL_MARKDOWN, /Every reviewer still evaluates|returns both matrix verdicts|\| Reviewer \||Reviewer [123] \(not selected\)/);
 });
 
 test("combined recommendation guidance prioritizes coverage and blockers over all-pass assessments", () => {
-    const section = SKILL_MARKDOWN.slice(
-        SKILL_MARKDOWN.indexOf("#### Combined recommendation"),
-        SKILL_MARKDOWN.indexOf("#### Refresh and renewal")
-    );
+    const section = REVIEWER_CONTRACT.slice(REVIEWER_CONTRACT.indexOf("## Combined recommendation"));
     const rules = [...section.matchAll(/^\| (.*?) \| (.*?) \|$/gm)].slice(1);
     assert.deepEqual(rules.map((match) => [match[1], match[2]]), [
         ["Reviews have not started or any seat is still running", "⏳ Pending"],
@@ -259,6 +268,10 @@ test("combined recommendation guidance prioritizes coverage and blockers over al
     assert.match(section, /Ordinary open\s+tasks are not automatically review blockers/);
     assert.match(section, /Always surface known blockers and missing coverage/);
     assert.match(section, /not majority votes or model rankings/);
+    assert.match(section, /Complete coverage means all three perspectives have usable assessments/);
+    assert.match(section, /Never automatically dispose items/);
+    assert.match(section, /Independent sessions are not evidence of model diversity when models repeat/);
+    assert.match(section, /not an automated merge gate\s+or permission to publish/);
 });
 
 test("assessment and combined recommendation states render without extra columns or recommendations", () => {
@@ -291,7 +304,7 @@ test("skill guidance runs independent reviews and aggregates high-confidence con
     assert.match(SKILL_MARKDOWN, /merging findings only when they\s+describe the same root cause or affected behavior/);
     assert.match(SKILL_MARKDOWN, /without a fix plan/);
     assert.match(SKILL_MARKDOWN, /decision support for the user/);
-    assert.match(SKILL_MARKDOWN, /not an automated merge gate/);
+    assert.match(REVIEWER_CONTRACT, /not an automated merge gate/);
 });
 
 test("skill guidance keeps execution attempts out of the matrix while preserving council coverage", () => {
