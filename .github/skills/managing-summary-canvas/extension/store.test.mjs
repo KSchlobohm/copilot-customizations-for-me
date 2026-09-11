@@ -23,17 +23,37 @@ process.env.COPILOT_HOME = tmpHome;
 
 const { loadDocument, saveDocument, loadInstanceMapping, saveInstanceMapping } = await import("./store.mjs");
 
+const skill = (await readFile(new URL("../SKILL.md", import.meta.url), "utf8")).replace(/\r\n/g, "\n");
+const preferencesBlock = skill.match(/<details>\s*<summary>Review preferences<\/summary>[\s\S]*?<\/details>/)?.[0];
+assert.ok(preferencesBlock);
+const preferences = JSON.parse(preferencesBlock.match(/```json\s+([\s\S]*?)\s+```/)[1]);
+
 const CODE_MATRIX = `## Reviewer Matrix
 
-| Reviewer | Safe to Merge | Closes Scope |
+| Perspective | Question it owns | Assessment |
 |---|---|---|
-| GPT-5.6 (reasoning: high) | ⏳ Pending | ⏳ Pending |`;
+| Intent | Does saving preserve this document's task states? | ⏳ Pending |
+| Failure | Can reopening lose saved content? | ⏳ Pending |
+| Maintenance | Does saving reuse the existing document store? | ⏳ Pending |
+
+**Combined recommendation:** ⏳ Pending — review has not started.`;
 
 const WRITING_MATRIX = `## Reviewer Matrix
 
-| Reviewer | Evidence & Consistency | Readability & Tone |
+| Perspective | Question it owns | Assessment |
 |---|---|---|
-| GPT-5.6 (reasoning: high) | ⏳ Pending | ⏳ Pending |`;
+| Purpose & Audience | Can a new contributor follow this setup guide? | ⏳ Pending |
+| Evidence & Consistency | Do the documented commands match supported options? | ⏳ Pending |
+| Style & Tone | Are the steps clear and direct for first-time readers? | ⏳ Pending |
+
+**Combined recommendation:** ⏳ Pending — review has not started.`;
+
+function profilePreferences(profile, perspectives) {
+    return preferencesBlock.replace(/```json[\s\S]*?```/, "```json\n" + JSON.stringify({
+        profile,
+        seats: preferences.seats.map((seat, index) => ({ ...seat, perspective: perspectives[index] })),
+    }) + "\n```");
+}
 
 test("saveDocument then loadDocument round-trips the exact content written (Bug 4 precondition)", async () => {
     const markdown = `## Action Items\n- [ ] a\n\n${CODE_MATRIX}`;
@@ -41,10 +61,10 @@ test("saveDocument then loadDocument round-trips the exact content written (Bug 
     const doc = await loadDocument("doc-1");
     assert.equal(doc.title, "Doc One");
     assert.equal(doc.markdown, markdown);
-    assert.match(doc.markdown, /\| Reviewer \| Safe to Merge \| Closes Scope \|/);
+    assert.match(doc.markdown, /\| Perspective \| Question it owns \| Assessment \|/);
 });
 
-test("writing reviewer headers survive durable reload and a full-document update", async () => {
+test("writing questions and Pending recommendation survive durable reload and a full-document update", async () => {
     const initial = `## Action Items\n- [ ] Draft article\n\n${WRITING_MATRIX}`;
     await saveDocument("writing-doc", { title: "Writing", markdown: initial });
     assert.equal((await loadDocument("writing-doc")).markdown, initial);
@@ -53,53 +73,100 @@ test("writing reviewer headers survive durable reload and a full-document update
     await saveDocument("writing-doc", { title: "Writing", markdown: updated });
     const reloaded = await loadDocument("writing-doc");
     assert.equal(reloaded.markdown, updated);
-    assert.match(reloaded.markdown, /\| Reviewer \| Evidence & Consistency \| Readability & Tone \|/);
+    assert.ok(reloaded.markdown.endsWith(WRITING_MATRIX));
 });
 
-test("reviewer identity labels (including distinct reasoning depths and unknown metadata) survive resume/reload unchanged", async () => {
-    const markdown = `## Reviewer Matrix
-| Reviewer | Safe to Merge | Closes Scope |
-|---|---|---|
-| GPT-5.6 (reasoning: high) | ✅ Pass | ✅ Pass |
-| GPT-5.6 (reasoning: xhigh) | ⚠️ Pass with concerns | ✅ Pass |
-| Claude Haiku 4.5 | ✅ Pass | ✅ Pass |
-| Gemini 3.1 Pro Preview (reasoning: high) | 🚫 Unavailable | 🚫 Unavailable |
-| (Model family unknown) (Version unknown) | ⏳ Pending | ⏳ Pending |`;
-    await saveDocument("doc-reviewers", { title: "Matrix", markdown });
-    const doc = await loadDocument("doc-reviewers");
+test("incomplete coverage and separate requested/effective metadata survive reload unchanged", async () => {
+    const matrix = CODE_MATRIX
+        .replace("| ⏳ Pending |", "| 🚫 Unavailable |")
+        .replace("| ⏳ Pending |", "| ⛔ Blocked: required content inaccessible |")
+        .replace("| ⏳ Pending |", "| ✅ Pass |")
+        .replace("⏳ Pending — review has not started.", "🚫 Incomplete — Intent unavailable; Failure lacks required content.");
+    const metadata = preferencesBlock.replace("Current run: not started.",
+        "Intent: requested GPT-6 Astra (reasoning: medium); effective model/version/reasoning: unknown.\n\n"
+        + "Failure: requested GPT-6 Astra (reasoning: medium); effective model/version/reasoning: unknown.\n\n"
+        + "Maintenance: requested GPT-6 Astra (reasoning: medium); effective model/version/reasoning: unknown.");
+    const markdown = `${matrix}\n\n${metadata}`;
+    await saveDocument("doc-incomplete", { title: "Matrix", markdown });
+    const doc = await loadDocument("doc-incomplete");
     assert.equal(doc.markdown, markdown);
     assert.match(doc.markdown, /🚫 Unavailable/);
+    assert.match(doc.markdown, /🚫 Incomplete/);
+    assert.match(doc.markdown, /effective model\/version\/reasoning: unknown/);
 });
 
-test("per-summary preferences and repeated-model rows survive task updates and council renewal", async () => {
-    const skill = await readFile(new URL("../SKILL.md", import.meta.url), "utf8");
-    const preferencesBlock = skill.match(/<details>\s*<summary>Review preferences<\/summary>[\s\S]*?<\/details>/)?.[0];
-    assert.ok(preferencesBlock);
-    const preferences = JSON.parse(preferencesBlock.match(/```json\s+([\s\S]*?)\s+```/)[1]);
-    const matrix = `## Reviewer Matrix\n\n| Reviewer | Safe to Merge | Closes Scope |\n|---|---|---|\n`
-        + preferences.seats.map(({ perspective }) =>
-            `| ${perspective} — GPT-6 Astra (reasoning: medium) | ✅ Pass | ✅ Pass |`
-        ).join("\n") + `\n\n${preferencesBlock}`;
-    const initial = `## Action Items\n- [x] (Failure) Fixed save handling\n- [ ] (Maintenance) Resolve duplication\n\n${matrix}`;
-    await saveDocument("review-preferences", { title: "Preferences", markdown: initial });
-    const reloaded = await loadDocument("review-preferences");
-    assert.equal(reloaded.markdown, initial);
+test("both profiles preserve questions, repeated-model preferences, and task states across authored refresh and renewal", async () => {
+    for (const [profile, matrix, perspectives] of [
+        ["code", CODE_MATRIX, ["Intent", "Failure", "Maintenance"]],
+        ["writing", WRITING_MATRIX, ["Purpose & Audience", "Evidence & Consistency", "Style & Tone"]],
+    ]) {
+        const settings = profilePreferences(profile, perspectives);
+        const metadata = settings.replace("Current run: not started.", "Current run: effective model/version/reasoning unknown.");
+        const completeMatrix = matrix.replaceAll("| ⏳ Pending |", "| ✅ Pass |")
+            .replace("⏳ Pending — review has not started.", "✅ Ready — reviewed scope has no outstanding concerns.");
+        const completeReview = `${completeMatrix}\n\n${metadata}`;
+        const initial = `## Action Items\n- [x] (${perspectives[1]}) Fixed save handling\n- [ ] Prepare handoff\n\n${completeReview}`;
+        await saveDocument(profile, { title: profile, markdown: initial });
+        const reloaded = await loadDocument(profile);
+        assert.equal(reloaded.markdown, initial);
 
-    const taskUpdate = reloaded.markdown.replace("- [ ] (Maintenance)", "- [x] (Maintenance)");
-    await saveDocument("review-preferences", { title: reloaded.title, markdown: taskUpdate });
-    const beforeRenewal = await loadDocument("review-preferences");
-    assert.equal(beforeRenewal.markdown, taskUpdate);
-    const renewed = beforeRenewal.markdown.replaceAll("✅ Pass", "⏳ Pending");
-    await saveDocument("review-preferences", { title: reloaded.title, markdown: renewed });
-    const afterRenewal = await loadDocument("review-preferences");
-    assert.equal(afterRenewal.markdown, renewed);
-    assert.ok(afterRenewal.markdown.includes(preferencesBlock));
-    assert.deepEqual(summarizeActionItems(afterRenewal.markdown), summarizeActionItems(beforeRenewal.markdown));
+        const taskUpdate = reloaded.markdown.replace("- [ ] Prepare handoff", "- [x] Prepare handoff");
+        await saveDocument(profile, { title: profile, markdown: taskUpdate });
+        const beforeRenewal = await loadDocument(profile);
+        assert.equal(beforeRenewal.markdown, taskUpdate);
+        assert.ok(beforeRenewal.markdown.endsWith(completeReview));
 
-    const otherPreferences = preferencesBlock.replaceAll('"medium"', '"high"');
-    await saveDocument("other-review-preferences", { title: "Other", markdown: otherPreferences });
-    assert.ok((await loadDocument("review-preferences")).markdown.includes(preferencesBlock));
-    assert.equal((await loadDocument("other-review-preferences")).markdown, otherPreferences);
+        // The agent authors the replacement; the store must not reinterpret it.
+        const renewed = beforeRenewal.markdown.replace(completeReview, `${matrix}\n\n${settings}`);
+        await saveDocument(profile, { title: profile, markdown: renewed });
+        const afterRenewal = await loadDocument(profile);
+        assert.equal(afterRenewal.markdown, renewed);
+        assert.ok(afterRenewal.markdown.includes(settings));
+        assert.deepEqual(summarizeActionItems(afterRenewal.markdown), summarizeActionItems(beforeRenewal.markdown));
+        assert.equal([...afterRenewal.markdown.matchAll(/\| ⏳ Pending \|/g)].length, 3);
+        assert.equal([...afterRenewal.markdown.matchAll(/\*\*Combined recommendation:\*\*/g)].length, 1);
+        assert.doesNotMatch(afterRenewal.markdown, /✅ Ready|Current run: effective/);
+    }
+});
+
+test("an authored legacy reassessment replacement discards votes but preserves tasks and selected preferences", async () => {
+    const actionItems = "## Action Items\n- [x] (Historical reviewer) Fixed save handling\n- [ ] (Maintenance) Resolve duplication";
+    const legacyReview = `## Reviewer Matrix
+
+| Reviewer | Safe to Merge | Closes Scope |
+|---|---|---|
+| Reviewer 1 (not selected) | ⏳ Pending | ⏳ Pending |
+| Previous reviewer | ✅ Pass | ✅ Pass |
+
+${preferencesBlock.replace("Current run: not started.", "Current run: previous merge votes.")}`;
+    const otherSections = "\n\n## What We Learned\nSaved preferences are not review results.";
+    await saveDocument("reassess", { title: "Reassess", markdown: `${actionItems}\n\n${legacyReview}${otherSections}` });
+    const before = await loadDocument("reassess");
+    const authoredUpdate = before.markdown.replace(legacyReview, `${CODE_MATRIX}\n\n${preferencesBlock}`);
+    await saveDocument("reassess", { title: before.title, markdown: authoredUpdate });
+    const after = await loadDocument("reassess");
+    assert.equal(after.markdown, authoredUpdate);
+    assert.deepEqual(summarizeActionItems(after.markdown), summarizeActionItems(before.markdown));
+    assert.ok(after.markdown.includes(preferencesBlock));
+    assert.ok(after.markdown.endsWith(otherSections));
+    assert.doesNotMatch(after.markdown, /Safe to Merge|Closes Scope|Previous reviewer|previous merge votes|✅ Pass/);
+    assert.equal([...after.markdown.matchAll(/\| ⏳ Pending \|/g)].length, 3);
+    assert.match(after.markdown, /\*\*Combined recommendation:\*\* ⏳ Pending/);
+});
+
+test("preferences are per-summary and changing them does not rewrite current results or run metadata", async () => {
+    const currentReview = CODE_MATRIX.replaceAll("| ⏳ Pending |", "| ✅ Pass |")
+        .replace("⏳ Pending — review has not started.", "✅ Ready — no review concerns.");
+    const currentMetadata = preferencesBlock.replace("Current run: not started.", "Intent: requested GPT-6 Astra (reasoning: medium); effective unknown.");
+    const initial = `${currentReview}\n\n${currentMetadata}`;
+    await saveDocument("preferences-a", { title: "A", markdown: initial });
+    await saveDocument("preferences-b", { title: "B", markdown: initial });
+    const updated = initial.replaceAll('"reasoning_effort":"medium"', '"reasoning_effort":"high"');
+    await saveDocument("preferences-a", { title: "A", markdown: updated });
+    assert.equal((await loadDocument("preferences-a")).markdown, updated);
+    assert.equal((await loadDocument("preferences-b")).markdown, initial);
+    assert.ok(updated.startsWith(currentReview));
+    assert.match(updated, /requested GPT-6 Astra \(reasoning: medium\); effective unknown/);
 });
 
 test("loadDocument returns null for a documentId that was never saved", async () => {
@@ -118,7 +185,7 @@ test("instanceId -> documentId mapping survives independently of any in-memory i
     const documentId = await loadInstanceMapping("panel-abc");
     assert.equal(documentId, "doc-1");
     const doc = await loadDocument(documentId);
-    assert.match(doc.markdown, /\| Reviewer \| Safe to Merge \| Closes Scope \|/);
+    assert.match(doc.markdown, /\| Perspective \| Question it owns \| Assessment \|/);
 });
 
 test("deleteInstanceMapping removes the mapping so loadInstanceMapping returns null afterward", async () => {

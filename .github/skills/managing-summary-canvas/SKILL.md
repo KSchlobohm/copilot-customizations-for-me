@@ -1,6 +1,6 @@
 ---
 name: managing-summary-canvas
-description: Opens, refreshes, and manages a reusable conversation summary canvas with action items and a reviewer matrix. Runs three fresh independent reviews with deliverable-specific perspectives and preferred models, including repeated models. Use when the user explicitly asks to open, show, or update the summary canvas; run or rerun the reviewer matrix; start or renew its model council; review again; manage an action item; or read its current task state.
+description: Opens, refreshes, and manages a reusable conversation summary canvas with action items and a reviewer matrix. Runs three fresh perspective-owned reviews contributing to one combined recommendation, with preferred models including repeated models. Use when the user explicitly asks to open, show, or update the summary canvas; run or rerun the reviewer matrix; start or renew its model council; review again; manage an action item; or read its current task state.
 license: MIT
 ---
 
@@ -30,8 +30,8 @@ Only when the user **explicitly** asks for it, e.g.:
 
 Never open or refresh this canvas proactively/automatically. It is
 user-invoked only.
-Showing or updating the reviewer matrix refreshes existing results only;
-it never starts reviewers.
+Showing or updating the reviewer matrix never starts reviewers. A refresh
+resets legacy review sections for reassessment; see "Refresh and renewal".
 
 ## Underlying mechanism
 
@@ -44,15 +44,10 @@ Markdown you generate before calling `open_canvas` / `invoke_canvas_action`.
 
 ### 1. Ensure the extension is installed (user scope)
 
-Check `extensions_manage({ operation: "list" })` for an extension named
-`conversation-summary-canvas`. If it is not present, install it from this
-repo folder at **user scope** (so it persists across every session, matching
-the "reusable across sessions" goal — "session-scoped" here refers to a
-given canvas *instance's content*, not the extension's install location).
-`install_extension`'s `name` override **must** be passed explicitly here —
-without it, the tool defaults to the URL's last path segment (`extension`),
-not `conversation-summary-canvas`, so the extension would install under the
-wrong folder/extensionId and never be found by the check above:
+Check `extensions_manage({ operation: "list" })` for `conversation-summary-canvas`.
+If absent, install this repo's extension folder at **user scope** for reuse
+across sessions. Always pass the `name` override: otherwise `install_extension`
+uses the URL's last segment (`extension`), producing the wrong folder/extensionId.
 
 ```
 install_extension({
@@ -64,23 +59,18 @@ install_extension({
 
 Then call `extensions_reload` if it wasn't picked up automatically.
 
-**Verification.** `extension/verify.test.mjs` is a committed, runnable
-structural test (`node --test .github/skills/managing-summary-canvas/extension/verify.test.mjs`)
-that renders a realistic full-shape document through the real renderer and
-asserts the layout invariants below still hold. Run it after any change to
-`markdown.mjs` or the section conventions in this file, so "reload and
-verify" leaves a reproducible, committed artifact instead of relying on
-one-off interactive testing:
-- the header renders as a working link containing the issue number (for issue-backed) or plain topic title with callout banner (for unlinked)
-- Action Items appears directly below the header
-- Action Items render with visible "To Do" and "Completed" group labels
-- "What Was Built" collapses via `<details>`/`<summary>`
-- the Reviewer Matrix renders as a table (including a pending row) above
-  "What We Learned"
-- both allowed reviewer header pairs render with exactly two verdict columns
-- the selected header pair survives durable reload and full-document updates
-- repeated models, perspective labels, and per-summary preferences survive updates
+**Verification.** After changing these conventions or `markdown.mjs`, run
+`node --test .github/skills/managing-summary-canvas/extension/verify.test.mjs`.
+It uses the real renderer and documented scaffolds to check:
+- linked/unlinked headers, pinned Action Items with To Do/Completed groups, and collapsed build notes
+- both profiles show three named perspectives and owned questions before review
+- the Reviewer Matrix has one assessment column and one combined recommendation
+- model metadata renders separately in a collapsed "Review preferences" block
 - `summarizeActionItems` agrees with the checkbox states in the document
+Run `extension/store.test.mjs` for exact persistence of questions, results,
+preferences, and task states. Guidance assertions check the skill contract,
+not live reviewer orchestration. Updating this skill, not reloading the
+generic renderer, changes how future summaries are authored.
 
 ### 2. Resolve a `documentId` and backing issue status
 
@@ -103,19 +93,11 @@ Summaries support both **issue-backed** and **unlinked** modes:
 Always structure the Markdown in this order. Do not bury Action Items or
 omit the reviewer matrix.
 
-Select the reviewer headers from the primary deliverable. For mixed work or
-materially ambiguous classification, follow
-[Deliverable-specific perspectives](#deliverable-specific-perspectives)
-before selecting headers; mixed work is not automatically code work.
-
-| Work type | Verdict column 1 | Verdict column 2 |
-|---|---|---|
-| Writing or editorial (the deliverable is prose/content) | Evidence & Consistency | Readability & Tone |
-| Default: code, feature, or other non-writing work | Safe to Merge | Closes Scope |
-
-This is a closed selection table. Never invent reviewer headers. For a work
-type not explicitly listed, use the default pair only after resolving the
-primary deliverable.
+Select the profile and tailor its questions before composing even a pending table.
+Follow [Deliverable-specific perspectives](#deliverable-specific-perspectives)
+for mixed work; it is not automatically code work. Both profiles use exactly
+`Perspective | Question it owns | Assessment`. Each perspective owns a different
+question, not a parallel overall judgment. The code scaffold is:
 
 ```markdown
 ## [#<issue-number>](<issue-url>) — <issue title>
@@ -138,99 +120,53 @@ primary deliverable.
 
 ## Reviewer Matrix
 
-| Reviewer | Safe to Merge | Closes Scope |
+| Perspective | Question it owns | Assessment |
 |---|---|---|
-| Reviewer 1 (not selected) | ⏳ Pending | ⏳ Pending |
-| Reviewer 2 (not selected) | ⏳ Pending | ⏳ Pending |
-| Reviewer 3 (not selected) | ⏳ Pending | ⏳ Pending |
+| Intent | Does the change deliver the agreed outcome and scope? | ⏳ Pending |
+| Failure | Could changed behavior fail or permit unintended execution? | ⏳ Pending |
+| Maintenance | Is the change understandable, consistent, and safe to maintain? | ⏳ Pending |
+
+**Combined recommendation:** ⏳ Pending — review has not started.
 
 ## What We Learned
 <insights / gotchas discovered during the work that aren't in the PR>
 ```
 
 Rules:
-- **Header** — For linked summaries: issue number linked to the GitHub issue URL, issue title, one
-  sentence of context. For unlinked summaries: `# Work Summary: <Topic>` header followed by
-  `> 💡 **Unlinked Summary**: No GitHub Issue is attached to this work. Ask Copilot to create an issue anytime to link it.`
-  and one sentence of context. Always first.
-- **Action Items** — pinned directly below the header. Real, actionable
-  items only. This is also where reviewer feedback lives (see below) —
-  don't duplicate it in the matrix. Keep one flat checklist in the source
-  Markdown without hand-written subgroup headings. The canvas automatically
-  renders unchecked items under a visible **To Do** label and checked items
-  under a visible **Completed** label. When checking an item off, just flip
-  its `- [ ]`/`- [x]` marker in place; don't manually regroup the source
-  list.
-- **What Was Built** — collapsed via `<details>`/`<summary>`, capped at 3-5
-  bullets. The PR diff already has full detail; don't duplicate it here.
+- **Header** — always first: linked issue number/title or the unlinked topic
+  and banner from step 2, followed by one sentence of context.
+- **Action Items** — pinned below the header; real actionable items, including
+  reviewer findings. Keep one flat checklist without subgroup headings. The
+  renderer groups unchecked items under **To Do** and checked items under
+  **Completed**. Flip `- [ ]`/`- [x]` in place; don't regroup the source list.
+- **What Was Built** — collapsed via `<details>`/`<summary>`, 3-5 bullets.
+  Do not duplicate the PR diff.
 - **Reviewer Matrix** — placed directly after "What Was Built" and above
-  "What We Learned". Always rendered, even before any review has happened.
-  Show a pending state per reviewer/column rather than
-  omitting the section. Use exactly two verdict columns after `Reviewer`,
-  selected only from the table above:
-  - **Safe to Merge** — is the code itself correct and secure (bugs,
-    security, lifecycle correctness)?
-  - **Closes Scope** — does the work satisfy the full scope of the backing
-    issue's action items and requirements?
-  - **Evidence & Consistency** — are claims supported and are facts,
-    citations, terminology, and internal details consistent?
-  - **Readability & Tone** — is the content clear, well structured, and
-    appropriate for its audience and intended tone?
-
-  Preserve the selected header pair verbatim through refreshes,
-  `update_markdown` calls, task-only edits, and checkbox changes. Change it
-  only when the work's primary deliverable is explicitly reclassified.
-
-  Fill each cell with only a status: ⏳ Pending / ✅ Pass / ❌ Fail /
+  "What We Learned". Show exactly three named perspective rows before models
+  are selected. Never use unnamed placeholders, append model names to
+  perspectives, or collapse rows when models repeat.
+  Fill each Assessment cell with only a status: ⏳ Pending / ✅ Pass / ❌ Fail /
   ⚠️ Pass with concerns / 🚫 Unavailable /
-  ⛔ Blocked: required content inaccessible. The matrix shows council
-  coverage and review verdicts, not failed execution attempts. It should
-  stay scannable at a glance with no per-reviewer comment column.
-
-  Any actual finding, concern, or comment a reviewer raises goes into
-  **Action Items** as its own line attributed by perspective, e.g.:
-  `- [x] (Failure) Fixed a URL-scheme allow-list bypass via a
-  leading C0 control character before \`javascript:\` — sanitized and
-  regression-tested.`
+  ⛔ Blocked: required content inaccessible. Do not add verdict or comment
+  columns. Below the table, show exactly one **Combined recommendation** with
+  a short rationale, followed by a collapsed "Review preferences" block for
+  selected preferences and current-run metadata, not model details in the table.
+- **Review findings** — put every actionable concern in **Action Items**,
+  attributed by perspective, e.g.:
+  `- [x] (Failure) Fixed a URL-scheme allow-list bypass — regression-tested.`
   `- [ ] (Intent, Maintenance) Missing \`name\` param in the \`install_extension\`
   example would install under the wrong folder.`
-  Perspective labels distinguish reviewers even when every model is identical.
-  The matrix is the source of truth for model and reasoning metadata.
-  Preserve historical attribution on existing items during renewals.
-  Leave the item unchecked while it still needs a decision before merge.
+  Preserve historical attribution on existing items during renewals. Leave
+  an item unchecked while it needs a decision for this work.
   Check it once it is disposed for this work: fixed, deferred, accepted, or
-  explicitly not planned. Preserve every Action Item and its checkbox state
-  across council renewals. This way the matrix shows the current council
-  verdicts while Action Items remain the fast, durable view of what is still
-  open.
-  Before the first council starts, the scaffold's three `(not selected)`
-  labels are placeholders, not reviewer identities. Preserve them exactly
-  during ordinary refreshes. When the council starts or renews, replace the
-  complete matrix with the selected roster from the current invocations.
-  After a council starts, label each first-column cell as
-  `<Perspective> — <family> <version> (reasoning: <depth>)`, for example
-  `Style & Tone — GPT-6 Astra (reasoning: medium)`.
-  - Preserve the exact model version and selected reasoning depth. Mark labels
-    as `(requested)` until effective runtime metadata confirms them; do not
-    present requested settings as independently verified effective settings.
-  - Use `(Model family unknown)`, `(Version unknown)`, or
-    `(reasoning: unknown)` for missing metadata. Add an unknown-metadata row
-    only for an actual reviewer. Omit reasoning for models that do not expose
-    it or whose reasoning capability is unknown.
-  - Never collapse rows by model ID, version, or reasoning depth. Each
-    perspective has its own row and verdicts, even with identical models.
-  - On refresh/resume, call `get_state` before rewriting matrix rows and
-    preserve every reviewer label and verdict exactly as stored. Do not infer
-    or migrate placeholder or abbreviated labels. Only an explicit council
-    start or renewal replaces the entire matrix with current reviewer
-    identities and verdicts.
+  explicitly not planned. Renewal never disposes items automatically.
 - **What We Learned** — last section. New insights/gotchas not captured
   elsewhere.
 
 ### Running a model council
 
-A model council is decision support for the user. It assesses the work and
-reports verdicts and concerns; it does not plan or implement repairs.
+A model council is decision support for the user: complementary assessments
+and one combined recommendation, not planning or implementing repairs.
 
 Start one only when the user explicitly asks to start the council for the
 first time, renew it, or review again. Opening, creating, or refreshing a
@@ -239,33 +175,37 @@ council.
 
 #### Deliverable-specific perspectives
 
-Read an existing summary with `get_state` before selecting a roster; for a new
-summary, compose it using steps 2-3 above. Select a profile from the primary deliverable:
+Read existing state with `get_state` before selecting the profile.
+**Code** covers non-writing deliverables: Intent owns outcomes/scope, Failure
+owns correctness/reliability/unsafe behavior, and Maintenance owns clarity,
+consistency, and safe future changes. **Writing** covers prose/content; replace
+the scaffold's table with this one and tailor its questions:
 
-| Profile | Reviewer 1 | Reviewer 2 | Reviewer 3 |
-|---|---|---|---|
-| Code | Intent: user outcomes, acceptance criteria, scope | Failure: correctness, edge cases, reliability, unsafe behavior | Maintenance: clarity, existing patterns, safe future changes |
-| Writing | Purpose & Audience: usefulness, completeness, reader needs | Evidence & Consistency: supported claims, sound reasoning, internal agreement | Style & Tone: clarity, structure, voice, readability |
+```markdown
+| Perspective | Question it owns | Assessment |
+|---|---|---|
+| Purpose & Audience | Does the content meet its readers' needs and intended purpose? | ⏳ Pending |
+| Evidence & Consistency | Are its claims supported and its details internally consistent? | ⏳ Pending |
+| Style & Tone | Are its structure, clarity, and voice appropriate for the audience? | ⏳ Pending |
+```
 
-For mixed work, use the primary outcome and explicitly assign coverage of
-supporting deliverables in the reviewer prompts. If classification or coverage
-is materially ambiguous, ask one focused question before launching; do not
-invent a third profile. Retain the selected profile on reruns unless the
-deliverable changes or the user overrides it. Writing uses the writing verdict
-headers; Code uses the default headers. A changed deliverable may reclassify
-the headers on an explicit review run, never on an ordinary refresh.
+For mixed work, use the primary outcome and assign supporting-deliverable coverage
+in the prompts. If classification or coverage is materially ambiguous, ask one
+focused question before composing or launching; do not invent a third profile.
+Retain the selected profile and owned questions on reruns unless the deliverable
+changes or the user overrides them. Question wording should identify this
+deliverable's scope, not repeat generic examples.
 
-Perspectives are primary assignments, not blinders: reviewers should flag
-obvious blocking problems outside their focus. Every reviewer still evaluates
-both verdict columns against the complete deliverable. Style and tone are
+Perspectives are primary assignments, not blinders: flag obvious outside-focus
+blockers separately. Each reviewer assesses only its owned question; outside-focus
+blockers affect synthesis without redefining it. Style and tone are
 substantive scope for writing, not excluded as code-style nits.
 
 #### Model preferences (per summary)
 
 The user's default `gpt-6-astra-medium` means model ID `gpt-6-astra` with
-`reasoning_effort: "medium"`, not a model ID with a `-medium` suffix.
-Use this default for all three seats. Repeated model IDs and families are
-allowed, including three identical model/reasoning selections.
+`reasoning_effort: "medium"`, not a `-medium` model suffix. Use this default for all three seats.
+Repeated model IDs and families are allowed, including three identical selections.
 
 Selection order: explicit user override, saved per-summary preferences, then
 the default above. Overrides are remembered for that summary, not globally.
@@ -274,9 +214,12 @@ default for that model rather than transferring another model's reasoning level.
 Validate IDs and supported reasoning levels against current runtime/tool choices;
 do not invoke a nested CLI to guess availability. If a selection is unavailable
 or ambiguous, ask the user rather than silently choosing another model or depth.
+Do not pass historical markers such as `runtime-default` as literal model IDs
+or silently replace them with the shared default; resolve the choice with the
+user before launching.
 
-Persist the selected profile and three preferences inside the Reviewer Matrix
-section in a collapsed "Review preferences" block before launching:
+Persist the profile and three preferences in the Reviewer Matrix's collapsed
+"Review preferences" block before launching:
 
 ````markdown
 <details>
@@ -285,25 +228,34 @@ section in a collapsed "Review preferences" block before launching:
 ```json
 {"profile":"code","seats":[{"perspective":"Intent","model":"gpt-6-astra","reasoning_effort":"medium"},{"perspective":"Failure","model":"gpt-6-astra","reasoning_effort":"medium"},{"perspective":"Maintenance","model":"gpt-6-astra","reasoning_effort":"medium"}]}
 ```
+
+Current run: not started.
 </details>
 ````
 
 Use `"writing"` for the writing profile and its exact perspective names. Omit
 `reasoning_effort` when using the runtime default. On profile changes, retain
 model preferences by seat number unless the user overrides them. Read this
-block on resume; preserve it through refreshes, task edits, and renewals.
+block on resume; preserve selected preferences through refreshes, task edits,
+and renewals, separately from current-run metadata.
 If it is malformed or conflicts with the three-seat profile, ask rather than
-discarding preferences. Older summaries without it remain unchanged until an
-explicit review run; on that run use explicit choices or the default, not
-guessed preferences from historical reviewer labels.
+discarding preferences. If preferences are absent, use explicit choices or
+the default, never guessed preferences from historical reviewer labels.
+
+Replace "Current run: not started" with one line per perspective when a run
+starts, recording **requested** model/version/reasoning separately from
+**effective** runtime-confirmed metadata. Unknown family/version/reasoning
+stays unknown; omit reasoning when unsupported or its capability is unknown.
+Never present requested settings as independently verified effective settings.
+A preference-only change leaves current results and their run metadata intact.
 
 #### Run and aggregate
 
-1. Resolve perspectives and validated model preferences as above. Present three
-   pending rows with perspective and model labels. Save the preferences block
-   with the roster via `update_markdown` (or first `open_canvas` for a new
-   summary) before launching. A preference-only change never starts reviews or
-   rewrites existing verdicts.
+1. Resolve perspectives, owned questions, and validated model preferences.
+   Reset the three assessments and combined recommendation to `⏳ Pending`;
+   replace current-run metadata, not selected preferences. Save the full
+   document via `update_markdown` (or first `open_canvas`) before launching.
+   A preference-only change never starts reviews or rewrites existing results.
 2. Create a new reviewer session for every seat. Never reuse an existing
    review or rubber-duck session as a current council member. Use one separate
    `task` call per seat and launch all three calls together in one
@@ -311,17 +263,16 @@ guessed preferences from historical reviewer labels.
    through `write_agent`. Pass each seat's selected `model` and, when specified,
    `reasoning_effort` to its `task` call.
 3. Run all reviewers in parallel with the same complete deliverable and
-   relevant context, plus its distinct perspective assignment and the selected
-   verdict definitions. Request read-only review, not implementation. Each
-   reviewer independently returns both matrix verdicts and actionable concerns.
+   relevant context, plus its assigned perspective and exact owned question.
+   Request read-only review, not implementation, using the result contract below.
    Do not expose one current reviewer's findings to another before
    aggregation.
 4. Ask reviewers to report only high-confidence, actionable concerns relevant
    to the deliverable and explain their concrete impact. Exclude code-style
    preferences, minor nits, and speculative concerns, not writing-style issues
-   that affect the intended reader. A verdict is `✅ Pass` with no actionable concerns,
-   `⚠️ Pass with concerns` with only non-blocking actionable concerns, and
-   `❌ Fail` with any blocking concern.
+   that affect the intended reader. Assess the owned question as `✅ Pass`
+   with no actionable concerns, `⚠️ Pass with concerns` with only non-blocking
+   actionable concerns, or `❌ Fail` with a blocking concern in that scope.
 5. Keep a seat `⏳ Pending` while recovering from an execution failure. For
    a transient failure or unusable output, retry the same selection once.
    If it cannot start or the retry fails, mark the seat `🚫 Unavailable`,
@@ -332,27 +283,81 @@ guessed preferences from historical reviewer labels.
    affected seat `⛔ Blocked: required content inaccessible`, and leave the
    council incomplete. Do not substitute another model unless it has
    confirmed access to the missing content. Explain the unavailable scope in
-   chat; an incomplete council cannot provide a full merge-ready verdict.
+   chat; an incomplete council cannot provide a ready recommendation.
 7. Aggregate only after every seat reaches a terminal state. Surface every
    actionable concern in Action Items, merging findings only when they
    describe the same root cause or affected behavior. Order shared concerns
    first, then by blocking severity and security impact. Each item states the
-   problem, impact, affected location when known, and all agreeing reviewers,
+   problem, impact, affected location when known, and all agreeing perspectives,
    without a fix plan.
 
-Independent sessions are not evidence of model diversity when models repeat.
-The council is complete only when all three seats have review verdicts. For a
-complete council, any `❌ Fail` means not ready; otherwise any
-`⚠️ Pass with concerns` means ready with concerns; all `✅ Pass` means ready.
-This result supports the user's decision and is not an automated merge gate.
+#### Reviewer result contract
 
-On renewal, replace only the current matrix with the fresh roster. Do not
-keep previous matrices or verdicts. Preserve all Action Items and their
-checkbox states; renewal never deletes, resets, or completes them. Do not
-claim that a review maps to a commit or exact code version. The user decides
-when earlier results are stale. If a verdict changes materially, such as Pass
-to Fail, mention that change in chat only. Existing saved summaries remain
-readable and unchanged until the user starts or renews their council.
+Include this contract in every reviewer prompt, filling in its perspective and question:
+
+```text
+Perspective: <assigned perspective>
+Question: <exact owned question>
+Assessment: <✅ Pass / ⚠️ Pass with concerns / ❌ Fail / ⛔ Blocked: required content inaccessible>
+Rationale: <brief evidence supporting that assessment>
+Findings: <actionable concerns in this scope, or None; each gives problem,
+           impact, location when known, and blocking/non-blocking severity>
+Cross-cutting blockers: <obvious blockers outside this scope, or None;
+                        each gives problem, impact, and location when known>
+```
+
+Do not request a merge vote, answers to other perspectives' questions, or a
+combined recommendation from an individual reviewer. Missing required fields,
+mismatched perspective/question, invalid status, or contradictory assessment/findings
+are unusable output; apply the retry rule rather than inferring a Pass.
+Keep rationale in synthesis, not a new column; effective metadata needs runtime evidence.
+
+#### Combined recommendation
+
+The coordinating agent writes one recommendation with a brief deliverable-specific
+rationale. Synthesize evidence and concerns, not majority votes or model rankings.
+Apply these rules in order:
+
+| Condition | Combined recommendation |
+|---|---|
+| Reviews have not started or any seat is still running | ⏳ Pending |
+| All seats terminal, but any is Unavailable or Blocked | 🚫 Incomplete |
+| Complete coverage, with any Fail or unresolved blocking concern | ❌ Not ready |
+| Complete coverage, with any Pass with concerns or unresolved non-blocking review concern | ⚠️ Ready with concerns |
+| Complete coverage, all Pass, and no unresolved review concerns | ✅ Ready |
+
+Complete coverage means all three perspectives have usable assessments.
+Always surface known blockers and missing coverage in the rationale, including
+while Pending or Incomplete. A cross-cutting blocker prevents Ready even if
+all owned questions pass. Reconcile known unresolved blocking Action Items;
+do not ignore them merely because a fresh reviewer omitted them. Ordinary open
+tasks are not automatically review blockers. Never automatically dispose items.
+
+Independent sessions are not evidence of model diversity when models repeat.
+This result supports the user's decision and is not an automated merge gate
+or permission to publish.
+
+#### Refresh and renewal
+
+Call `get_state` before rewriting an existing summary. On a full-summary or
+matrix refresh, replace any legacy review section with the new contract and
+reset assessments and the combined recommendation to Pending. Discard old
+votes and current-run claims rather than translating or preserving old council
+behavior. Preserve Action Items, checkbox states, historical attribution,
+selected model preferences, and other sections. Report the reset in chat;
+do not start reviewers. There is no legacy-layout compatibility path.
+
+For a section already following this contract, ordinary refreshes preserve
+its profile, questions, assessments, combined recommendation, and run metadata.
+Reopening only rehydrates saved content. Task-only edits leave the entire
+review section untouched.
+
+On explicit renewal, replace current results and run metadata with a fresh
+review; keep the profile/questions unless scope or user choice changes.
+Do not keep previous matrices or recommendations. Preserve all Action Items
+and their checkbox states; renewal never deletes, resets, or completes them.
+Do not claim reviews map to an exact commit/version. The user decides when
+current-format results are stale. Mention material assessment changes in chat.
 
 ### 4. Open or refresh
 
@@ -367,15 +372,12 @@ readable and unchanged until the user starts or renews their council.
   instance is already open for this `documentId`:**
   `invoke_canvas_action({ instanceId: "<same instance>", actionName: "update_markdown", input: { markdown } })`
 
-Recompose the full Markdown each time (the action replaces the whole
-document) — don't try to patch fragments in place.
+Send full Markdown each time; `update_markdown` replaces the whole document.
 
 ## Adding a single task
 
-Trigger: "add a task for <description>" (and close variants like "add an
-action item for...", "track a task to..."). This is a lightweight variant of
-step 4's refresh flow, scoped to one Action Items line instead of a full
-recompose of every section.
+Trigger: "add a task for <description>", "add an action item for...", or
+"track a task to...". This updates one Action Item, not other sections.
 
 1. Identify which open canvas instance the task belongs to. If exactly one
    `conversation-summary-canvas` instance is open, use it. If several are
@@ -458,11 +460,9 @@ before deploying — insert between those two:
 
 ## Reading the canvas
 
-Trigger: any question about the canvas's current state — "how many tasks
-are left?", "what's still open?", "close off <task>" / "check off <task>"
-(mark an existing item done rather than adding a new one), or anything else
-that requires knowing what's actually on the canvas right now rather than
-what you last remember sending it.
+Trigger: questions about current canvas state, e.g. "how many tasks are left?",
+"what's still open?", or "close off <task>" / "check off <task>" (complete an
+existing item, not add one). Read live state, not conversation memory.
 
 1. Call `invoke_canvas_action({ instanceId, actionName: "get_state" })`. It
    returns the full current `markdown`, plus a pre-parsed `actionItems`
@@ -483,10 +483,8 @@ what you last remember sending it.
 
 ## Reordering the task list on demand
 
-Trigger: the user explicitly asks to reorder, re-sort, re-prioritize, or
-reorganize the Action Items list (e.g. "reorder the tasks", "re-sort the
-action items", "fix the task order"). This is **not** done automatically —
-only on explicit request.
+Trigger: explicit requests to reorder, re-sort, re-prioritize, or reorganize
+Action Items. Never reorder automatically.
 
 1. Get the canvas's current full Markdown via `get_state`.
 2. Extract all open (unchecked) items from the `## Action Items` section.
