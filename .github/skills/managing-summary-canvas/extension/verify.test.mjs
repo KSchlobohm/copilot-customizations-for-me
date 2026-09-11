@@ -130,9 +130,16 @@ for (const { name, markdown, perspectives } of [
         const recommendation = html.indexOf("<strong>Combined recommendation:");
         assert.ok(recommendation > html.indexOf("</table>"));
         assert.ok(recommendation < html.indexOf("What We Learned"));
+        assert.doesNotMatch(html, /Review preferences|Current run:|gpt-6-astra/);
         assert.doesNotMatch(html, /Reviewer [123]|not selected|Safe to Merge|Closes Scope|GPT-|Model family unknown/);
     });
 }
+
+test("layout guidance requires the preferences block only after preferences are resolved", () => {
+    const rules = SKILL_MARKDOWN.slice(SKILL_MARKDOWN.indexOf("Rules:"), SKILL_MARKDOWN.indexOf("### Running a model council"));
+    assert.match(rules, /Only when preferences have been resolved, follow it\s+with a collapsed "Review preferences" block/);
+    assert.match(SKILL_MARKDOWN, /Persist the profile and three preferences in the Reviewer Matrix's collapsed\s+"Review preferences" block before launching/);
+});
 
 test("the documented preferences block keeps the default separate from current-run metadata", () => {
     const preferences = JSON.parse(PREFERENCES_BLOCK.match(/```json\s+([\s\S]*?)\s+```/)[1]);
@@ -159,14 +166,17 @@ test("repeated models and unknown effective metadata render only in the collapse
             .replace("Current run: not started.", perspectives.map((perspective) =>
                 `${perspective}: requested GPT-6 Astra (reasoning: medium); effective model/version/reasoning: unknown.`
             ).join("\n\n"));
-        const html = renderMarkdown(`${matrix}\n\n${metadata}`);
+        const html = renderMarkdown(SAMPLE_MARKDOWN.replace(CODE_MATRIX, `${matrix}\n\n${metadata}`));
         const table = html.match(/<table>[\s\S]*?<\/table>/)[0];
         assert.equal([...table.matchAll(/<td>⏳ Pending<\/td>/g)].length, 3);
         assert.doesNotMatch(table, /GPT|reasoning|unknown/);
-        const details = html.slice(html.indexOf("<details>"));
+        const details = html.match(/<details>\s*<summary>Review preferences<\/summary>[\s\S]*?<\/details>/)?.[0];
+        assert.ok(details, "expected a collapsed preferences block");
         assert.equal([...details.matchAll(/requested GPT-6 Astra/g)].length, 3);
         assert.equal([...details.matchAll(/effective model\/version\/reasoning: unknown/g)].length, 3);
         assert.doesNotMatch(details, /<details open/);
+        assert.ok(html.indexOf("<summary>Review preferences</summary>") > html.indexOf("<strong>Combined recommendation:"));
+        assert.ok(html.indexOf("<summary>Review preferences</summary>") < html.indexOf("What We Learned"));
     }
 });
 

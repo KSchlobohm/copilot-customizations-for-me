@@ -149,8 +149,9 @@ Rules:
   ⚠️ Pass with concerns / 🚫 Unavailable /
   ⛔ Blocked: required content inaccessible. Do not add verdict or comment
   columns. Below the table, show exactly one **Combined recommendation** with
-  a short rationale, followed by a collapsed "Review preferences" block for
-  selected preferences and current-run metadata, not model details in the table.
+  a short rationale. Only when preferences have been resolved, follow it
+  with a collapsed "Review preferences" block for selected preferences and
+  current-run metadata, not model details in the table.
 - **Review findings** — put every actionable concern in **Action Items**,
   attributed by perspective, e.g.:
   `- [x] (Failure) Fixed a URL-scheme allow-list bypass — regression-tested.`
