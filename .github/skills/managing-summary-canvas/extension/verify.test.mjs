@@ -137,6 +137,41 @@ test("writing and editorial Reviewer Matrix renders exactly its two verdict colu
     ]);
 });
 
+test("three perspectives render as separate rows with the same model for both deliverables", () => {
+    const profiles = [
+        { perspectives: ["Intent", "Failure", "Maintenance"], headers: ["Safe to Merge", "Closes Scope"] },
+        { perspectives: ["Purpose & Audience", "Evidence & Consistency", "Style & Tone"], headers: ["Evidence & Consistency", "Readability & Tone"] },
+    ];
+    for (const { perspectives, headers } of profiles) {
+        const markdown = `## Reviewer Matrix\n\n| Reviewer | ${headers.join(" | ")} |\n|---|---|---|\n`
+            + perspectives.map((perspective) =>
+                `| ${perspective} — GPT-6 Astra (reasoning: medium) | ⏳ Pending | ⏳ Pending |`
+            ).join("\n");
+        const html = renderMarkdown(markdown);
+        const rows = html.match(/<tbody>(.*?)<\/tbody>/s)?.[1] ?? "";
+        assert.equal([...rows.matchAll(/<tr>/g)].length, 3);
+        assert.equal([...rows.matchAll(/GPT-6 Astra \(reasoning: medium\)/g)].length, 3);
+        for (const perspective of perspectives) {
+            assert.ok(rows.includes(perspective.replaceAll("&", "&amp;")));
+        }
+        assert.equal(reviewerHeaders(markdown).length, 3);
+    }
+});
+
+test("the documented preferences block has three default seats and renders collapsed", () => {
+    const block = SKILL_MARKDOWN.match(/<details>\s*<summary>Review preferences<\/summary>[\s\S]*?<\/details>/)?.[0];
+    assert.ok(block, "expected an inspectable preferences block in the skill");
+    const preferences = JSON.parse(block.match(/```json\s+([\s\S]*?)\s+```/)[1]);
+    assert.equal(preferences.profile, "code");
+    assert.deepEqual(preferences.seats, ["Intent", "Failure", "Maintenance"].map((perspective) => ({
+        perspective, model: "gpt-6-astra", reasoning_effort: "medium",
+    })));
+    const html = renderMarkdown(block);
+    assert.match(html, /<details>\s*<summary>Review preferences<\/summary>/);
+    assert.match(html, /<pre><code class="language-json">/);
+    assert.doesNotMatch(html, /<details open/);
+});
+
 test("skill guidance defines a closed header selection with a fixed default", () => {
     assert.match(SKILL_MARKDOWN, /\| Writing or editorial .* \| Evidence & Consistency \| Readability & Tone \|/);
     assert.match(
@@ -146,34 +181,51 @@ test("skill guidance defines a closed header selection with a fixed default", ()
     assert.match(SKILL_MARKDOWN, /This is a closed selection table\. Never invent reviewer headers\./);
 });
 
-test("skill guidance defaults reasoning-capable reviewers to high", () => {
-    assert.match(
-        SKILL_MARKDOWN,
-        /When selecting reviewers, use `high` for every reasoning-capable model/
-    );
+test("skill guidance uses the user's exact default and allows repeated models", () => {
+    assert.match(SKILL_MARKDOWN, /model ID `gpt-6-astra` with\s+`reasoning_effort: "medium"`/);
+    assert.match(SKILL_MARKDOWN, /Use this default for all three seats/);
+    assert.match(SKILL_MARKDOWN, /Repeated model IDs and families are\s+allowed/);
+    assert.doesNotMatch(SKILL_MARKDOWN, /no duplicate model IDs|three distinct families|default.*reviewers to high/);
 });
 
 test("skill guidance creates a fresh three-reviewer council only on explicit review requests", () => {
     assert.match(SKILL_MARKDOWN, /"review again" —\s+runs fresh, independent reviewers/);
+    assert.match(SKILL_MARKDOWN, /"run the reviewer matrix", "rerun the reviewer matrix"/);
     assert.match(SKILL_MARKDOWN, /Opening, creating, or refreshing a\s+summary does not start reviewers/);
-    assert.match(SKILL_MARKDOWN, /Select three available reviewers from different model families/);
+    assert.match(SKILL_MARKDOWN, /Showing or updating the reviewer matrix refreshes existing results only;\s+it never starts reviewers/);
     assert.match(SKILL_MARKDOWN, /Create a new reviewer session for every seat/);
     assert.match(SKILL_MARKDOWN, /Never reuse an existing\s+review or rubber-duck session/);
-    assert.match(SKILL_MARKDOWN, /using family, version, and reasoning metadata from these current\s+invocations/);
-    assert.match(SKILL_MARKDOWN, /Use one separate `task` call per seat and launch all three\s+calls together in one `multi_tool_use\.parallel` invocation/);
-    assert.match(SKILL_MARKDOWN, /Do not reuse an\s+existing `agent_id` through `write_agent`/);
+    assert.match(SKILL_MARKDOWN, /Use one separate\s+`task` call per seat and launch all three calls together in one\s+`multi_tool_use\.parallel` invocation/);
+    assert.match(SKILL_MARKDOWN, /Do not reuse an existing `agent_id`\s+through `write_agent`/);
 });
 
-test("skill guidance keeps automatic reviewer configuration near high or medium", () => {
-    assert.match(SKILL_MARKDOWN, /use `high`, then `medium` if `high` is unsupported/);
-    assert.match(SKILL_MARKDOWN, /Never select `xhigh`,\s+`max`, or `none` automatically/);
+test("skill guidance remembers per-summary choices and does not silently substitute models", () => {
+    assert.match(SKILL_MARKDOWN, /Selection order: explicit user override, saved per-summary preferences, then\s+the default above/);
+    assert.match(SKILL_MARKDOWN, /remembered for that summary, not globally/);
+    assert.match(SKILL_MARKDOWN, /Read this\s+block on resume; preserve it through refreshes, task edits, and renewals/);
+    assert.match(SKILL_MARKDOWN, /malformed or conflicts with the three-seat profile, ask/);
+    assert.match(SKILL_MARKDOWN, /If a selection is unavailable\s+or ambiguous, ask the user/);
+    assert.match(SKILL_MARKDOWN, /runtime\s+default for that model rather than transferring another model's reasoning level/);
+    assert.match(SKILL_MARKDOWN, /retain\s+model preferences by seat number/);
+    assert.match(SKILL_MARKDOWN, /Older summaries without it remain unchanged until an\s+explicit review run/);
+    assert.doesNotMatch(SKILL_MARKDOWN, /copilot --model auto/);
+});
+
+test("skill guidance assigns deliverable-specific perspectives without excluding writing style", () => {
+    assert.match(SKILL_MARKDOWN, /\| Code \| Intent:.*\| Failure:.*\| Maintenance:/);
+    assert.match(SKILL_MARKDOWN, /\| Writing \| Purpose & Audience:.*\| Evidence & Consistency:.*\| Style & Tone:/);
+    assert.match(SKILL_MARKDOWN, /classification or coverage\s+is materially ambiguous, ask one focused question/);
+    assert.match(SKILL_MARKDOWN, /Every reviewer still evaluates\s+both verdict columns/);
+    assert.match(SKILL_MARKDOWN, /Style and tone are\s+substantive scope for writing/);
+    assert.match(SKILL_MARKDOWN, /Perspectives are primary assignments, not blinders/);
 });
 
 test("skill guidance runs independent reviews and aggregates high-confidence concerns without repair work", () => {
     assert.match(SKILL_MARKDOWN, /Run all reviewers in parallel with the same complete deliverable/);
     assert.match(SKILL_MARKDOWN, /Do not expose one current reviewer's findings to another before\s+aggregation/);
-    assert.match(SKILL_MARKDOWN, /only high-confidence correctness, security,\s+reliability, and scope concerns/);
-    assert.match(SKILL_MARKDOWN, /Exclude style, minor nits, and\s+speculative concerns/);
+    assert.match(SKILL_MARKDOWN, /only high-confidence, actionable concerns relevant\s+to the deliverable/);
+    assert.match(SKILL_MARKDOWN, /not writing-style issues\s+that affect the intended reader/);
+    assert.match(SKILL_MARKDOWN, /Request read-only review, not implementation/);
     assert.match(SKILL_MARKDOWN, /merging findings only when they\s+describe the same root cause or affected behavior/);
     assert.match(SKILL_MARKDOWN, /without a fix plan/);
     assert.match(SKILL_MARKDOWN, /decision support for the user/);
@@ -182,12 +234,12 @@ test("skill guidance runs independent reviews and aggregates high-confidence con
 
 test("skill guidance keeps execution attempts out of the matrix while preserving council coverage", () => {
     assert.match(SKILL_MARKDOWN, /Keep a seat `⏳ Pending` while recovering from an execution failure/);
-    assert.match(SKILL_MARKDOWN, /transient failure or unusable output, retry that reviewer once/);
-    assert.match(SKILL_MARKDOWN, /Prefer a model not already in the\s+council, but allow a duplicate when necessary/);
-    assert.match(SKILL_MARKDOWN, /update that seat to the replacement's identity and\s+verdict/);
+    assert.match(SKILL_MARKDOWN, /transient failure or unusable output, retry the same selection once/);
+    assert.match(SKILL_MARKDOWN, /Ask before substituting a model or reasoning depth/);
+    assert.match(SKILL_MARKDOWN, /replacement\s+retains the seat's perspective/);
     assert.match(SKILL_MARKDOWN, /do not retain failed-attempt rows in the matrix/);
-    assert.match(SKILL_MARKDOWN, /mark the seat\s+`🚫 Unavailable`, leave the council incomplete/);
-    assert.match(SKILL_MARKDOWN, /Report execution failures and replacements in chat,\s+not in the matrix/);
+    assert.match(SKILL_MARKDOWN, /mark the seat\s+`🚫 Unavailable`,\s+leave the council incomplete/);
+    assert.match(SKILL_MARKDOWN, /report the execution failure in chat/);
     assert.doesNotMatch(SKILL_MARKDOWN, /Invocation failed/);
     assert.match(SKILL_MARKDOWN, /Blocked: required content inaccessible/);
     assert.match(SKILL_MARKDOWN, /Do not substitute another model unless it has\s+confirmed access/);
@@ -215,20 +267,20 @@ test("skill guidance renews verdicts without changing durable Action Items", () 
     assert.match(SKILL_MARKDOWN, /Existing saved summaries remain\s+readable and unchanged/);
 });
 
-test("skill guidance uses short unambiguous reviewer labels in Action Items", () => {
-    assert.match(SKILL_MARKDOWN, /shortest unambiguous\s+reviewer shorthand/);
-    assert.match(SKILL_MARKDOWN, /`- \[x\] \(Opus\)/);
-    assert.match(SKILL_MARKDOWN, /`- \[ \] \(GPT-5\.6\)/);
-    assert.match(SKILL_MARKDOWN, /matrix\s+is the source of truth for full family, version, and reasoning metadata/);
+test("skill guidance attributes Action Items by perspective when models repeat", () => {
+    assert.match(SKILL_MARKDOWN, /attributed by perspective/);
+    assert.match(SKILL_MARKDOWN, /`- \[x\] \(Failure\)/);
+    assert.match(SKILL_MARKDOWN, /`- \[ \] \(Intent, Maintenance\)/);
+    assert.match(SKILL_MARKDOWN, /Preserve historical attribution on existing items/);
 });
 
 test("skill scaffold does not seed a phantom unknown reviewer", () => {
     assert.doesNotMatch(SKILL_SCAFFOLD, /\(Model family unknown\)/);
-    assert.match(SKILL_SCAFFOLD, /Claude reviewer \(not selected\)/);
-    assert.match(SKILL_SCAFFOLD, /GPT reviewer \(not selected\)/);
-    assert.match(SKILL_SCAFFOLD, /Gemini reviewer \(not selected\)/);
+    for (const seat of [1, 2, 3]) {
+        assert.ok(SKILL_SCAFFOLD.includes(`Reviewer ${seat} (not selected)`));
+    }
     assert.doesNotMatch(SKILL_SCAFFOLD, /<selected reviewer/);
-    assert.match(SKILL_MARKDOWN, /Add an unknown-metadata row only for an actual reviewer/);
+    assert.match(SKILL_MARKDOWN, /Add an unknown-metadata row\s+only for an actual reviewer/);
 });
 
 test("skill guidance safely rehydrates existing canvases before updating", () => {

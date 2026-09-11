@@ -11,9 +11,10 @@
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { summarizeActionItems } from "./tasks.mjs";
 
 // COPILOT_HOME must be set before store.mjs is imported, since it computes
 // ARTIFACTS_DIR at module load time.
@@ -68,6 +69,37 @@ test("reviewer identity labels (including distinct reasoning depths and unknown 
     const doc = await loadDocument("doc-reviewers");
     assert.equal(doc.markdown, markdown);
     assert.match(doc.markdown, /🚫 Unavailable/);
+});
+
+test("per-summary preferences and repeated-model rows survive task updates and council renewal", async () => {
+    const skill = await readFile(new URL("../SKILL.md", import.meta.url), "utf8");
+    const preferencesBlock = skill.match(/<details>\s*<summary>Review preferences<\/summary>[\s\S]*?<\/details>/)?.[0];
+    assert.ok(preferencesBlock);
+    const preferences = JSON.parse(preferencesBlock.match(/```json\s+([\s\S]*?)\s+```/)[1]);
+    const matrix = `## Reviewer Matrix\n\n| Reviewer | Safe to Merge | Closes Scope |\n|---|---|---|\n`
+        + preferences.seats.map(({ perspective }) =>
+            `| ${perspective} — GPT-6 Astra (reasoning: medium) | ✅ Pass | ✅ Pass |`
+        ).join("\n") + `\n\n${preferencesBlock}`;
+    const initial = `## Action Items\n- [x] (Failure) Fixed save handling\n- [ ] (Maintenance) Resolve duplication\n\n${matrix}`;
+    await saveDocument("review-preferences", { title: "Preferences", markdown: initial });
+    const reloaded = await loadDocument("review-preferences");
+    assert.equal(reloaded.markdown, initial);
+
+    const taskUpdate = reloaded.markdown.replace("- [ ] (Maintenance)", "- [x] (Maintenance)");
+    await saveDocument("review-preferences", { title: reloaded.title, markdown: taskUpdate });
+    const beforeRenewal = await loadDocument("review-preferences");
+    assert.equal(beforeRenewal.markdown, taskUpdate);
+    const renewed = beforeRenewal.markdown.replaceAll("✅ Pass", "⏳ Pending");
+    await saveDocument("review-preferences", { title: reloaded.title, markdown: renewed });
+    const afterRenewal = await loadDocument("review-preferences");
+    assert.equal(afterRenewal.markdown, renewed);
+    assert.ok(afterRenewal.markdown.includes(preferencesBlock));
+    assert.deepEqual(summarizeActionItems(afterRenewal.markdown), summarizeActionItems(beforeRenewal.markdown));
+
+    const otherPreferences = preferencesBlock.replaceAll('"medium"', '"high"');
+    await saveDocument("other-review-preferences", { title: "Other", markdown: otherPreferences });
+    assert.ok((await loadDocument("review-preferences")).markdown.includes(preferencesBlock));
+    assert.equal((await loadDocument("other-review-preferences")).markdown, otherPreferences);
 });
 
 test("loadDocument returns null for a documentId that was never saved", async () => {
